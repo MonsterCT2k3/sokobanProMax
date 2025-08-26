@@ -18,6 +18,7 @@ class GameView @JvmOverloads constructor(
     private var map: Array<CharArray> = arrayOf() // Bản đồ game
     private var playerX: Int = 0 // Tọa độ X của người chơi
     private var playerY: Int = 0 // Tọa độ Y của người chơi
+    private val goalPositions = mutableSetOf<Pair<Int, Int>>() // Lưu các vị trí mục tiêu
     private lateinit var wall: Drawable
     private lateinit var box: Drawable
     private lateinit var goal: Drawable
@@ -29,28 +30,31 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun initGame() {
-        // Khởi tạo bản đồ mẫu
         map = arrayOf(
-            charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#'),
-            charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '#'),
-            charArrayOf('#', '.', 'B', '.', '#', '.', 'G', '.', '#'),
-            charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '#'),
-            charArrayOf('#', '#', '#', '.', '#', '.', '#', '#', '#'),
-            charArrayOf('#', '.', '.', 'B', '.', '.', '.', '.', '#'),
-            charArrayOf('#', '.', 'G', '.', '#', '.', '@', '.', '#'),
-            charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '#'),
-            charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#')
+            charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
+            charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+            charArrayOf('#', '.', 'B', '.', '.', 'G', '.', '.', '.', '#'),
+            charArrayOf('#', '.', '.', '#', '.', '.', '#', '.', '.', '#'),
+            charArrayOf('#', '.', '#', '.', '#', '.', '.', 'B', '.', '#'),
+            charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+            charArrayOf('#', 'G', '.', '@', '.', 'B', '.', '.', '.', '#'),
+            charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
+            charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '.', '#'),
+            charArrayOf('#', '.', '.', 'B', '.', '.', '.', '.', '.', '#'),
+            charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+            charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
         )
-        // Tìm vị trí người chơi
         for (i in map.indices) {
             for (j in map[i].indices) {
                 if (map[i][j] == '@') {
                     playerX = i
                     playerY = j
                 }
+                if (map[i][j] == 'G') {
+                    goalPositions.add(Pair(i, j))
+                }
             }
         }
-        // Tải tài nguyên hình ảnh
         wall = ContextCompat.getDrawable(context, R.drawable.wall) ?: throw IllegalStateException("wall drawable not found")
         box = ContextCompat.getDrawable(context, R.drawable.box) ?: throw IllegalStateException("box drawable not found")
         goal = ContextCompat.getDrawable(context, R.drawable.goal) ?: throw IllegalStateException("goal drawable not found")
@@ -60,11 +64,8 @@ class GameView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (map.isEmpty() || map[0].isEmpty()) return // Kiểm tra map rỗng
-
-        // Tính kích thước ô dựa trên kích thước màn hình
+        if (map.isEmpty() || map[0].isEmpty()) return
         val tileSize = min(width / map[0].size, height / map.size)
-        // Vẽ từng ô trên bản đồ
         for (i in map.indices) {
             for (j in map[i].indices) {
                 val x = j * tileSize
@@ -100,14 +101,14 @@ class GameView @JvmOverloads constructor(
                     // Di chuyển hộp
                     map[boxNewX][boxNewY] = 'B'
                     map[newX][newY] = '@'
-                    map[playerX][playerY] = if (map[playerX][playerY] == 'G') 'G' else '.'
+                    map[playerX][playerY] = if (goalPositions.contains(Pair(playerX, playerY))) 'G' else '.'
                     playerX = newX
                     playerY = newY
                 }
             } else {
                 // Di chuyển người chơi
                 map[newX][newY] = '@'
-                map[playerX][playerY] = if (map[playerX][playerY] == 'G') 'G' else '.'
+                map[playerX][playerY] = if (goalPositions.contains(Pair(playerX, playerY))) 'G' else '.'
                 playerX = newX
                 playerY = newY
             }
@@ -124,9 +125,8 @@ class GameView @JvmOverloads constructor(
             val x = event.x.toInt()
             val y = event.y.toInt()
             val tileSize = min(width / map[0].size, height / map.size)
-            val touchX = y / tileSize // Tọa độ hàng
-            val touchY = x / tileSize // Tọa độ cột
-            // Kiểm tra xem chạm vào ô lân cận của người chơi
+            val touchX = y / tileSize
+            val touchY = x / tileSize
             if (kotlin.math.abs(touchX - playerX) + kotlin.math.abs(touchY - playerY) == 1) {
                 movePlayer(touchX - playerX, touchY - playerY)
             }

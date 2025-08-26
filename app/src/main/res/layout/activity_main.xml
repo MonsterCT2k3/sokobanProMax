@@ -4,52 +4,86 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F0F4F8">
 
     <com.example.myapplication.GameView
         android:id="@+id/gameView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/buttonLayout"
+        app:layout_constraintBottom_toTopOf="@+id/controlLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:ignore="MissingClass" />
 
-    <LinearLayout
-        android:id="@+id/buttonLayout"
-        android:layout_width="match_parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/controlLayout"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp">
 
         <Button
             android:id="@+id/buttonUp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Up" />
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:text="↑"
+            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:background="#4CAF50"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="@id/buttonCenter"
+            app:layout_constraintEnd_toEndOf="@id/buttonCenter" />
 
         <Button
             android:id="@+id/buttonDown"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Down" />
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:text="↓"
+            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:background="#4CAF50"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@id/buttonCenter"
+            app:layout_constraintEnd_toEndOf="@id/buttonCenter" />
 
         <Button
             android:id="@+id/buttonLeft"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Left" />
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:text="←"
+            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:background="#2196F3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/buttonCenter"
+            app:layout_constraintBottom_toBottomOf="@id/buttonCenter" />
 
         <Button
             android:id="@+id/buttonRight"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Right" />
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:text="→"
+            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:background="#2196F3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/buttonCenter"
+            app:layout_constraintBottom_toBottomOf="@id/buttonCenter" />
 
-    </LinearLayout>
+        <!-- Nút trung tâm ảo để căn chỉnh -->
+        <Space
+            android:id="@+id/buttonCenter"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            app:layout_constraintBottom_toTopOf="@id/buttonDown"
+            app:layout_constraintTop_toBottomOf="@id/buttonUp"
+            app:layout_constraintStart_toEndOf="@id/buttonLeft"
+            app:layout_constraintEnd_toStartOf="@id/buttonRight" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
