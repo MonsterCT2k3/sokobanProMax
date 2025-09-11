@@ -16,6 +16,12 @@ class GameButtonActivity : AppCompatActivity() {
         // Lấy tham chiếu đến GameView
         gameView = findViewById(R.id.gameView)
 
+        // Set background image
+        gameView.setBackgroundImage(
+            R.drawable.background_forest, // Thử với ảnh forest
+            com.example.myapplication.rendering.BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL
+        )
+
         // Lấy level ID từ intent và load level
         val levelId = intent.getIntExtra("LEVEL_ID", 1)
         gameView.loadLevel(levelId)
@@ -69,6 +75,7 @@ class GameButtonActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+        super.onBackPressed()
         // Khi nhấn nút back của hệ thống cũng hiện dialog
         showExitGameDialog()
     }
