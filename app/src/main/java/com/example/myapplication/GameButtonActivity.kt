@@ -18,7 +18,7 @@ class GameButtonActivity : AppCompatActivity() {
 
         // Set background image
         gameView.setBackgroundImage(
-            R.drawable.background_forest, // Thử với ảnh forest
+            R.drawable.bg2, // Thử với ảnh forest
             com.example.myapplication.rendering.BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL
         )
 

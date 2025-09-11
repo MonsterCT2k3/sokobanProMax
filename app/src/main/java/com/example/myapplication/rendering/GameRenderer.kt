@@ -9,6 +9,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import com.example.myapplication.R
+import com.example.myapplication.game.PlayerDirection
 import kotlin.math.min
 
 class GameRenderer(private val context: Context) {
@@ -17,8 +18,11 @@ class GameRenderer(private val context: Context) {
     private lateinit var wall: Drawable
     private lateinit var box: Drawable
     private lateinit var goal: Drawable
-    private lateinit var player: Drawable
     private lateinit var floor: Drawable
+    private lateinit var playerUp: Drawable
+    private lateinit var playerDown: Drawable
+    private lateinit var playerLeft: Drawable
+    private lateinit var playerRight: Drawable
     
     // Paint objects
     private lateinit var tilePaint: Paint
@@ -45,10 +49,26 @@ class GameRenderer(private val context: Context) {
             ?: throw IllegalStateException("box drawable not found")
         goal = ContextCompat.getDrawable(context, R.drawable.goal)
             ?: throw IllegalStateException("goal drawable not found")
-        player = ContextCompat.getDrawable(context, R.drawable.player)
+        playerUp = ContextCompat.getDrawable(context, R.drawable.hero_up)
+            ?: throw IllegalStateException("player drawable not found")
+        playerDown = ContextCompat.getDrawable(context, R.drawable.hero_down)
+            ?: throw IllegalStateException("player drawable not found")
+        playerLeft = ContextCompat.getDrawable(context, R.drawable.hero_left)
+            ?: throw IllegalStateException("player drawable not found")
+        playerRight = ContextCompat.getDrawable(context, R.drawable.hero_right)
             ?: throw IllegalStateException("player drawable not found")
         floor = ContextCompat.getDrawable(context, R.drawable.floor)
             ?: throw IllegalStateException("floor drawable not found")
+    }
+
+    // Thêm method mới vào GameRenderer:
+    private fun getCurrentPlayerDrawable(direction: PlayerDirection): Drawable {
+        return when (direction) {
+            PlayerDirection.UP -> playerUp
+            PlayerDirection.DOWN -> playerDown
+            PlayerDirection.LEFT -> playerLeft
+            PlayerDirection.RIGHT -> playerRight
+        }
     }
     
     private fun initPaints() {
@@ -76,7 +96,7 @@ class GameRenderer(private val context: Context) {
         screenHeight = height
     }
     
-    fun drawGameBoard(canvas: Canvas, map: Array<CharArray>) {
+    fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerDirection: PlayerDirection) {
         if (map.isEmpty() || map[0].isEmpty()) return
 
         val tileSize = min(screenWidth / map[0].size, screenHeight / map.size)
@@ -88,7 +108,6 @@ class GameRenderer(private val context: Context) {
                 '#' to drawableToBitmap(wall, tileSize),
                 'B' to drawableToBitmap(box, tileSize),
                 'G' to drawableToBitmap(goal, tileSize),
-                '@' to drawableToBitmap(player, tileSize),
                 '.' to drawableToBitmap(floor, tileSize)
             )
         }
@@ -110,9 +129,15 @@ class GameRenderer(private val context: Context) {
                 if (map[i][j] != '.') {
                     canvas.drawRect(x + 3, y + 3, x + tileSize + 3, y + tileSize + 3, shadowPaint)
                 }
-                
-                val bitmap = bitmaps[map[i][j]] ?: bitmaps['.']!!
-                canvas.drawBitmap(bitmap, x, y, tilePaint)
+                // Vẽ người chơi với hướng hiện tại
+                if (map[i][j] == '@') {
+                    val playerDrawable = getCurrentPlayerDrawable(playerDirection)
+                    val playerBitmap = drawableToBitmap(playerDrawable, tileSize)
+                    canvas.drawBitmap(playerBitmap, x, y, tilePaint)
+                }else{
+                    val bitmap = bitmaps[map[i][j]] ?: bitmaps['.']!!
+                    canvas.drawBitmap(bitmap, x, y, tilePaint)
+                }
             }
         }
     }
@@ -148,7 +173,6 @@ class GameRenderer(private val context: Context) {
             '#' -> wall
             'B' -> box
             'G' -> goal
-            '@' -> player
             else -> floor
         }
     }

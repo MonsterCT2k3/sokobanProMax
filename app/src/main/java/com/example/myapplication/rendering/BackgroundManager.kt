@@ -285,4 +285,40 @@ class BackgroundManager(private val context: Context) {
     }
     
     fun hasBackground(): Boolean = scaledBackgroundBitmap != null
+    
+    // ===== DEBUG & UTILITY =====
+    
+    /**
+     * 📊 Lấy thông tin debug về background
+     * 
+     * @return String chứa info về background hiện tại
+     */
+    fun getDebugInfo(): String {
+        return if (hasBackground()) {
+            val original = backgroundBitmap
+            val scaled = scaledBackgroundBitmap
+            """Background Info:
+            |Type: $backgroundType
+            |Speed: $backgroundSpeed
+            |Original: ${original?.width}x${original?.height}
+            |Scaled: ${scaled?.width}x${scaled?.height}
+            |Screen: ${screenWidth}x${screenHeight}
+            |Scroll: ($backgroundScrollX, $backgroundScrollY)""".trimMargin()
+        } else {
+            "No background loaded"
+        }
+    }
+    
+    /**
+     * 🧹 Clean up resources
+     * 
+     * Giải phóng memory khi không cần background nữa.
+     * Gọi khi Activity/Fragment bị destroy.
+     */
+    fun cleanup() {
+        backgroundBitmap?.recycle()
+        scaledBackgroundBitmap?.recycle()
+        backgroundBitmap = null
+        scaledBackgroundBitmap = null
+    }
 }

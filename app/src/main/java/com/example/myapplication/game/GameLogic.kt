@@ -11,6 +11,7 @@ class GameLogic {
     private var playerY: Int = 0
     private val goalPositions = mutableSetOf<Pair<Int, Int>>()
     private var currentLevel: Level? = null
+    private var playerDirection = PlayerDirection.DOWN
     
     // Game status
     private var isGameWon = false
@@ -44,6 +45,7 @@ class GameLogic {
     
     // Player movement
     fun movePlayer(dx: Int, dy: Int): Boolean {
+        playerDirection = PlayerDirection.fromMovement(dx, dy)
         val newX = playerX + dx
         val newY = playerY + dy
 
@@ -163,4 +165,6 @@ class GameLogic {
         val boxesOnGoals = getBoxesOnGoalsCount()
         return (boxesOnGoals.toFloat() / totalGoals.toFloat()) * 100f
     }
+
+    fun getPlayerDirection(): PlayerDirection = playerDirection
 }
