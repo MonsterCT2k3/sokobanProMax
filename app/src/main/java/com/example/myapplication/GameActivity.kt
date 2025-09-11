@@ -1,27 +1,35 @@
 package com.example.myapplication
 
 import android.os.Bundle
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
 class GameActivity : AppCompatActivity() {
+
+    private lateinit var gameView: GameView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        // Lấy tham chiếu đến GameView
-        val gameView: GameView = findViewById(R.id.gameView)
+        gameView = GameView(this)
+        setContentView(gameView)
 
-        // Gán sự kiện cho các nút điều khiển
-        findViewById<Button>(R.id.buttonUp).setOnClickListener { gameView.movePlayer(-1, 0) }
-        findViewById<Button>(R.id.buttonDown).setOnClickListener { gameView.movePlayer(1, 0) }
-        findViewById<Button>(R.id.buttonLeft).setOnClickListener { gameView.movePlayer(0, -1) }
-        findViewById<Button>(R.id.buttonRight).setOnClickListener { gameView.movePlayer(0, 1) }
+        // Lấy level ID từ intent
+        val levelId = intent.getIntExtra("LEVEL_ID", 1)
+        gameView.loadLevel(levelId)
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        // Quay lại menu khi nhấn nút back
-        finish()
+    override fun onResume() {
+        super.onResume()
+        gameView.resumeGame()
     }
-} 
+
+    override fun onPause() {
+        super.onPause()
+        gameView.pauseGame()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        gameView.stopGame()
+    }
+}

@@ -4,86 +4,41 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#F0F4F8">
+    android:layout_height="match_parent">
 
+    <!-- GameView làm background toàn màn hình -->
     <com.example.myapplication.GameView
         android:id="@+id/gameView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/controlLayout"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         tools:ignore="MissingClass" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/controlLayout"
+    <!-- Back Button - Overlay phía trên -->
+    <Button
+        android:id="@+id/buttonBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp">
+        android:text="← Quay lại"
+        android:textColor="#FFFFFF"
+        android:background="#CC000000"
+        android:padding="12dp"
+        android:layout_margin="16dp"
+        android:elevation="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
-            android:id="@+id/buttonUp"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:text="↑"
-            android:textSize="24sp"
-            android:textColor="#FFFFFF"
-            android:background="#4CAF50"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="@id/buttonCenter"
-            app:layout_constraintEnd_toEndOf="@id/buttonCenter" />
-
-        <Button
-            android:id="@+id/buttonDown"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:text="↓"
-            android:textSize="24sp"
-            android:textColor="#FFFFFF"
-            android:background="#4CAF50"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@id/buttonCenter"
-            app:layout_constraintEnd_toEndOf="@id/buttonCenter" />
-
-        <Button
-            android:id="@+id/buttonLeft"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:text="←"
-            android:textSize="24sp"
-            android:textColor="#FFFFFF"
-            android:background="#2196F3"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/buttonCenter"
-            app:layout_constraintBottom_toBottomOf="@id/buttonCenter" />
-
-        <Button
-            android:id="@+id/buttonRight"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:text="→"
-            android:textSize="24sp"
-            android:textColor="#FFFFFF"
-            android:background="#2196F3"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/buttonCenter"
-            app:layout_constraintBottom_toBottomOf="@id/buttonCenter" />
-
-        <!-- Nút trung tâm ảo để căn chỉnh -->
-        <Space
-            android:id="@+id/buttonCenter"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            app:layout_constraintBottom_toTopOf="@id/buttonDown"
-            app:layout_constraintTop_toBottomOf="@id/buttonUp"
-            app:layout_constraintStart_toEndOf="@id/buttonLeft"
-            app:layout_constraintEnd_toStartOf="@id/buttonRight" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Reset Button - Overlay phía trên -->
+    <Button
+        android:id="@+id/buttonReset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔄 Reset"
+        android:textColor="#FFFFFF"
+        android:background="#CC000000"
+        android:padding="12dp"
+        android:layout_margin="16dp"
+        android:elevation="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

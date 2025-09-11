@@ -7,4 +7,20 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+
+    <!-- Level states -->
+    <color name="level_available">#4CAF50</color>
+    <color name="level_completed">#2196F3</color>
+    <color name="level_locked">#9E9E9E</color>
+
+    <!-- Text colors -->
+    <color name="text_available">#FFFFFF</color>
+    <color name="text_completed">#FFFFFF</color>
+    <color name="text_locked">#616161</color>
+    <color name="text_secondary">#757575</color>
+
+    <!-- Background -->
+    <color name="background_color">#263238</color>
+    <color name="text_color">#FFFFFF</color>
 </resources>

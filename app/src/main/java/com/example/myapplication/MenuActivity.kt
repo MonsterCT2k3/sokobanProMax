@@ -24,7 +24,7 @@ class MenuActivity : AppCompatActivity() {
     private fun setupButtons() {
         // Nút Play - chuyển đến màn hình game
         findViewById<Button>(R.id.btnPlay).setOnClickListener {
-            val intent = Intent(this, GameActivity::class.java)
+            val intent = Intent(this, LevelSelectionActivity::class.java)
             startActivity(intent)
         }
 

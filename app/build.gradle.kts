@@ -50,7 +50,11 @@ android {
 }
 
 dependencies {
+    // RecyclerView
+    implementation(libs.androidx.recyclerview)
 
+    // CardView (cho layout level item)
+    implementation(libs.androidx.cardview)
     implementation(libs.androidx.core.ktx.v1120)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
