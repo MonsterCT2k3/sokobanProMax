@@ -37,21 +37,23 @@ class InputHandler {
                 // Lưu vị trí kết thúc chạm
                 endX = event.x
                 endY = event.y
-                handleSwipe()
-                return true
+
+                // Return kết quả từ handleSwipe()
+                val isSwipe = handleSwipe()
+                return isSwipe // true nếu là swipe, false nếu là tap
             }
         }
         return false
     }
     
-    private fun handleSwipe() {
+    private fun handleSwipe(): Boolean {
         val deltaX = endX - startX
         val deltaY = endY - startY
 
         // Kiểm tra khoảng cách swipe có đủ dài không
         val distance = sqrt((deltaX * deltaX + deltaY * deltaY).toDouble()).toFloat()
         if (distance < minSwipeDistance) {
-            return // Quá ngắn, không phải swipe
+            return false // ❌ KHÔNG PHẢI SWIPE → GameView xử lý bắn đạn
         }
 
         // Xác định hướng swipe
@@ -77,6 +79,8 @@ class InputHandler {
                 playerMoveListener?.onPlayerMove(-1, 0)
             }
         }
+
+        return true // ✅ ĐÃ XỬ LÝ SWIPE
     }
     
     // Method để set khoảng cách swipe tối thiểu nếu cần

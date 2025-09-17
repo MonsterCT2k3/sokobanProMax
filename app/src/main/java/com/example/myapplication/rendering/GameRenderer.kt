@@ -9,8 +9,11 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import com.example.myapplication.R
+import com.example.myapplication.entities.Bullet
 import com.example.myapplication.game.PlayerDirection
 import kotlin.math.min
+import com.example.myapplication.entities.Monster
+import com.example.myapplication.entities.MonsterType
 
 class GameRenderer(private val context: Context) {
     
@@ -23,6 +26,9 @@ class GameRenderer(private val context: Context) {
     private lateinit var playerDown: Drawable
     private lateinit var playerLeft: Drawable
     private lateinit var playerRight: Drawable
+    private lateinit var monsterPatrol: Drawable
+    private lateinit var monsterStraight: Drawable
+    private lateinit var bullet: Drawable
     
     // Paint objects
     private lateinit var tilePaint: Paint
@@ -59,6 +65,25 @@ class GameRenderer(private val context: Context) {
             ?: throw IllegalStateException("player drawable not found")
         floor = ContextCompat.getDrawable(context, R.drawable.floor)
             ?: throw IllegalStateException("floor drawable not found")
+        monsterPatrol = ContextCompat.getDrawable(context, R.drawable.monster_patrol)
+            ?: throw IllegalStateException("monster drawable not found")
+        monsterStraight = ContextCompat.getDrawable(context, R.drawable.monster_straight)
+            ?: throw IllegalStateException("monster drawable not found")
+        bullet = ContextCompat.getDrawable(context, R.drawable.bullet)
+            ?: throw IllegalStateException("bullet drawable not found")
+    }
+
+    /**
+     * 👹 Lấy drawable cho monster theo type
+     */
+    private fun getMonsterDrawable(type: MonsterType): Drawable {
+        return when (type) {
+            MonsterType.PATROL -> monsterPatrol
+            MonsterType.CIRCLE -> monsterPatrol  // Tạm dùng chung
+            MonsterType.RANDOM -> monsterPatrol  // Tạm dùng chung
+            MonsterType.CHASE -> monsterPatrol   // Tạm dùng chung
+            MonsterType.STRAIGHT -> monsterStraight
+        }
     }
 
     // Thêm method mới vào GameRenderer:
@@ -96,7 +121,7 @@ class GameRenderer(private val context: Context) {
         screenHeight = height
     }
     
-    fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerDirection: PlayerDirection) {
+    fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerDirection: PlayerDirection, monsters: List<Monster>) {
         if (map.isEmpty() || map[0].isEmpty()) return
 
         val tileSize = min(screenWidth / map[0].size, screenHeight / map.size)
@@ -129,6 +154,8 @@ class GameRenderer(private val context: Context) {
                 if (map[i][j] != '.') {
                     canvas.drawRect(x + 3, y + 3, x + tileSize + 3, y + tileSize + 3, shadowPaint)
                 }
+                // Vẽ quái vật nếu có
+                drawMonsters(canvas, monsters, tileSize, offsetX, offsetY)
                 // Vẽ người chơi với hướng hiện tại
                 if (map[i][j] == '@') {
                     val playerDrawable = getCurrentPlayerDrawable(playerDirection)
@@ -138,6 +165,30 @@ class GameRenderer(private val context: Context) {
                     val bitmap = bitmaps[map[i][j]] ?: bitmaps['.']!!
                     canvas.drawBitmap(bitmap, x, y, tilePaint)
                 }
+            }
+        }
+    }
+
+    /**
+     * 👹 Vẽ tất cả monsters lên canvas
+     */
+    private fun drawMonsters(canvas: Canvas, monsters: List<Monster>, tileSize: Int, offsetX: Float, offsetY: Float) {
+        monsters.forEach { monster ->
+            if (monster.isActive) {
+                // 1️⃣ Lấy drawable cho monster
+                val monsterDrawable = getMonsterDrawable(monster.type)
+                val monsterBitmap = drawableToBitmap(monsterDrawable, tileSize)
+
+                // 2️⃣ Tính vị trí render (smooth position)
+                val x = offsetX + monster.currentY * tileSize  // ✅ SỬA: currentY là column
+                val y = offsetY + monster.currentX * tileSize  // ✅ SỬA: currentX là row
+
+                // 3️⃣ Vẽ shadow
+                canvas.drawRect(x + 2, y + 2, x + tileSize + 2, y + tileSize + 2, shadowPaint)
+
+                // 4️⃣ Vẽ monster
+                canvas.drawBitmap(monsterBitmap, x, y, tilePaint)
+
             }
         }
     }
@@ -158,6 +209,36 @@ class GameRenderer(private val context: Context) {
             screenHeight - 60f, 
             instructionsPaint
         )
+    }
+
+    /**
+     * 🎯 Vẽ tất cả bullets lên canvas
+     *
+     * @param canvas Canvas để vẽ
+     * @param bullets Danh sách bullets cần vẽ
+     */
+    fun drawBullets(canvas: Canvas, bullets: List<Bullet>) {
+        // Bullet lớn hơn để dễ thấy (32x32 thay vì 16x16)
+        val bulletBitmap = drawableToBitmap(bullet, 64)
+
+        bullets.forEach { bullet ->
+            if (bullet.isActive) {
+                // Vẽ bullet tại vị trí hiện tại
+                canvas.drawBitmap(
+                    bulletBitmap,
+                    bullet.currentX - 32,  // Center bullet (64/2 = 32)
+                    bullet.currentY - 32,  // Center bullet (64/2 = 32)
+                    tilePaint
+                )
+
+                // Vẽ trail effect
+                val trailPaint = Paint().apply {
+                    color = android.graphics.Color.YELLOW
+                    alpha = 150  // Tăng độ trong suốt
+                }
+                canvas.drawCircle(bullet.currentX, bullet.currentY, 5f, trailPaint)
+            }
+        }
     }
     
     private fun drawableToBitmap(drawable: Drawable, size: Int): Bitmap {

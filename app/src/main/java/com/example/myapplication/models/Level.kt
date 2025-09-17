@@ -1,5 +1,7 @@
 package com.example.myapplication.models
 
+import com.example.myapplication.entities.MonsterType
+
 data class Level(
     val id: Int,
     val name: String,
@@ -8,7 +10,8 @@ data class Level(
     val description: String = "",
     val isUnlocked: Boolean = true,
     val bestMoves: Int? = null,
-    val bestTime: Long? = null
+    val bestTime: Long? = null,
+    val monsters: List<MonsterData> = emptyList()
 ) {
     enum class Difficulty {
         EASY, MEDIUM, HARD, EXPERT
@@ -52,3 +55,12 @@ data class Level(
         return id
     }
 }
+
+data class MonsterData(
+    val type: MonsterType,
+    val startRow: Int,
+    val startColumn: Int,
+    val patrolPoints: List<Pair<Int, Int>> = emptyList(),
+    val speed: Float = 2.0f,
+
+    )

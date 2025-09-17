@@ -6,9 +6,12 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import com.example.myapplication.game.GameLogic
+import com.example.myapplication.game.PlayerDirection
 import com.example.myapplication.input.InputHandler
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
+import com.example.myapplication.systems.BulletSystem
+import com.example.myapplication.systems.MonsterSystem
 
 /**
  * 🎮 GameView - Main game view class
@@ -38,6 +41,8 @@ class GameView @JvmOverloads constructor(
     private val gameRenderer = GameRenderer(context)       // 🖼️ Vẽ game board và UI
     private val backgroundManager = BackgroundManager(context) // 🎨 Quản lý background
     private val inputHandler = InputHandler()              // 👆 Xử lý touch input
+    private val monsterSystem = MonsterSystem()            // 👾 Xử lý logic monster
+    private val bulletSystem = BulletSystem()               // 🎯 Xử lý logic bullet
     
     // ===== GAME THREAD MANAGEMENT =====
     // Game chạy trên thread riêng để không block UI thread
@@ -51,6 +56,7 @@ class GameView @JvmOverloads constructor(
     
     // ===== ANIMATION =====
     private var animationTime = 0f                         // Thời gian để tính animation
+    private var lastUpdateTime = 0L                        // Thời gian lần cuối update animation
 
     init {
         initGame()
@@ -71,6 +77,17 @@ class GameView @JvmOverloads constructor(
 
     fun loadLevel(levelId: Int) {
         gameLogic.loadLevel(levelId)
+        // ⭐ LOAD MONSTERS từ level data
+        monsterSystem.clearMonsters()  // Xóa monsters cũ
+
+        val level = gameLogic.getCurrentLevel()
+        level?.monsters?.forEachIndexed { index, monsterData ->
+            val monsterId = "monster_${levelId}_${index}"
+            val monster = monsterSystem.createMonsterFromData(monsterData, monsterId)
+            monsterSystem.addMonster(monster)
+
+            println("🎮 Loaded monster: ${monsterId} type=${monsterData.type} at (${monsterData.startRow}, ${monsterData.startColumn})")
+        }
     }
 
     fun setBackgroundImage(resourceId: Int, scrollType: BackgroundManager.BackgroundScrollType = BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL) {
@@ -196,12 +213,57 @@ class GameView @JvmOverloads constructor(
             lastFPSTime = currentTime
         }
 
+        val rawDeltaTime = if(lastUpdateTime==0L){
+            0.016f
+        }else{
+            (currentTime - lastUpdateTime).toFloat() / 1000f
+        }
+        lastUpdateTime = currentTime
+
+        // Đảm bảo deltaTime hợp lý
+        val deltaTime = rawDeltaTime.coerceIn(0.01f, 0.1f)
+
         // ===== UPDATE ANIMATION =====
         animationTime = currentTime.toFloat()  // Thời gian cho background animation
-        
+
+        // update monsters
+        val (playerX, playerY) = gameLogic.getPlayerPosition()
+        monsterSystem.updateMonsters(deltaTime, playerX, playerY, gameLogic.getMap())
+
+        //check collision between player and monsters
+        if(monsterSystem.checkPlayerCollision(playerX, playerY)){
+            onPlayerDied()
+        }
+
+        // Update bullets
+        // Update vị trí bullets và cleanup
+        val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap()).toFloat()
+        val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
+        bulletSystem.updateBullets(deltaTime, width.toFloat(), height.toFloat(), gameLogic.getMap(), tileSize, offsetX, offsetY)
+
+        // ===== CHECK BULLET COLLISIONS =====
+        // Kiểm tra bullets có chạm monsters không
+        val monsterPositions = monsterSystem.getActiveMonsters().map {
+            Pair(it.currentY, it.currentX)  // Đảo ngược coordinate như trong drawMonsters
+        }
+
+        val collisions = bulletSystem.checkCollisions(monsterPositions)
+        collisions.forEach { (bullet, monsterIndex) ->
+            // TODO: Xử lý khi bullet chạm monster
+            // - Tăng điểm
+            // - Hiệu ứng visual
+            // - Sound effect
+            println("🎯 Bullet destroyed monster $monsterIndex!")
+        }
+
         // Update background animation và check cần redraw không
         if (backgroundManager.updateAnimation()) {
             gameStateChanged = true  // Background có animation → cần redraw
+        }
+
+        // Monsters cũng cần redraw
+        if (monsterSystem.getActiveMonsters().isNotEmpty()) {
+            gameStateChanged = true
         }
     }
 
@@ -230,8 +292,13 @@ class GameView @JvmOverloads constructor(
         // 2. 🎮 Vẽ game board (tiles: wall, box, player, goal)
         //    Chỉ vẽ nếu đã load level
         if (!gameLogic.isMapEmpty()) {
-            gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), gameLogic.getPlayerDirection())
+            val monsters = monsterSystem.getActiveMonsters()
+            gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), gameLogic.getPlayerDirection(), monsters)
         }
+
+        // Vẽ bullets
+        val activeBullets = bulletSystem.getActiveBullets()
+        gameRenderer.drawBullets(canvas, activeBullets)
         
         // 3. 🖼️ Vẽ UI elements cuối cùng (trên cùng)
         //    Title, instructions, score, etc.
@@ -240,7 +307,58 @@ class GameView @JvmOverloads constructor(
 
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return inputHandler.handleTouchEvent(event) || super.onTouchEvent(event)
+        // 🔄 DELEGATE CHO INPUT HANDLER TRƯỚC
+        val inputHandled = inputHandler.handleTouchEvent(event)
+
+        // Nếu InputHandler đã xử lý (swipe), return luôn
+        if (inputHandled) {
+            return true
+        }
+
+        // Nếu InputHandler không xử lý (tap), thì bắn đạn
+        when (event.action) {
+            MotionEvent.ACTION_UP -> {
+                // 🎯 BẮN ĐẠN THEO HƯỚNG PLAYER
+
+                // 1️⃣ Lấy vị trí player trên grid
+                val playerPos = gameLogic.getPlayerPosition()
+                val playerDirection = gameLogic.getPlayerDirection()
+
+                // 2️⃣ Convert grid position → screen position
+                val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap())
+                val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
+
+                // 3️⃣ Tính vị trí player trên màn hình (CENTER của tile)
+                val playerScreenX = offsetX + playerPos.second * tileSize + tileSize/2  // Center X
+                val playerScreenY = offsetY + playerPos.first * tileSize + tileSize/2   // Center Y
+
+                println("🎯 Player position: Grid(${playerPos.first}, ${playerPos.second}) -> Screen(${playerScreenX.toInt()}, ${playerScreenY.toInt()})")
+
+                // 4️⃣ Tính target position dựa trên hướng player (TĂNG KHOẢNG CÁCH!)
+                val targetX = when (playerDirection) {
+                    PlayerDirection.LEFT -> playerScreenX - 2000f    // Bắn sang trái xa hơn
+                    PlayerDirection.RIGHT -> playerScreenX + 2000f   // Bắn sang phải xa hơn
+                    PlayerDirection.UP -> playerScreenX             // Giữ nguyên X
+                    PlayerDirection.DOWN -> playerScreenX           // Giữ nguyên X
+                }
+
+                val targetY = when (playerDirection) {
+                    PlayerDirection.LEFT -> playerScreenY           // Giữ nguyên Y
+                    PlayerDirection.RIGHT -> playerScreenY          // Giữ nguyên Y
+                    PlayerDirection.UP -> playerScreenY - 800f      // Bắn lên trên xa hơn
+                    PlayerDirection.DOWN -> playerScreenY + 800f    // Bắn xuống dưới xa hơn
+                }
+
+                // 5️⃣ Bắn đạn theo hướng player
+                bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY)
+
+                println("🎯 Player fired bullet in direction: $playerDirection")
+
+                return true
+            }
+        }
+
+        return super.onTouchEvent(event)
     }
 
 
@@ -297,4 +415,19 @@ class GameView @JvmOverloads constructor(
     fun getProgressPercentage(): Float = gameLogic.getProgressPercentage()
 
     fun getCurrentLevel() = gameLogic.getCurrentLevel()
+    /**
+     * 💀 Xử lý khi player chết (chạm monster)
+     */
+    private fun onPlayerDied() {
+        isGameRunning = false  // Dừng game loop
+        post {
+            // TODO: Hiển thị Game Over dialog
+            println("💀 GAME OVER! Player touched monster!")
+
+            // Tạm thời restart level
+            val levelId = gameLogic.getCurrentLevel()?.id ?: 1
+            loadLevel(levelId)
+        startGame()
+    }
+    }
 }

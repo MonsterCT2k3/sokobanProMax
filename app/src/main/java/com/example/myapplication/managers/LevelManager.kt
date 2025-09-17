@@ -2,6 +2,8 @@ package com.example.myapplication.managers
 
 import com.example.myapplication.models.Level
 import com.example.myapplication.models.Level.Difficulty.*
+import com.example.myapplication.entities.MonsterType
+import com.example.myapplication.models.MonsterData
 
 object LevelManager{
     private val levels = mutableListOf<Level>()
@@ -11,18 +13,40 @@ object LevelManager{
     }
 
     private fun initializeLevels(){
-        // Level 1 - Tutorial
+        // Level 1 - Tutorial với Monster
         levels.add(
             Level(
                 id = 1,
                 name = "Hướng dẫn",
                 difficulty = EASY,
-                description = "Học cách chơi cơ bản",
+                description = "Học cách chơi cơ bản và tránh quái",
                 map = arrayOf(
-                    charArrayOf('#', '#', '#', '#', '#'),
-                    charArrayOf('#', '@', '.', 'G', '#'),
-                    charArrayOf('#', '.', 'B', '.', '#'),
-                    charArrayOf('#', '#', '#', '#', '#')
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#'),
+                    charArrayOf('#', '@', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', 'B', '.', 'G', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#')
+                ),
+                monsters = listOf(
+                    // Đi sang phải
+                    MonsterData(
+                        type = MonsterType.STRAIGHT,
+                        startRow = 1,
+                        startColumn = 5,
+                        patrolPoints = listOf(Pair(0, -1)),
+                        speed = 1.0f
+                    ),
+                    MonsterData(
+                        type = MonsterType.STRAIGHT,
+                        startRow = 1,
+                        startColumn = 5,
+                        patrolPoints = listOf(Pair(1, 0)),
+                        speed = 1.0f
+                    ),
+
+
+
                 )
             )
         )
