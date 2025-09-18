@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import com.example.myapplication.R
 import com.example.myapplication.entities.Bullet
+import com.example.myapplication.entities.BulletDirection
 import com.example.myapplication.game.PlayerDirection
 import kotlin.math.min
 import com.example.myapplication.entities.Monster
@@ -28,7 +29,10 @@ class GameRenderer(private val context: Context) {
     private lateinit var playerRight: Drawable
     private lateinit var monsterPatrol: Drawable
     private lateinit var monsterStraight: Drawable
-    private lateinit var bullet: Drawable
+    private lateinit var bulletUp: Drawable
+    private lateinit var bulletDown: Drawable
+    private lateinit var bulletLeft: Drawable
+    private lateinit var bulletRight: Drawable
     
     // Paint objects
     private lateinit var tilePaint: Paint
@@ -69,8 +73,16 @@ class GameRenderer(private val context: Context) {
             ?: throw IllegalStateException("monster drawable not found")
         monsterStraight = ContextCompat.getDrawable(context, R.drawable.monster_straight)
             ?: throw IllegalStateException("monster drawable not found")
-        bullet = ContextCompat.getDrawable(context, R.drawable.bullet)
-            ?: throw IllegalStateException("bullet drawable not found")
+
+        // Load bullet drawables for each direction
+        bulletUp = ContextCompat.getDrawable(context, R.drawable.bullet_up)
+            ?: throw IllegalStateException("bullet_up drawable not found")
+        bulletDown = ContextCompat.getDrawable(context, R.drawable.bullet_down)
+            ?: throw IllegalStateException("bullet_down drawable not found")
+        bulletLeft = ContextCompat.getDrawable(context, R.drawable.bullet_left)
+            ?: throw IllegalStateException("bullet_left drawable not found")
+        bulletRight = ContextCompat.getDrawable(context, R.drawable.bullet_right)
+            ?: throw IllegalStateException("bullet_right drawable not found")
     }
 
     /**
@@ -83,6 +95,18 @@ class GameRenderer(private val context: Context) {
             MonsterType.RANDOM -> monsterPatrol  // Tạm dùng chung
             MonsterType.CHASE -> monsterPatrol   // Tạm dùng chung
             MonsterType.STRAIGHT -> monsterStraight
+        }
+    }
+
+    /**
+     * 🎯 Lấy drawable cho bullet theo hướng
+     */
+    private fun getBulletDrawable(direction: BulletDirection): Drawable {
+        return when (direction) {
+            BulletDirection.UP -> bulletUp
+            BulletDirection.DOWN -> bulletDown
+            BulletDirection.LEFT -> bulletLeft
+            BulletDirection.RIGHT -> bulletRight
         }
     }
 
@@ -218,11 +242,12 @@ class GameRenderer(private val context: Context) {
      * @param bullets Danh sách bullets cần vẽ
      */
     fun drawBullets(canvas: Canvas, bullets: List<Bullet>) {
-        // Bullet lớn hơn để dễ thấy (32x32 thay vì 16x16)
-        val bulletBitmap = drawableToBitmap(bullet, 64)
-
         bullets.forEach { bullet ->
             if (bullet.isActive) {
+                // 🎯 Lấy drawable theo hướng của bullet
+                val bulletDrawable = getBulletDrawable(bullet.direction)
+                val bulletBitmap = drawableToBitmap(bulletDrawable, 64)
+
                 // Vẽ bullet tại vị trí hiện tại
                 canvas.drawBitmap(
                     bulletBitmap,
@@ -231,9 +256,16 @@ class GameRenderer(private val context: Context) {
                     tilePaint
                 )
 
-                // Vẽ trail effect
+                // Vẽ trail effect theo màu của hướng
+                val trailColor = when (bullet.direction) {
+                    BulletDirection.UP -> android.graphics.Color.BLUE
+                    BulletDirection.DOWN -> android.graphics.Color.RED
+                    BulletDirection.LEFT -> android.graphics.Color.GREEN
+                    BulletDirection.RIGHT -> android.graphics.Color.YELLOW
+                }
+
                 val trailPaint = Paint().apply {
-                    color = android.graphics.Color.YELLOW
+                    color = trailColor
                     alpha = 150  // Tăng độ trong suốt
                 }
                 canvas.drawCircle(bullet.currentX, bullet.currentY, 5f, trailPaint)

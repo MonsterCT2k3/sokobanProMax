@@ -1,11 +1,16 @@
 package com.example.myapplication.entities
 
+enum class BulletDirection {
+    UP, DOWN, LEFT, RIGHT
+}
+
 data class Bullet(
     val id:String,
     var currentX: Float,
     var currentY: Float,
     val targetX: Float,
     val targetY: Float,
+    val direction: BulletDirection,  // Hướng của bullet
     val speed: Float = 800.0f,  // Tăng speed mặc định
     var isActive: Boolean = true
 ) {

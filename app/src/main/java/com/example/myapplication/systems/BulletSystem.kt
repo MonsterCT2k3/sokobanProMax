@@ -1,10 +1,14 @@
 package com.example.myapplication.systems
 
 import com.example.myapplication.entities.Bullet
+import com.example.myapplication.entities.BulletDirection
 
 class BulletSystem {
     private val bullets = mutableListOf<Bullet>()
     private var nextBulletId = 0
+    private val bulletsHitWall = mutableListOf<Bullet>()
+    val bulletsToRemove = mutableListOf<Bullet>()
+    val bulletsHitWallTemp = mutableListOf<Bullet>()
 
     //public method to add a bullet
     fun addBullet(startX: Float, startY: Float, targetX: Float, targetY: Float) {
@@ -12,6 +16,16 @@ class BulletSystem {
         val dx = targetX - startX
         val dy = targetY - startY
         val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+
+        // Tính hướng của bullet dựa trên vector (dx, dy)
+        val bulletDirection = when {
+            kotlin.math.abs(dx) > kotlin.math.abs(dy) -> {
+                if (dx > 0) BulletDirection.RIGHT else BulletDirection.LEFT
+            }
+            else -> {
+                if (dy > 0) BulletDirection.DOWN else BulletDirection.UP
+            }
+        }
 
         // Nếu quá gần, tăng khoảng cách
         val finalTargetX = if (distance < 50f) {
@@ -32,6 +46,7 @@ class BulletSystem {
             currentY = startY,
             targetX = finalTargetX,
             targetY = finalTargetY,
+            direction = bulletDirection,  // Thêm hướng của bullet
             speed = 800.0f,  // Tăng tốc độ để bullet bay nhanh hơn
             isActive = true
         )
@@ -44,7 +59,7 @@ class BulletSystem {
         // Đảm bảo deltaTime hợp lý (tránh quá nhỏ)
         val safeDeltaTime = deltaTime.coerceIn(0.01f, 0.1f) // Giới hạn 10ms - 100ms
 
-        val bulletsToRemove = mutableListOf<Bullet>()
+
         bullets.forEach { bullet ->
             if (bullet.isActive) {
                 // Di chuyển bullet
@@ -63,7 +78,10 @@ class BulletSystem {
                 // Kiểm tra chạm tường hoặc ra khỏi màn hình
                 if (isBulletHitWall(bullet, map, tileSize, offsetX, offsetY) || bullet.isOutOfBounds(screenWidth, screenHeight)) {
                     bulletsToRemove.add(bullet)
-                    println("💥 Bullet ${bullet.id} hit wall or out of bounds at (${bullet.currentX.toInt()}, ${bullet.currentY.toInt()})")
+                    if (isBulletHitWall(bullet, map, tileSize, offsetX, offsetY)) {
+                        bulletsHitWallTemp.add(bullet) // Track bullets hit wall
+                    }
+                    println("💥 Bullet ${bullet.id} hit wall or out of bounds")
                 }
             } else {
                 // Bullet inactive -> remove ngay
@@ -102,6 +120,15 @@ class BulletSystem {
             }
         }
         return collisions
+    }
+
+    // Thêm method để lấy bullets hit wall
+    fun getBulletsHitWall(): List<Bullet> {
+        val result = bulletsHitWall.toList()
+        bulletsHitWall.clear()
+        bulletsHitWall.addAll(bulletsHitWallTemp)
+        bulletsHitWallTemp.clear()
+        return result
     }
 
     fun getActiveBullets(): List<Bullet> {

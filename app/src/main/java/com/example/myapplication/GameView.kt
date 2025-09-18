@@ -8,6 +8,7 @@ import android.view.View
 import com.example.myapplication.game.GameLogic
 import com.example.myapplication.game.PlayerDirection
 import com.example.myapplication.input.InputHandler
+import com.example.myapplication.managers.SoundManager
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
 import com.example.myapplication.systems.BulletSystem
@@ -43,7 +44,8 @@ class GameView @JvmOverloads constructor(
     private val inputHandler = InputHandler()              // 👆 Xử lý touch input
     private val monsterSystem = MonsterSystem()            // 👾 Xử lý logic monster
     private val bulletSystem = BulletSystem()               // 🎯 Xử lý logic bullet
-    
+    private val soundManager = SoundManager(context)
+
     // ===== GAME THREAD MANAGEMENT =====
     // Game chạy trên thread riêng để không block UI thread
     private var gameThread: Thread? = null                 // Thread chạy game loop
@@ -256,6 +258,12 @@ class GameView @JvmOverloads constructor(
             println("🎯 Bullet destroyed monster $monsterIndex!")
         }
 
+        val bulletsHitWall = bulletSystem.getBulletsHitWall()
+        if (bulletsHitWall.isNotEmpty()) {
+            soundManager.playSound("bullet_wall")
+            println("💥 ${bulletsHitWall.size} bullets hit wall!")
+        }
+
         // Update background animation và check cần redraw không
         if (backgroundManager.updateAnimation()) {
             gameStateChanged = true  // Background có animation → cần redraw
@@ -352,6 +360,8 @@ class GameView @JvmOverloads constructor(
                 // 5️⃣ Bắn đạn theo hướng player
                 bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY)
 
+                // 🆕 THÊM ÂM THANH BẮN ĐẠN
+                soundManager.playSound("shoot")
                 println("🎯 Player fired bullet in direction: $playerDirection")
 
                 return true
@@ -370,6 +380,7 @@ class GameView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         stopGame()   // Dừng game loop và clean up
+        soundManager.cleanup()
     }
 
     // ===== CALLBACK IMPLEMENTATIONS =====
@@ -377,7 +388,7 @@ class GameView @JvmOverloads constructor(
     /**
      * 🎯 GameLogic.GameStateListener - Lắng nghe thay đổi từ GameLogic
      */
-    
+
     /**
      * 🔄 Được gọi khi game state thay đổi
      * VD: Player di chuyển, box được đẩy, level reset
@@ -402,7 +413,14 @@ class GameView @JvmOverloads constructor(
     }
 
     override fun onPlayerMove(dx: Int, dy: Int) {
-        gameLogic.movePlayer(dx, dy)  // Delegate cho GameLogic xử lý
+        var moved = gameLogic.movePlayer(dx, dy)  // Delegate cho GameLogic xử lý
+        if (moved) {
+            // 🆕 DI CHUYỂN THÀNH CÔNG - Phát âm thanh di chuyển
+            soundManager.playSound("move")
+        } else {
+            // 🆕 ĐẬP VÀO TƯỜNG - Phát âm thanh bump
+            soundManager.playSound("bump_wall")
+        }
     }
 
     fun resetLevel() {
@@ -430,4 +448,11 @@ class GameView @JvmOverloads constructor(
         startGame()
     }
     }
+
+    // Thêm vào cuối file GameView.kt
+    fun setSoundMuted(muted: Boolean) {
+        soundManager.setMuted(muted)
+    }
+
+    fun isSoundMuted(): Boolean = soundManager.isMuted()
 }
