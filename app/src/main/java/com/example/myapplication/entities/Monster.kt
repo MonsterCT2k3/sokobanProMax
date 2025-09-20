@@ -51,4 +51,9 @@ sealed class MonsterAIState {
         val direction: Pair<Int, Int>,
         var isReturning: Boolean = false
     ) : MonsterAIState()
+
+    data class BounceState(
+        var currentDirection: Pair<Int, Int> = Pair(0, 1),  // Default: đi sang phải
+        var lastDirectionChange: Long = 0L
+    ) : MonsterAIState()
 }

@@ -51,19 +51,39 @@ object LevelManager{
             )
         )
 
-        // Level 2 - Easy
+        // Level 2 - Easy với BOUNCE Monster
         levels.add(
             Level(
                 id = 2,
-                name = "Khởi đầu",
+                name = "Khởi đầu với Bounce",
                 difficulty = EASY,
-                description = "Thử thách đầu tiên",
+                description = "Thử thách đầu tiên với monster nảy tường",
                 map = arrayOf(
-                    charArrayOf('#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '@', 'B', 'G', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '#', '#', '#', '#', '#')
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '#', '.', '.', '#', '.', '#'),
+                    charArrayOf('#', '.', '.', 'B', 'G', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#')
+                ),
+                monsters = listOf(
+                    // BOUNCE Monster - bắt đầu đi sang phải
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 1,
+                        startColumn = 1,
+                        patrolPoints = listOf(Pair(0, 1)),  // Hướng ban đầu: đi sang phải
+                        speed = 1.5f
+                    ),
+                    // BOUNCE Monster khác - bắt đầu đi xuống  
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 1,
+                        startColumn = 6,
+                        patrolPoints = listOf(Pair(1, 0)),  // Hướng ban đầu: đi xuống
+                        speed = 1.2f
+                    )
                 )
             )
         )
@@ -127,6 +147,53 @@ object LevelManager{
                     charArrayOf('#', '.', '.', 'B', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '#', '.', '.', 'G', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#')
+                )
+            )
+        )
+
+        // Level 6 - BOUNCE Monster Playground 
+        levels.add(
+            Level(
+                id = 6,
+                name = "Thế giới Bounce",
+                difficulty = MEDIUM,
+                description = "Khám phá sức mạnh của BOUNCE monsters",
+                map = arrayOf(
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
+                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '.', '#'),
+                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '#', '.', '.', '#', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', 'B', '#'),
+                    charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', 'G', '#'),
+                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
+                ),
+                monsters = listOf(
+                    // BOUNCE Monster với random direction
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 1,
+                        startColumn = 1,
+                        patrolPoints = emptyList(),  // Random hướng ban đầu
+                        speed = 1.8f
+                    ),
+                    // BOUNCE Monster đi chéo lên-phải  
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 7,
+                        startColumn = 1,
+                        patrolPoints = listOf(Pair(-1, 1)),  // Đi chéo lên-phải
+                        speed = 1.3f
+                    ),
+                    // BOUNCE Monster nhanh
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 3,
+                        startColumn = 8,
+                        patrolPoints = listOf(Pair(0, -1)),  // Đi sang trái
+                        speed = 2.2f
+                    )
                 )
             )
         )

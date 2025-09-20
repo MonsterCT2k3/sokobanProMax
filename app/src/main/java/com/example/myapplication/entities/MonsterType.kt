@@ -5,7 +5,8 @@ enum class MonsterType {
     CIRCLE,
     RANDOM,
     CHASE,
-    STRAIGHT
+    STRAIGHT,
+    BOUNCE  // Đi thẳng cho đến khi gặp chướng ngại vật thì chuyển hướng ngẫu nhiên
 }
 
 enum class MonsterDirection {

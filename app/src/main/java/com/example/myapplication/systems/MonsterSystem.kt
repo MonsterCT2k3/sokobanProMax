@@ -49,6 +49,7 @@ class MonsterSystem {
             MonsterType.RANDOM -> updateRandomAI(monster, map)
             MonsterType.CHASE -> updateChaseAI(monster, playerX, playerY, map)
             MonsterType.STRAIGHT -> updateStraightAI(monster, map)
+            MonsterType.BOUNCE -> updateBounceAI(monster, map)
         }
     }
 
@@ -198,6 +199,79 @@ class MonsterSystem {
     }
 
     /**
+     * 🎾 BOUNCE AI: Đi thẳng cho đến khi gặp chướng ngại vật thì chuyển hướng ngẫu nhiên
+     */
+    private fun updateBounceAI(monster: Monster, map: Array<CharArray>) {
+        val bounceState = monster.aiState as? MonsterAIState.BounceState ?: return
+        
+        // Nếu monster đã đến target, tính target tiếp theo
+        if (monster.hasReachedTarget()) {
+            val currentX = monster.currentX.toInt()
+            val currentY = monster.currentY.toInt()
+            
+            // Thử tiếp tục đi theo hướng hiện tại
+            val nextX = currentX + bounceState.currentDirection.first
+            val nextY = currentY + bounceState.currentDirection.second
+            
+            // Nếu có thể tiếp tục đi thẳng
+            if (isValidPosition(nextX, nextY, map, monster)) {
+                monster.targetX = nextX
+                monster.targetY = nextY
+                println("🎾 ${monster.id} continues straight to ($nextX, $nextY)")
+            } else {
+                // Gặp chướng ngại vật - chuyển hướng ngẫu nhiên
+                val newDirection = getRandomValidDirection(currentX, currentY, map, monster)
+                if (newDirection != null) {
+                    bounceState.currentDirection = newDirection
+                    bounceState.lastDirectionChange = System.currentTimeMillis()
+                    
+                    monster.targetX = currentX + newDirection.first
+                    monster.targetY = currentY + newDirection.second
+                    
+                    println("🎾 ${monster.id} bounced! New direction: $newDirection, target: (${monster.targetX}, ${monster.targetY})")
+                } else {
+                    // Không có hướng nào hợp lệ - dừng lại
+                    monster.targetX = currentX
+                    monster.targetY = currentY
+                    println("🎾 ${monster.id} stuck! No valid directions")
+                }
+            }
+        }
+    }
+    
+    /**
+     * 🎲 Lấy hướng ngẫu nhiên hợp lệ (không bao gồm hướng ngược lại)
+     */
+    private fun getRandomValidDirection(x: Int, y: Int, map: Array<CharArray>, monster: Monster): Pair<Int, Int>? {
+        val bounceState = monster.aiState as? MonsterAIState.BounceState ?: return null
+        val currentDir = bounceState.currentDirection
+        
+        // Tất cả hướng có thể
+        val allDirections = listOf(
+            Pair(-1, 0), // UP
+            Pair(1, 0),  // DOWN
+            Pair(0, -1), // LEFT
+            Pair(0, 1)   // RIGHT
+        )
+        
+        // Loại bỏ hướng ngược lại để tránh oscillation
+        val oppositeDir = Pair(-currentDir.first, -currentDir.second)
+        val validDirections = allDirections.filter { direction ->
+            direction != oppositeDir && // Không quay ngược lại
+            isValidPosition(x + direction.first, y + direction.second, map, monster)
+        }
+        
+        // Nếu không có hướng nào khác, cho phép quay ngược lại
+        return if (validDirections.isNotEmpty()) {
+            validDirections.random()
+        } else {
+            allDirections.find { direction ->
+                isValidPosition(x + direction.first, y + direction.second, map, monster)
+            }
+        }
+    }
+
+    /**
      * ✅ Check vị trí có hợp lệ không (không là tường và trong bounds)
      */
     private fun isValidPosition(x: Int, y: Int, map: Array<CharArray>, monster: Monster): Boolean {
@@ -255,18 +329,46 @@ class MonsterSystem {
                     isReturning = false
                 )
             }
-    }
-        val initialTarget = if (monsterData.type == MonsterType.STRAIGHT) {
-            // Với STRAIGHT, target ban đầu là vị trí hiện tại + direction
-            val straightState = aiState as MonsterAIState.StraightState
-            Pair(
-                monsterData.startRow + straightState.direction.first,
-                monsterData.startColumn + straightState.direction.second
-            )
-        } else if (monsterData.patrolPoints.isNotEmpty()) {
-            monsterData.patrolPoints[0]
-        } else {
-            Pair(monsterData.startRow, monsterData.startColumn)
+            MonsterType.BOUNCE -> {
+                // Lấy direction từ patrolPoints hoặc dùng random
+                val initialDirection = if (monsterData.patrolPoints.isNotEmpty()) {
+                    monsterData.patrolPoints[0]
+                } else {
+                    // Random direction để bắt đầu
+                    val directions = listOf(Pair(-1, 0), Pair(1, 0), Pair(0, -1), Pair(0, 1))
+                    directions.random()
+                }
+
+                MonsterAIState.BounceState(
+                    currentDirection = initialDirection,
+                    lastDirectionChange = System.currentTimeMillis()
+                )
+            }
+        }
+        val initialTarget = when (monsterData.type) {
+            MonsterType.STRAIGHT -> {
+                // Với STRAIGHT, target ban đầu là vị trí hiện tại + direction
+                val straightState = aiState as MonsterAIState.StraightState
+                Pair(
+                    monsterData.startRow + straightState.direction.first,
+                    monsterData.startColumn + straightState.direction.second
+                )
+            }
+            MonsterType.BOUNCE -> {
+                // Với BOUNCE, target ban đầu là vị trí hiện tại + direction
+                val bounceState = aiState as MonsterAIState.BounceState
+                Pair(
+                    monsterData.startRow + bounceState.currentDirection.first,
+                    monsterData.startColumn + bounceState.currentDirection.second
+                )
+            }
+            else -> {
+                if (monsterData.patrolPoints.isNotEmpty()) {
+                    monsterData.patrolPoints[0]
+                } else {
+                    Pair(monsterData.startRow, monsterData.startColumn)
+                }
+            }
         }
 
         return Monster(
