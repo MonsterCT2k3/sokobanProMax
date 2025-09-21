@@ -30,11 +30,6 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
-        <!-- Game Activity -->
-        <activity
-            android:name=".GameActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <!-- Keep existing activities -->
         <activity
@@ -44,6 +39,12 @@
 
         <activity
             android:name=".GameButtonActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <!-- Music Selection Activity -->
+        <activity
+            android:name=".MusicSelectionActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
     </application>

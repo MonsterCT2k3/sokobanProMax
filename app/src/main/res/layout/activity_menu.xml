@@ -81,10 +81,10 @@
 
         <!-- Other Button -->
         <Button
-            android:id="@+id/btnOther"
+            android:id="@+id/btnMusic"
             android:layout_width="280dp"
             android:layout_height="70dp"
-            android:text="OTHER"
+            android:text="MUSIC"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/pixel_background"
+    android:padding="16dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/titleMusic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MUSIC SETTINGS"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="#FFD700"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="60dp" />
+
+    <!-- Music Controls Container -->
+    <LinearLayout
+        android:id="@+id/musicControlsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Enable/Disable Music -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="30dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Enable Music:"
+                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+
+            <Switch
+                android:id="@+id/switchMusic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+
+        <!-- Volume Control -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="30dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Volume:"
+                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+
+            <SeekBar
+                android:id="@+id/seekBarVolume"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:max="100"
+                android:progress="50" />
+
+            <TextView
+                android:id="@+id/textVolumeValue"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="50%"
+                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Music Selection -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Background Music:"
+            android:textSize="20sp"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="20dp" />
+
+        <RadioGroup
+            android:id="@+id/radioGroupMusic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/radioMusic1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="We will Rock You"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/radioMusic2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shiverr"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+
+            <RadioButton
+                android:id="@+id/radioMusic3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Asphyxia"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+            <RadioButton
+                android:id="@+id/radioMusic4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Else Paris"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+            <RadioButton
+                android:id="@+id/radioMusic5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shirfine"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+            <RadioButton
+                android:id="@+id/radioMusic6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Star Sky Remix"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <!-- Save Button Only -->
+    <Button
+        android:id="@+id/btnSaveMusic"
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:text="SAVE"
+        android:textSize="20sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/pixel_button_primary_pressed"
+        android:fontFamily="monospace"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="40dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

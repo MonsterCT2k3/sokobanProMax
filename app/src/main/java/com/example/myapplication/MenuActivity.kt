@@ -8,17 +8,40 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplication.managers.MusicManager
 
 class MenuActivity : AppCompatActivity() {
+    private lateinit var musicManager: MusicManager
+    private var isNavigatingToMusicSettings = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
+
+        // Khởi tạo MusicManager Singleton và phát nhạc nền
+        musicManager = MusicManager.getInstance(this)
+        loadMusicSettings()
 
         // Thiết lập các sự kiện cho các nút
         setupButtons()
         
         // Thêm animation
         setupAnimations()
+    }
+
+    private fun loadMusicSettings() {
+        val sharedPreferences = getSharedPreferences("music_settings", MODE_PRIVATE)
+        val isEnabled = sharedPreferences.getBoolean("music_enabled", true)
+        val volume = sharedPreferences.getFloat("music_volume", 0.5f)
+        val selectedMusic = sharedPreferences.getInt("selected_music", MusicManager.MUSIC_MENU)
+
+        musicManager.setEnabled(isEnabled)
+        musicManager.setVolume(volume)
+
+        // Phát bài nhạc đã chọn trong Music Settings (hoặc MUSIC_MENU mặc định)
+        if (isEnabled) {
+            musicManager.playMusic(selectedMusic, true)
+        }
     }
 
     private fun setupButtons() {
@@ -38,9 +61,11 @@ class MenuActivity : AppCompatActivity() {
             showToast("Kỷ lục cao nhất sẽ được hiển thị ở đây!")
         }
 
-        // Nút Other - các tùy chọn khác
-        findViewById<Button>(R.id.btnOther).setOnClickListener {
-            showToast("Các tùy chọn khác sẽ được hiển thị ở đây!")
+        // MUSIC - giữ nhạc phát tiếp
+        findViewById<Button>(R.id.btnMusic).setOnClickListener {
+            isNavigatingToMusicSettings = true
+            val intent = Intent(this, MusicSelectionActivity::class.java)
+            startActivity(intent)
         }
     }
 
@@ -56,6 +81,26 @@ class MenuActivity : AppCompatActivity() {
         // Animation cho menu buttons
         val buttonAnimation = AnimationUtils.loadAnimation(this, R.anim.slide_up)
         findViewById<LinearLayout>(R.id.menuButtonsContainer).startAnimation(buttonAnimation)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reset flag và reload settings mới từ MusicSelectionActivity
+        isNavigatingToMusicSettings = false
+        loadMusicSettings()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Chỉ tạm dừng nhạc khi không chuyển sang Music Settings
+        if (!isNavigatingToMusicSettings) {
+            musicManager.pauseMusic()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        musicManager.release()
     }
 
     override fun onBackPressed() {

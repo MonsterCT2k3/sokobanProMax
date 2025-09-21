@@ -4,14 +4,17 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplication.managers.MusicManager
 
 class GameButtonActivity : AppCompatActivity() {
     
     private lateinit var gameView: GameView
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+
 
         // Lấy tham chiếu đến GameView
         gameView = findViewById(R.id.gameView)
@@ -38,6 +41,8 @@ class GameButtonActivity : AppCompatActivity() {
             gameView.loadLevel(levelId) // Reset level về trạng thái ban đầu
         }
     }
+
+
 
     override fun onResume() {
         super.onResume()
