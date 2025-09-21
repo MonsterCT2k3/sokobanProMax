@@ -162,6 +162,21 @@ class MusicSelectionActivity : AppCompatActivity() {
         editor.apply()
     }
 
+    override fun onPause() {
+        super.onPause()
+        // Tạm dừng nhạc khi app bị đưa vào background
+        musicManager.pauseMusic()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Tiếp tục phát nhạc nếu đã bật
+        if (switchMusic.isChecked) {
+            val selectedMusic = getSelectedMusic()
+            musicManager.playMusic(selectedMusic, true)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // KHÔNG gọi release() vì đây là Singleton, chỉ MenuActivity mới được release

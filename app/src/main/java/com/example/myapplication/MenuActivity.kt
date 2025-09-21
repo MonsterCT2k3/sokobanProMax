@@ -13,18 +13,19 @@ import com.example.myapplication.managers.MusicManager
 class MenuActivity : AppCompatActivity() {
     private lateinit var musicManager: MusicManager
     private var isNavigatingToMusicSettings = false
+    private var isNavigatingToGame = false
+    private var isFirstResume = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
 
-        // Khởi tạo MusicManager Singleton và phát nhạc nền
+        // Khởi tạo MusicManager Singleton
         musicManager = MusicManager.getInstance(this)
-        loadMusicSettings()
 
         // Thiết lập các sự kiện cho các nút
         setupButtons()
-        
+
         // Thêm animation
         setupAnimations()
     }
@@ -38,15 +39,16 @@ class MenuActivity : AppCompatActivity() {
         musicManager.setEnabled(isEnabled)
         musicManager.setVolume(volume)
 
-        // Phát bài nhạc đã chọn trong Music Settings (hoặc MUSIC_MENU mặc định)
+        // Phát nhạc khi khởi động app lần đầu
         if (isEnabled) {
             musicManager.playMusic(selectedMusic, true)
         }
     }
 
     private fun setupButtons() {
-        // Nút Play - chuyển đến màn hình game
+        // Nút Play - chuyển đến màn hình game, giữ nhạc phát tiếp
         findViewById<Button>(R.id.btnPlay).setOnClickListener {
+            isNavigatingToGame = true
             val intent = Intent(this, LevelSelectionActivity::class.java)
             startActivity(intent)
         }
@@ -85,15 +87,24 @@ class MenuActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Reset flag và reload settings mới từ MusicSelectionActivity
+        // Reset flags
         isNavigatingToMusicSettings = false
-        loadMusicSettings()
+        isNavigatingToGame = false
+
+        if (isFirstResume) {
+            // Lần đầu vào app: load settings và phát nhạc
+            isFirstResume = false
+            loadMusicSettings()
+        } else {
+            // Các lần sau: chỉ tiếp tục phát nhạc
+            musicManager.resumeMusic()
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        // Chỉ tạm dừng nhạc khi không chuyển sang Music Settings
-        if (!isNavigatingToMusicSettings) {
+        // Chỉ tạm dừng nhạc khi không chuyển sang Music Settings hoặc Game
+        if (!isNavigatingToMusicSettings && !isNavigatingToGame) {
             musicManager.pauseMusic()
         }
     }

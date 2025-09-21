@@ -9,12 +9,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.managers.LevelManager
+import com.example.myapplication.managers.MusicManager
 
 class LevelSelectionActivity : AppCompatActivity() {
+
+    private lateinit var musicManager: MusicManager
+    private var isNavigatingToGame = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Khởi tạo MusicManager
+        musicManager = MusicManager.getInstance(this)
+
         try {
             Log.d("LevelSelection", "Creating level selection layout")
             createSimpleLayout()
@@ -130,6 +137,7 @@ class LevelSelectionActivity : AppCompatActivity() {
     
     private fun startGameWithLevel(levelId: Int) {
         Log.d("LevelSelection", "Starting game with level $levelId")
+        isNavigatingToGame = true
         val intent = Intent(this, GameButtonActivity::class.java).apply {
             putExtra("LEVEL_ID", levelId)
         }
@@ -138,10 +146,26 @@ class LevelSelectionActivity : AppCompatActivity() {
     
     private fun startGameDirectly() {
         Log.d("LevelSelection", "Starting game with default level")
+        isNavigatingToGame = true
         val intent = Intent(this, GameButtonActivity::class.java).apply {
             putExtra("LEVEL_ID", 1)
         }
         startActivity(intent)
         finish()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reset flag và tiếp tục phát nhạc khi quay lại từ game
+        isNavigatingToGame = false
+        musicManager.resumeMusic()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Chỉ tạm dừng nhạc khi không chuyển sang game
+        if (!isNavigatingToGame) {
+            musicManager.pauseMusic()
+        }
     }
 }

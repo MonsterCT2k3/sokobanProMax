@@ -9,13 +9,15 @@ import com.example.myapplication.managers.MusicManager
 class GameButtonActivity : AppCompatActivity() {
     
     private lateinit var gameView: GameView
+    private lateinit var musicManager: MusicManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
 
-
+        musicManager = MusicManager.getInstance(this)
+        musicManager.resumeMusic()
         // Lấy tham chiếu đến GameView
         gameView = findViewById(R.id.gameView)
 
@@ -49,6 +51,7 @@ class GameButtonActivity : AppCompatActivity() {
         if (::gameView.isInitialized) {
             gameView.resumeGame()
         }
+        musicManager.resumeMusic()
     }
 
     override fun onPause() {
@@ -56,6 +59,7 @@ class GameButtonActivity : AppCompatActivity() {
         if (::gameView.isInitialized) {
             gameView.pauseGame()
         }
+        musicManager.pauseMusic()
     }
 
     override fun onDestroy() {
