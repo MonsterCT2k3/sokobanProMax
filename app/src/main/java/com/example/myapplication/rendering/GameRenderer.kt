@@ -5,10 +5,12 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import com.example.myapplication.R
+import com.example.myapplication.entities.AmmoPickup
 import com.example.myapplication.entities.Bullet
 import com.example.myapplication.entities.BulletDirection
 import com.example.myapplication.game.PlayerDirection
@@ -39,6 +41,12 @@ class GameRenderer(private val context: Context) {
     private lateinit var bulletDown: Drawable
     private lateinit var bulletLeft: Drawable
     private lateinit var bulletRight: Drawable
+    private lateinit var itemBullet: Drawable  // 🆕 THÊM ITEM BULLET
+
+    private lateinit var musicOnIcon: Drawable
+    private lateinit var musicOffIcon: Drawable
+    private lateinit var soundOnIcon: Drawable
+    private lateinit var soundOffIcon: Drawable
     
     // Paint objects
     private lateinit var tilePaint: Paint
@@ -90,6 +98,17 @@ class GameRenderer(private val context: Context) {
             ?: throw IllegalStateException("bullet_left drawable not found")
         bulletRight = ContextCompat.getDrawable(context, R.drawable.bullet_right)
             ?: throw IllegalStateException("bullet_right drawable not found")
+        itemBullet = ContextCompat.getDrawable(context, R.drawable.item_bullet)
+            ?: throw IllegalStateException("item_bullet drawable not found")  // 🆕 LOAD ITEM BULLET
+
+        musicOnIcon = ContextCompat.getDrawable(context, R.drawable.music_on)
+            ?: throw IllegalStateException("music_on drawable not found")
+        musicOffIcon = ContextCompat.getDrawable(context, R.drawable.music_off)
+            ?: throw IllegalStateException("music_off drawable not found")
+        soundOnIcon = ContextCompat.getDrawable(context, R.drawable.sound_on)
+            ?: throw IllegalStateException("sound_on drawable not found")
+        soundOffIcon = ContextCompat.getDrawable(context, R.drawable.sound_off)
+            ?: throw IllegalStateException("sound_off drawable not found")
     }
 
     /**
@@ -420,6 +439,72 @@ class GameRenderer(private val context: Context) {
         drawable.draw(canvas)
         return bitmap
     }
+
+    /**
+     * 🎛️ Vẽ các nút toggle nhạc/sound phía trên map
+     */
+    fun drawToggleButtons(canvas: Canvas, map: Array<CharArray>, 
+                         musicEnabled: Boolean, soundEnabled: Boolean) {
+        if (map.isEmpty() || map[0].isEmpty()) return
+
+        // Tính vị trí các nút phía trên map
+        val tileSize = min(screenWidth / map[0].size, screenHeight / map.size)
+        val boardWidth = map[0].size * tileSize
+        val boardHeight = map.size * tileSize
+        val offsetX = (screenWidth - boardWidth) / 2f
+        val offsetY = (screenHeight - boardHeight) / 2f
+
+        // Vị trí nút: phía trên map, cách top 20px
+        val buttonY = offsetY - 140f  // Tăng khoảng cách để nút lớn hơn không bị che
+        val buttonSize = 120f         // Tăng kích thước nút từ 80f lên 120f
+        
+        // Nút trái: Toggle Music (bên trái màn hình)
+        val musicButtonX = 20f
+        val musicIcon = if (musicEnabled) musicOnIcon else musicOffIcon
+        drawToggleButton(canvas, musicIcon, musicButtonX, buttonY, buttonSize)
+        
+        // Nút phải: Toggle Sound (bên phải màn hình) 
+        val soundButtonX = screenWidth - buttonSize - 20f
+        val soundIcon = if (soundEnabled) soundOnIcon else soundOffIcon
+        drawToggleButton(canvas, soundIcon, soundButtonX, buttonY, buttonSize)
+    }
+
+    /**
+     * 🎨 Vẽ một nút toggle đơn lẻ
+     */
+    private fun drawToggleButton(canvas: Canvas, icon: Drawable, x: Float, y: Float, size: Float) {
+        // 1️⃣ Vẽ shadow trước (phía sau nút)
+        val shadowPaint = Paint().apply {
+            color = Color.argb(120, 0, 0, 0)  // Shadow đen nhạt
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(x + 4, y + 4, x + size + 4, y + size + 4, 15f, 15f, shadowPaint)
+        
+        // 2️⃣ Vẽ background trắng cho nút để dễ nhìn
+        val buttonPaint = Paint().apply {
+            color = Color.WHITE  // Nền trắng
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(x, y, x + size, y + size, 15f, 15f, buttonPaint)
+        
+        // 3️⃣ Vẽ icon với padding
+        val iconPadding = size * 0.15f  // 15% padding
+        val iconLeft = x + iconPadding
+        val iconTop = y + iconPadding
+        val iconRight = x + size - iconPadding
+        val iconBottom = y + size - iconPadding
+        
+        icon.setBounds(iconLeft.toInt(), iconTop.toInt(), iconRight.toInt(), iconBottom.toInt())
+        icon.draw(canvas)
+        
+        // 4️⃣ Vẽ border xám đậm cho contrast
+        val borderPaint = Paint().apply {
+            color = Color.DKGRAY  // Viền xám đậm
+            style = Paint.Style.STROKE
+            strokeWidth = 4f      // Viền dày hơn cho nút lớn
+        }
+        canvas.drawRoundRect(x, y, x + size, y + size, 15f, 15f, borderPaint)
+    }
     
     fun getTileDrawable(tile: Char): Drawable {
         return when (tile) {
@@ -445,5 +530,115 @@ class GameRenderer(private val context: Context) {
         val offsetY = (screenHeight - boardHeight) / 2f
         
         return Pair(offsetX, offsetY)
+    }
+
+    fun drawAmmoUI(canvas: Canvas, ammo: Int, maxAmmo: Int, screenWidth: Float, screenHeight: Float) {
+        // 🆕 Đặt UI ở vị trí dưới nút reset (góc trên phải, nhưng thấp hơn)
+        val uiRect = RectF(
+            screenWidth - 180f,  // Bên phải màn hình, rộng hơn
+            220f,                 // Thấp hơn 100px (từ 120px xuống 220px)
+            screenWidth - 40f,    // Cách lề phải 40px (từ 20px thành 40px)
+            280f                  // Chiều cao lớn hơn
+        )
+
+        // 🆕 Vẽ nền nổi bật hơn
+        val uiPaint = Paint().apply {
+            color = Color.parseColor("#DD333333")  // Nền đỏ đậm hơn, ít trong suốt
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, uiPaint)
+
+        // 🆕 Vẽ viền vàng nổi bật
+        val borderPaint = Paint().apply {
+            color = Color.YELLOW
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, borderPaint)
+
+        // 🆕 Vẽ text lớn hơn và nổi bật hơn
+        val textPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 36f  // Tăng từ 24f lên 36f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 2f
+        }
+
+        val centerX = uiRect.centerX()
+        val centerY = uiRect.centerY() + 12f  // Căn giữa theo Y
+
+        // 🆕 Vẽ text với hiệu ứng shadow
+        val shadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 36f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+        canvas.drawText("$ammo/$maxAmmo", centerX + 2f, centerY + 2f, shadowPaint)
+        canvas.drawText("$ammo/$maxAmmo", centerX, centerY, textPaint)
+
+        // 🆕 Vẽ icon item_bullet thay vì bullet_right
+        itemBullet?.let { drawable ->
+            val bulletSize = 36f
+            drawable.setBounds(
+                (uiRect.left + 8f).toInt(),  // 🆕 Tách bullet sang trái hơn
+                (uiRect.centerY() - bulletSize / 2).toInt(),
+                (uiRect.left + 8f + bulletSize).toInt(),  // 🆕 Điều chỉnh right tương ứng
+                (uiRect.centerY() + bulletSize / 2).toInt()
+            )
+            drawable.draw(canvas)
+        }
+    }
+
+    // Thêm method vẽ ammo pickups:
+
+    fun drawAmmoPickups(canvas: Canvas, ammoPickups: List<AmmoPickup>, tileSize: Float, offsetX: Float, offsetY: Float) {
+        println("🎯 Drawing ${ammoPickups.size} ammo pickups")
+        ammoPickups.forEachIndexed { index, ammo ->
+            println("📦 Drawing ammo pickup ${index} at (${ammo.gridX}, ${ammo.gridY})")
+            val (screenX, screenY) = ammo.getScreenPosition(tileSize, offsetX, offsetY)
+
+            // 🆕 Vẽ nền trắng vuông
+            val backgroundPaint = Paint().apply {
+                color = Color.WHITE
+                style = Paint.Style.FILL
+            }
+            val backgroundSize = tileSize * 0.6f
+            val backgroundRect = RectF(
+                screenX - backgroundSize / 2,
+                screenY - backgroundSize / 2,
+                screenX + backgroundSize / 2,
+                screenY + backgroundSize / 2
+            )
+            canvas.drawRect(backgroundRect, backgroundPaint)
+
+            // 🆕 Vẽ viền đen
+            val borderPaint = Paint().apply {
+                color = Color.BLACK
+                style = Paint.Style.STROKE
+                strokeWidth = 2f
+            }
+            canvas.drawRect(backgroundRect, borderPaint)
+
+            // 🆕 Vẽ hình item_bullet - Sử dụng bitmap để tránh conflict
+            itemBullet?.let { drawable ->
+                println("🔫 Drawing item_bullet for ammo ${index}")
+                val bulletSize = tileSize * 0.4f
+                val left = (screenX - bulletSize / 2).toInt()
+                val top = (screenY - bulletSize / 2).toInt()
+                val right = (screenX + bulletSize / 2).toInt()
+                val bottom = (screenY + bulletSize / 2).toInt()
+
+                println("📍 Bullet bounds: ($left, $top, $right, $bottom)")
+
+                // Set bounds và vẽ trực tiếp (drawable sẽ được reset bounds mỗi lần)
+                drawable.setBounds(left, top, right, bottom)
+                drawable.draw(canvas)
+            } ?: println("❌ itemBullet drawable is null!")
+        }
     }
 }

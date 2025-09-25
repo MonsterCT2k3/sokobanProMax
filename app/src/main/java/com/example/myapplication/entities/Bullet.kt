@@ -22,10 +22,13 @@ data class Bullet(
         return Pair(dx / distance, dy / distance)
     }
 
-    fun collidesWith(monsterX: Float, monsterY: Float, threshold: Float = 0.3f): Boolean {
+    fun collidesWith(monsterX: Float, monsterY: Float, threshold: Float = 40f): Boolean {
         val dx = currentX - monsterX
-        val dy = currentY - monsterY
+        val dy = currentY - monsterY-77
         val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+        // Trong Bullet.collidesWith
+        println("🔍 Bullet at (${currentX.toInt()}, ${currentY.toInt()}) checking monster at (${monsterX.toInt()}, ${monsterY.toInt()}), distance: $distance")
+
         return distance < threshold
     }
 

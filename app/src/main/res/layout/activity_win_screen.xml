@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background_forest"
+    android:gravity="center">
+
+    <!-- Container chính -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:background="@drawable/pixel_button_primary"
+        android:orientation="vertical"
+        android:padding="40dp">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/win_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="20dp"
+            android:text="🎉 CHÚC MỪNG! 🎉"
+            android:textColor="@android:color/white"
+            android:textSize="48sp"
+            android:textStyle="bold" />
+
+        <!-- Message -->
+        <TextView
+            android:id="@+id/win_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="40dp"
+            android:text="Bạn đã hoàn thành Level 1!"
+            android:textColor="@android:color/white"
+            android:textSize="24sp" />
+
+        <!-- Buttons container -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:layout_marginTop="20dp">
+
+            <!-- Next Level Button -->
+            <Button
+                android:id="@+id/btn_next_level"
+                android:layout_width="200dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/pixel_button_primary"
+                android:text="LEVEL TIẾP THEO"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Back to Menu Button -->
+            <Button
+                android:id="@+id/btn_back_to_menu"
+                android:layout_width="200dp"
+                android:layout_height="60dp"
+                android:background="@drawable/pixel_button_secondary"
+                android:text="VỀ MENU"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

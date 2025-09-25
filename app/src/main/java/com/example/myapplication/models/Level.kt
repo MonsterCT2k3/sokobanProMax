@@ -62,5 +62,5 @@ data class MonsterData(
     val startColumn: Int,
     val patrolPoints: List<Pair<Int, Int>> = emptyList(),
     val speed: Float = 2.0f,
-
-    )
+    val initialDirection: Pair<Int, Int> = Pair(0, 1)  // Hướng di chuyển ban đầu (mặc định: sang phải)
+)

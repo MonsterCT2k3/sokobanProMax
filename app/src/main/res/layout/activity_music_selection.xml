@@ -12,7 +12,7 @@
         android:id="@+id/titleMusic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="MUSIC SETTINGS"
+        android:text="AUDIO SETTINGS"
         android:textSize="36sp"
         android:textStyle="bold"
         android:textColor="#FFD700"
@@ -20,7 +20,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="60dp" />
+        android:layout_marginTop="30dp" />
 
     <!-- Music Controls Container -->
     <LinearLayout
@@ -156,6 +156,83 @@
                 android:textColor="#FFFFFF"
                 android:fontFamily="monospace" />
         </RadioGroup>
+
+        <!-- Sound Effects Section -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#FFD700"
+            android:layout_marginVertical="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SOUND EFFECTS SETTINGS"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Enable/Disable Sound Effects -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Enable Sound Effects:"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+
+            <Switch
+                android:id="@+id/switchSoundEffects"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+
+        <!-- Sound Effects Volume Control -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Sound Effects Volume:"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace" />
+
+            <SeekBar
+                android:id="@+id/seekBarSoundVolume"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:max="100"
+                android:progress="50" />
+
+            <TextView
+                android:id="@+id/textSoundVolumeValue"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="50%"
+                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+        </LinearLayout>
 
     </LinearLayout>
 

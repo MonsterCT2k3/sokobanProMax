@@ -6,6 +6,7 @@ import com.example.myapplication.entities.MonsterDirection
 import com.example.myapplication.entities.MonsterType
 import com.example.myapplication.models.MonsterData
 import kotlin.math.abs
+import kotlin.math.sqrt
 
 class MonsterSystem {
     private val monsters = mutableListOf<Monster>()
@@ -24,7 +25,7 @@ class MonsterSystem {
         monsters.forEach { monster ->
             if(monster.isActive) {
                 updateMonsterAI(monster, playerX, playerY, map)
-                updateMonsterMovement(monster, deltaTime)
+                updateMonsterMovement(monster, deltaTime, map)
                 updateMonsterDirection(monster)
             }
         }
@@ -44,7 +45,7 @@ class MonsterSystem {
 
     private fun updateMonsterAI(monster: Monster, playerX: Int, playerY: Int, map:Array<CharArray>) {
         when(monster.type) {
-            MonsterType.PATROL -> updatePatrolAI(monster)
+            MonsterType.PATROL -> updatePatrolAI(monster, map)
             MonsterType.CIRCLE -> updateCircleAI(monster)
             MonsterType.RANDOM -> updateRandomAI(monster, map)
             MonsterType.CHASE -> updateChaseAI(monster, playerX, playerY, map)
@@ -53,16 +54,42 @@ class MonsterSystem {
         }
     }
 
-    private fun updatePatrolAI(monster: Monster) {
+    private fun updatePatrolAI(monster: Monster, map: Array<CharArray>) {
         val patrolState = monster.aiState as? MonsterAIState.PatrolState ?: return
-        if (monster.hasReachedTarget()){
-            val nextIndex = (patrolState.currentPointIndex+1) % patrolState.patrolPoints.size
-            patrolState.currentPointIndex = nextIndex
-            val nextPoint = patrolState.patrolPoints[nextIndex]
-            monster.targetX = nextPoint.first
-            monster.targetY = nextPoint.second
 
-            println("🔄 ${monster.id} patrol to point ${nextIndex}: (${monster.targetX}, ${monster.targetY})")
+        // Chỉ xử lý khi monster đã đến target hiện tại
+        if (monster.hasReachedTarget()) {
+            // Kiểm tra có thể tiếp tục di chuyển theo hướng hiện tại không
+            val nextX = monster.currentX.toInt() + patrolState.currentDirection.first
+            val nextY = monster.currentY.toInt() + patrolState.currentDirection.second
+
+            if (isValidPosition(nextX, nextY, map, monster)) {
+                // Có thể tiếp tục đi, set target mới
+                monster.targetX = nextX
+                monster.targetY = nextY
+                println("➡️ ${monster.id} continuing in direction: (${monster.targetX}, ${monster.targetY})")
+            } else {
+                // Không thể tiếp tục, quay đầu
+                patrolState.currentDirection = Pair(
+                    -patrolState.currentDirection.first,
+                    -patrolState.currentDirection.second
+                )
+
+                // Set target mới theo hướng ngược lại
+                val reverseTargetX = monster.currentX.toInt() + patrolState.currentDirection.first
+                val reverseTargetY = monster.currentY.toInt() + patrolState.currentDirection.second
+
+                if (isValidPosition(reverseTargetX, reverseTargetY, map, monster)) {
+                    monster.targetX = reverseTargetX
+                    monster.targetY = reverseTargetY
+                    println("🔄 ${monster.id} hit obstacle, reversing to: (${monster.targetX}, ${monster.targetY})")
+                } else {
+                    // Nếu hướng ngược lại cũng không hợp lệ, dừng lại tại chỗ
+                    monster.targetX = monster.currentX.toInt()
+                    monster.targetY = monster.currentY.toInt()
+                    println("🔄 ${monster.id} stuck, stopping at current position")
+                }
+            }
         }
     }
 
@@ -163,7 +190,13 @@ class MonsterSystem {
     }
 
     //update movement
-    private fun updateMonsterMovement(monster: Monster, deltaTime: Float) {
+    private fun updateMonsterMovement(monster: Monster, deltaTime: Float, map: Array<CharArray>) {
+        // Kiểm tra target position có hợp lệ không trước khi di chuyển
+        if (!isValidPosition(monster.targetX, monster.targetY, map, monster)) {
+            println("❌ ${monster.id} target (${monster.targetX}, ${monster.targetY}) is invalid! Not moving.")
+            return
+        }
+
         val moveDistance = monster.speed*deltaTime
         val dx = monster.targetX - monster.currentX
         val dy = monster.targetY - monster.currentY
@@ -295,9 +328,10 @@ class MonsterSystem {
     fun createMonsterFromData(monsterData: MonsterData, id:String): Monster {
         val aiState = when (monsterData.type) {
             MonsterType.PATROL -> {
+                // Sử dụng initialDirection từ MonsterData (đơn giản hóa)
                 MonsterAIState.PatrolState(
-                    patrolPoints = monsterData.patrolPoints,
-                    currentPointIndex = 0
+                    startPosition = Pair(monsterData.startRow, monsterData.startColumn),
+                    currentDirection = monsterData.initialDirection
                 )
             }
             MonsterType.CIRCLE -> {
@@ -316,31 +350,17 @@ class MonsterSystem {
                 MonsterAIState.ChaseState()
             }
             MonsterType.STRAIGHT -> {
-                // THÊM MỚI: Lấy direction từ patrolPoints (điểm đầu tiên là vector hướng)
-                val direction = if (monsterData.patrolPoints.isNotEmpty()) {
-                    monsterData.patrolPoints[0]
-                } else {
-                    Pair(0, 1)  // Default: đi sang phải
-                }
-
+                // Sử dụng initialDirection từ MonsterData
                 MonsterAIState.StraightState(
                     startPosition = Pair(monsterData.startRow, monsterData.startColumn),
-                    direction = direction,
+                    direction = monsterData.initialDirection,
                     isReturning = false
                 )
             }
             MonsterType.BOUNCE -> {
-                // Lấy direction từ patrolPoints hoặc dùng random
-                val initialDirection = if (monsterData.patrolPoints.isNotEmpty()) {
-                    monsterData.patrolPoints[0]
-                } else {
-                    // Random direction để bắt đầu
-                    val directions = listOf(Pair(-1, 0), Pair(1, 0), Pair(0, -1), Pair(0, 1))
-                    directions.random()
-                }
-
+                // Sử dụng initialDirection từ MonsterData
                 MonsterAIState.BounceState(
-                    currentDirection = initialDirection,
+                    currentDirection = monsterData.initialDirection,
                     lastDirectionChange = System.currentTimeMillis()
                 )
             }
@@ -360,6 +380,14 @@ class MonsterSystem {
                 Pair(
                     monsterData.startRow + bounceState.currentDirection.first,
                     monsterData.startColumn + bounceState.currentDirection.second
+                )
+            }
+            MonsterType.PATROL -> {
+                // Với PATROL, target ban đầu là vị trí hiện tại + hướng di chuyển
+                val patrolState = aiState as MonsterAIState.PatrolState
+                Pair(
+                    monsterData.startRow + patrolState.currentDirection.first,
+                    monsterData.startColumn + patrolState.currentDirection.second
                 )
             }
             else -> {
@@ -384,4 +412,16 @@ class MonsterSystem {
             isActive = true
         )
     }
+
+    // 🆕 THÊM METHOD XÓA MONSTER THEO INDEX
+    fun removeMonster(index: Int) {
+        if (index >= 0 && index < monsters.size) {
+            val monsterToRemove = monsters[index]
+            monsters.removeAt(index)
+            println("💀 Monster ${monsterToRemove.id} (index $index) removed!")
+        } else {
+            println("❌ Invalid monster index $index, cannot remove!")
+        }
+    }
+
 }

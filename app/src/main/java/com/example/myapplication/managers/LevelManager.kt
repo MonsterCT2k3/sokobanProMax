@@ -34,14 +34,14 @@ object LevelManager{
                         type = MonsterType.STRAIGHT,
                         startRow = 1,
                         startColumn = 5,
-                        patrolPoints = listOf(Pair(0, -1)),
+                        initialDirection = Pair(0, -1),  // Đi lên
                         speed = 1.0f
                     ),
                     MonsterData(
                         type = MonsterType.STRAIGHT,
                         startRow = 1,
                         startColumn = 5,
-                        patrolPoints = listOf(Pair(1, 0)),
+                        initialDirection = Pair(1, 0),   // Đi xuống
                         speed = 1.0f
                     ),
 
@@ -193,6 +193,73 @@ object LevelManager{
                         startColumn = 8,
                         patrolPoints = listOf(Pair(0, -1)),  // Đi sang trái
                         speed = 2.2f
+                    )
+                )
+            )
+        )
+        
+        // Level 7 - Hard Sokoban Challenge với PATROL và BOUNCE monsters
+        levels.add(
+            Level(
+                id = 7,
+                name = "Thách thức tối thượng",
+                difficulty = HARD,
+                description = "Map khó với monster patrol và bounce",
+                isUnlocked = true, // Mở khóa để test
+                map = arrayOf(
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
+                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '#', '.', '.', '#'),
+                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '#', '.', 'B', '.', '#', '.', 'B', '.', '#', '.'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '#', '.', '#', '.', '.', '#', '.', '.', '#', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', 'B', '.', 'B', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '#', '.', '.', '.', '.', '.', '.', '#', '.', '#'),
+                    charArrayOf('#', 'G', '.', 'G', '.', '.', '#', '.', 'G', '.', 'G', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
+                ),
+                monsters = listOf(
+                    // PATROL Monster 1 - Di chuyển ngang phía trên
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 1,
+                        startColumn = 1,
+                        initialDirection = Pair(0, 1),  // Di chuyển sang phải
+                        speed = 2.2f
+                    ),
+                    // PATROL Monster 2 - Di chuyển dọc bên phải
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 5,
+                        startColumn = 10,
+                        initialDirection = Pair(1, 0),  // Di chuyển xuống
+                        speed = 3.4f
+                    ),
+                    // BOUNCE Monster 1 - Bắt đầu từ giữa trái
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 3,
+                        startColumn = 2,
+                        initialDirection = Pair(0, 1),  // Hướng ban đầu: xuống
+                        speed = 2.6f
+                    ),
+                    // BOUNCE Monster 2 - Khu vực phía dưới
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 7,
+                        startColumn = 8,
+                        initialDirection = Pair(-1, 0),  // Hướng ban đầu: lên
+                        speed = 2.3f
+                    ),
+
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 6,
+                        startColumn = 8,
+                        initialDirection = Pair(-1, 0),  // Hướng ban đầu: lên
+                        speed = 4.0f
                     )
                 )
             )

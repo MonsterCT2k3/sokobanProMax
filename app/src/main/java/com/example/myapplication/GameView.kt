@@ -1,18 +1,26 @@
 package com.example.myapplication
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
+import androidx.appcompat.app.AlertDialog
 import android.view.MotionEvent
 import android.view.View
 import com.example.myapplication.game.GameLogic
 import com.example.myapplication.game.PlayerDirection
 import com.example.myapplication.input.InputHandler
+import com.example.myapplication.managers.MusicManager
 import com.example.myapplication.managers.SoundManager
+import com.example.myapplication.entities.AmmoPickup
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
+import com.example.myapplication.systems.AmmoSystem
 import com.example.myapplication.systems.BulletSystem
 import com.example.myapplication.systems.MonsterSystem
+import kotlin.text.toInt
 
 /**
  * 🎮 GameView - Main game view class
@@ -44,7 +52,10 @@ class GameView @JvmOverloads constructor(
     private val inputHandler = InputHandler()              // 👆 Xử lý touch input
     private val monsterSystem = MonsterSystem()            // 👾 Xử lý logic monster
     private val bulletSystem = BulletSystem()               // 🎯 Xử lý logic bullet
-    private val soundManager = SoundManager(context)
+//    private val soundManager = SoundManager(context)
+    private lateinit var musicManager: MusicManager
+    private lateinit var soundManager: SoundManager
+    private val ammoSystem = AmmoSystem()
 
     // ===== GAME THREAD MANAGEMENT =====
     // Game chạy trên thread riêng để không block UI thread
@@ -59,6 +70,8 @@ class GameView @JvmOverloads constructor(
     // ===== ANIMATION =====
     private var animationTime = 0f                         // Thời gian để tính animation
     private var lastUpdateTime = 0L                        // Thời gian lần cuối update animation
+    private var playerAmmo = 5  // Bắt đầu với 5 viên đạn
+    private val maxAmmo = 5
 
     init {
         initGame()
@@ -69,13 +82,23 @@ class GameView @JvmOverloads constructor(
      * Setup các listener để các component có thể giao tiếp với nhau
      */
     private fun initGame() {
+        soundManager = SoundManager.getInstance(context)
+        musicManager = MusicManager.getInstance()!!
+
         // Setup listeners để tạo communication giữa các component
         gameLogic.setGameStateListener(this)        // GameView lắng nghe thay đổi từ GameLogic
         inputHandler.setPlayerMoveListener(this)    // GameView lắng nghe input từ InputHandler
+
+        loadAudioSettings()
     }
 
     // ===== PUBLIC API METHODS =====
     // Các method public để Activity/Fragment có thể điều khiển game
+
+    // 🆕 GETTER CHO CURRENT LEVEL ID
+    fun getCurrentLevelId(): Int {
+        return gameLogic.getCurrentLevel()?.id ?: 1
+    }
 
     fun loadLevel(levelId: Int) {
         gameLogic.loadLevel(levelId)
@@ -90,6 +113,20 @@ class GameView @JvmOverloads constructor(
 
             println("🎮 Loaded monster: ${monsterId} type=${monsterData.type} at (${monsterData.startRow}, ${monsterData.startColumn})")
         }
+
+        // 🆕 SPAWN AMMO PICKUPS (loại trừ vị trí player start)
+        val playerStartPos = gameLogic.getCurrentLevel()?.getPlayerStartPosition()
+        val excludePositions = if (playerStartPos != null) {
+            listOf(Pair(playerStartPos.second, playerStartPos.first)) // (x, y) format
+        } else {
+            emptyList()
+        }
+        ammoSystem.spawnRandomAmmo(gameLogic.getMap(), 3, excludePositions)
+
+        // 🆕 RESET AMMO (hoặc giữ từ level trước nếu muốn)
+        playerAmmo = 5  // Reset về 5 viên mỗi level
+
+        gameStateChanged = true
     }
 
     fun setBackgroundImage(resourceId: Int, scrollType: BackgroundManager.BackgroundScrollType = BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL) {
@@ -237,6 +274,23 @@ class GameView @JvmOverloads constructor(
             onPlayerDied()
         }
 
+        // ===== CHECK AMMO COLLECTION =====
+        val playerPos = gameLogic.getPlayerPosition()
+        if (ammoSystem.checkAmmoCollection(playerPos.second, playerPos.first)) {
+            // 🆕 TĂNG ĐẠN (TỐI ĐA 5)
+            if (playerAmmo < maxAmmo) {
+                playerAmmo++
+                println("💚 Ammo collected! Current ammo: $playerAmmo/$maxAmmo")
+
+                // 🆕 PHÁT ÂM THANH AMMO PICKUP
+                soundManager.playSound("ammo_pickup")
+            } else {
+                println("💚 Ammo collected but already at max ($maxAmmo)!")
+                // Vẫn phát âm thanh ngay cả khi đã max ammo
+                soundManager.playSound("ammo_pickup")
+            }
+        }
+
         // Update bullets
         // Update vị trí bullets và cleanup
         val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap()).toFloat()
@@ -245,17 +299,23 @@ class GameView @JvmOverloads constructor(
 
         // ===== CHECK BULLET COLLISIONS =====
         // Kiểm tra bullets có chạm monsters không
-        val monsterPositions = monsterSystem.getActiveMonsters().map {
-            Pair(it.currentY, it.currentX)  // Đảo ngược coordinate như trong drawMonsters
+        val monsterPositions = monsterSystem.getActiveMonsters().map { monster ->
+            // Convert grid coordinates to screen coordinates
+            val screenX = offsetX + monster.currentY * tileSize  // currentY là column
+            val screenY = offsetY + monster.currentX * tileSize  // currentX là row
+            Pair(screenX, screenY)
         }
 
         val collisions = bulletSystem.checkCollisions(monsterPositions)
+        // Trong GameView collision check
+        monsterPositions.forEachIndexed { index, (x, y) ->
+            println("👹 Monster $index at screen pos (${x.toInt()}, ${y.toInt()})")
+        }
         collisions.forEach { (bullet, monsterIndex) ->
-            // TODO: Xử lý khi bullet chạm monster
-            // - Tăng điểm
-            // - Hiệu ứng visual
-            // - Sound effect
-            println("🎯 Bullet destroyed monster $monsterIndex!")
+            // 🆕 XỬ LÝ KHI BULLET CHẠM MONSTER
+            monsterSystem.removeMonster(monsterIndex)  // Xóa monster
+            soundManager.playSound("monster_hit")      // Phát âm thanh
+            println("💥 Bullet destroyed monster $monsterIndex!")
         }
 
         val bulletsHitWall = bulletSystem.getBulletsHitWall()
@@ -304,6 +364,22 @@ class GameView @JvmOverloads constructor(
             gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), gameLogic.getPlayerDirection(), monsters)
         }
 
+        // 🆕 DRAW AMMO UI
+        gameRenderer.drawAmmoUI(canvas, playerAmmo, maxAmmo, width.toFloat(), height.toFloat())
+
+        // 🆕 DRAW AMMO PICKUPS
+        if (!gameLogic.isMapEmpty()) {
+            val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap()).toFloat()
+            val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
+            val ammoPickups = ammoSystem.getActiveAmmoPickups()
+            gameRenderer.drawAmmoPickups(canvas, ammoPickups, tileSize, offsetX, offsetY)
+        }
+
+        // 🎛️ Vẽ nút toggle phía trên map
+        val musicEnabled = musicManager.isEnabled()
+        val soundEnabled = !soundManager.isMuted()  // enabled = true khi không muted
+        gameRenderer.drawToggleButtons(canvas, gameLogic.getMap(), musicEnabled, soundEnabled)
+
         // Vẽ bullets
         val activeBullets = bulletSystem.getActiveBullets()
         gameRenderer.drawBullets(canvas, activeBullets)
@@ -315,6 +391,24 @@ class GameView @JvmOverloads constructor(
 
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // 🔄 KIỂM TRA NÚT TOGGLE TRƯỚC
+        if (event.action == MotionEvent.ACTION_UP) {
+            val touchX = event.x
+            val touchY = event.y
+
+            // Kiểm tra nút Music (trái)
+            if (isTouchOnToggleButton(touchX, touchY, gameLogic.getMap(), "music")) {
+                toggleMusic()
+                return true
+            }
+
+            // Kiểm tra nút Sound (phải)
+            if (isTouchOnToggleButton(touchX, touchY, gameLogic.getMap(), "sound")) {
+                toggleSound()
+                return true
+            }
+        }
+
         // 🔄 DELEGATE CHO INPUT HANDLER TRƯỚC
         val inputHandled = inputHandler.handleTouchEvent(event)
 
@@ -327,6 +421,11 @@ class GameView @JvmOverloads constructor(
         when (event.action) {
             MotionEvent.ACTION_UP -> {
                 // 🎯 BẮN ĐẠN THEO HƯỚNG PLAYER
+
+                if (playerAmmo <= 0) {
+                    println("❌ Out of ammo!")
+                    return true  // Không bắn được
+                }
 
                 // 1️⃣ Lấy vị trí player trên grid
                 val playerPos = gameLogic.getPlayerPosition()
@@ -359,6 +458,10 @@ class GameView @JvmOverloads constructor(
 
                 // 5️⃣ Bắn đạn theo hướng player
                 bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY)
+
+                // Giảm ammo và in ra debug
+                playerAmmo--
+                println("🔫 Player ammo: $playerAmmo/$maxAmmo")
 
                 // 🆕 THÊM ÂM THANH BẮN ĐẠN
                 soundManager.playSound("shoot")
@@ -405,11 +508,109 @@ class GameView @JvmOverloads constructor(
 
     override fun onGameWon() {
         isGameRunning = false  // Dừng game loop
+
+        // 🆕 PHÁT ÂM THANH CHIẾN THẮNG
+        soundManager.playSound("victory")
+
         post {
-            // TODO: Hiển thị thông báo chiến thắng
-            // Toast.makeText(context, "🎉 You Win!", Toast.LENGTH_LONG).show()
-            // Hoặc show dialog chuyển level tiếp theo
+            // 🆕 HIỂN THỊ DIALOG CHIẾN THẮNG (thay vì Activity)
+            showWinDialog()
         }
+    }
+
+    // 🆕 DIALOG CHIẾN THẮNG
+    private fun showWinDialog() {
+        var levelId = gameLogic.getCurrentLevel()?.id ?: 1
+        val nextLevelId = levelId + 1
+
+        val dialogView = android.view.LayoutInflater.from(context).inflate(R.layout.dialog_win, null)
+
+        val titleText = dialogView.findViewById<android.widget.TextView>(R.id.win_title)
+        val messageText = dialogView.findViewById<android.widget.TextView>(R.id.win_message)
+        val nextButton = dialogView.findViewById<android.widget.Button>(R.id.btn_next_level)
+        val menuButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_menu)
+
+        titleText.text = "🎉 CHÚC MỪNG! 🎉"
+        messageText.text = "Bạn đã hoàn thành Level $levelId!"
+
+        val dialog = AlertDialog.Builder(context)
+            .setView(dialogView)
+            .setCancelable(false) // Không cho phép dismiss bằng back button
+            .create()
+
+        // Background mờ
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        nextButton.setOnClickListener {
+            soundManager.playSound("move")
+
+            // Load level tiếp theo
+            val newLevelId = levelId + 1
+            levelId = newLevelId
+            loadLevel(newLevelId)
+            startGame()  // 🆕 RESTART GAME LOOP
+            dialog.dismiss()
+
+
+        }
+
+        menuButton.setOnClickListener {
+            soundManager.playSound("move")
+
+            val intent = Intent(context, MenuActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            context.startActivity(intent)
+            (context as? GameButtonActivity)?.finish()
+
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    // 🆕 DIALOG THUA
+    private fun showLoseDialog() {
+        val levelId = gameLogic.getCurrentLevel()?.id ?: 1
+
+        val dialogView = android.view.LayoutInflater.from(context).inflate(R.layout.dialog_lose, null)
+
+        val titleText = dialogView.findViewById<android.widget.TextView>(R.id.lose_title)
+        val messageText = dialogView.findViewById<android.widget.TextView>(R.id.lose_message)
+        val retryButton = dialogView.findViewById<android.widget.Button>(R.id.btn_retry)
+        val menuButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_menu)
+
+        titleText.text = "💀 GAME OVER! 💀"
+        messageText.text = "Bạn đã thua ở Level $levelId!"
+
+        val dialog = AlertDialog.Builder(context)
+            .setView(dialogView)
+            .setCancelable(false) // Không cho phép dismiss bằng back button
+            .create()
+
+        // Background mờ
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        retryButton.setOnClickListener {
+            soundManager.playSound("move")
+
+            // Retry level hiện tại
+            loadLevel(levelId)
+            startGame()  // Restart game loop
+            dialog.dismiss()
+        }
+
+        menuButton.setOnClickListener {
+            soundManager.playSound("move")
+
+            val intent = Intent(context, MenuActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            context.startActivity(intent)
+            (context as? GameButtonActivity)?.finish()
+
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     override fun onPlayerMove(dx: Int, dy: Int) {
@@ -438,15 +639,14 @@ class GameView @JvmOverloads constructor(
      */
     private fun onPlayerDied() {
         isGameRunning = false  // Dừng game loop
-        post {
-            // TODO: Hiển thị Game Over dialog
-            println("💀 GAME OVER! Player touched monster!")
 
-            // Tạm thời restart level
-            val levelId = gameLogic.getCurrentLevel()?.id ?: 1
-            loadLevel(levelId)
-        startGame()
-    }
+        // 🆕 Phát âm thanh thua
+        soundManager.playSound("game_over")
+
+        post {
+            // 🆕 HIỂN THỊ DIALOG THUA
+            showLoseDialog()
+        }
     }
 
     // Thêm vào cuối file GameView.kt
@@ -455,4 +655,108 @@ class GameView @JvmOverloads constructor(
     }
 
     fun isSoundMuted(): Boolean = soundManager.isMuted()
+
+    /**
+     * 🔘 Kiểm tra xem touch có nằm trên nút toggle không
+     */
+    private fun isTouchOnToggleButton(x: Float, y: Float, map: Array<CharArray>,
+                                      buttonType: String): Boolean {
+        val tileSize = gameRenderer.calculateTileSize(map)
+        val boardWidth = map[0].size * tileSize
+        val boardHeight = map.size * tileSize
+        val offsetX = (width - boardWidth) / 2f
+        val offsetY = (height - boardHeight) / 2f
+
+        val buttonY = offsetY - 140f  // Cập nhật cho khớp với GameRenderer
+        val buttonSize = 120f         // Cập nhật cho khớp với GameRenderer
+
+        val buttonRect = when (buttonType) {
+            "music" -> android.graphics.RectF(20f, buttonY, 20f + buttonSize, buttonY + buttonSize)
+            "sound" -> android.graphics.RectF(width - buttonSize - 20f, buttonY,
+                width - 20f, buttonY + buttonSize)
+            else -> return false
+        }
+
+        return buttonRect.contains(x, y)
+    }
+
+    /**
+     * 🎵 Toggle nhạc nền
+     */
+    private fun toggleMusic() {
+        val currentlyEnabled = musicManager.isEnabled()
+        val newState = !currentlyEnabled
+
+        if (newState) {
+            // Bật nhạc: cần play music từ setting đã lưu
+            val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+            val selectedMusic = prefs.getInt("selected_music", MusicManager.MUSIC_GAME_1)
+            musicManager.playMusic(selectedMusic, true)
+        } else {
+            // Tắt nhạc
+            musicManager.setEnabled(false)
+        }
+
+        // Lưu setting
+        val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("music_enabled", newState).apply()
+
+        // Trigger redraw để cập nhật icon
+        gameStateChanged = true
+
+        println("🎵 Music toggled: $newState")
+    }
+
+    /**
+     * 🔊 Toggle âm thanh + nhạc
+     */
+    private fun toggleSound() {
+        // Lấy trạng thái hiện tại: nếu sound đang muted thì nghĩa là đang tắt
+        val currentlyEnabled = !soundManager.isMuted()
+
+        // Toggle: nếu đang bật thì tắt, nếu đang tắt thì bật
+        val newEnabledState = !currentlyEnabled
+
+        // Áp dụng trạng thái mới
+        soundManager.setMuted(!newEnabledState)  // muted = true khi newEnabledState = false
+        
+        if (newEnabledState) {
+            // Bật: play music từ setting đã lưu
+            val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+            val selectedMusic = prefs.getInt("selected_music", MusicManager.MUSIC_GAME_1)
+            musicManager.playMusic(selectedMusic, true)
+        } else {
+            // Tắt music
+            musicManager.setEnabled(false)
+        }
+
+        // Lưu setting
+        val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putBoolean("sound_effects_enabled", newEnabledState)
+            .putBoolean("music_enabled", newEnabledState)
+            .apply()
+
+        // Trigger redraw để cập nhật icon
+        gameStateChanged = true
+
+        println("🔊 Sound toggled: enabled=$newEnabledState, muted=${!newEnabledState}")
+    }
+
+    private fun loadAudioSettings() {
+        val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+
+        // Load music setting
+        val musicEnabled = prefs.getBoolean("music_enabled", true)
+        if (musicEnabled) {
+            val selectedMusic = prefs.getInt("selected_music", MusicManager.MUSIC_GAME_1)
+            musicManager.playMusic(selectedMusic, true)
+        } else {
+            musicManager.setEnabled(false)
+        }
+
+        // Load sound effects setting
+        val soundEnabled = prefs.getBoolean("sound_effects_enabled", true)
+        soundManager.setMuted(!soundEnabled)  // muted = false khi soundEnabled = true
+    }
 }

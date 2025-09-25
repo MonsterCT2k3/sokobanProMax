@@ -9,9 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.managers.MusicManager
+import com.example.myapplication.managers.SoundManager
 
 class MenuActivity : AppCompatActivity() {
     private lateinit var musicManager: MusicManager
+    private lateinit var soundManager: SoundManager
     private var isNavigatingToMusicSettings = false
     private var isNavigatingToGame = false
     private var isFirstResume = true
@@ -20,8 +22,9 @@ class MenuActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
 
-        // Khởi tạo MusicManager Singleton
+        // Khởi tạo Managers Singleton
         musicManager = MusicManager.getInstance(this)
+        soundManager = SoundManager.getInstance(this)
 
         // Thiết lập các sự kiện cho các nút
         setupButtons()
@@ -31,16 +34,25 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun loadMusicSettings() {
-        val sharedPreferences = getSharedPreferences("music_settings", MODE_PRIVATE)
-        val isEnabled = sharedPreferences.getBoolean("music_enabled", true)
-        val volume = sharedPreferences.getFloat("music_volume", 0.5f)
+        val sharedPreferences = getSharedPreferences("audio_settings", MODE_PRIVATE)
+
+        // Load music settings
+        val musicEnabled = sharedPreferences.getBoolean("music_enabled", true)
+        val musicVolume = sharedPreferences.getFloat("music_volume", 0.5f)
         val selectedMusic = sharedPreferences.getInt("selected_music", MusicManager.MUSIC_MENU)
 
-        musicManager.setEnabled(isEnabled)
-        musicManager.setVolume(volume)
+        musicManager.setEnabled(musicEnabled)
+        musicManager.setVolume(musicVolume)
 
-        // Phát nhạc khi khởi động app lần đầu
-        if (isEnabled) {
+        // Load sound effects settings
+        val soundEnabled = sharedPreferences.getBoolean("sound_enabled", true)
+        val soundVolume = sharedPreferences.getFloat("sound_volume", 0.5f)
+
+        soundManager.setMuted(!soundEnabled)
+        soundManager.setVolume(soundVolume)
+
+        // Phát nhạc khi khởi động app lần đầu (chỉ khi music enabled)
+        if (musicEnabled) {
             musicManager.playMusic(selectedMusic, true)
         }
     }

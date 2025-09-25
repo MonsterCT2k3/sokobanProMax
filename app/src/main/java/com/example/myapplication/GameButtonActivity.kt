@@ -39,8 +39,9 @@ class GameButtonActivity : AppCompatActivity() {
         
         // Nút Reset level
         findViewById<Button>(R.id.buttonReset).setOnClickListener {
-            val levelId = intent.getIntExtra("LEVEL_ID", 1)
-            gameView.loadLevel(levelId) // Reset level về trạng thái ban đầu
+            // 🆕 Lấy level hiện tại từ game thay vì từ intent
+            val currentLevelId = gameView.getCurrentLevelId()
+            gameView.loadLevel(currentLevelId) // Reset level hiện tại về trạng thái ban đầu
         }
     }
 

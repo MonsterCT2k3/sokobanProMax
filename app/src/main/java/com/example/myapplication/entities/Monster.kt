@@ -26,8 +26,8 @@ data class Monster(
 
 sealed class MonsterAIState {
     data class PatrolState(
-        val patrolPoints: List<Pair<Int, Int>>,
-        var currentPointIndex: Int = 0
+        val startPosition: Pair<Int, Int>,           // Vị trí bắt đầu
+        var currentDirection: Pair<Int, Int> = Pair(0, 1)  // Hướng di chuyển hiện tại
     ): MonsterAIState()
 
     data class CircleState(

@@ -44,7 +44,9 @@ class MusicManager private constructor(private val context: Context){
     )
 
     fun playMusic(musicId: Int, loop: Boolean = true) {
-        if(!isEnabled) return
+        // Luôn set enabled = true khi play music
+        isEnabled = true
+        
         val resourceId = musicResources[musicId] ?: return
         if(currentMusicResource == resourceId&& mediaPlayer?.isPlaying == true) return
         stopMusic()
@@ -86,7 +88,11 @@ class MusicManager private constructor(private val context: Context){
 
     fun setEnabled(enabled: Boolean){
         isEnabled = enabled
-        if(!isEnabled) stopMusic()
+        if(!isEnabled) {
+            stopMusic()
+        }
+        // Khi bật (enabled = true): chỉ set flag, không tự động play
+        // Việc play music sẽ được handle bởi caller (như toggleMusic)
     }
 
     fun isEnabled(): Boolean = isEnabled
