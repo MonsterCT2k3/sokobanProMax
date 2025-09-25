@@ -20,6 +20,7 @@ import com.example.myapplication.rendering.GameRenderer
 import com.example.myapplication.systems.AmmoSystem
 import com.example.myapplication.systems.BulletSystem
 import com.example.myapplication.systems.MonsterSystem
+import com.example.myapplication.systems.ParticleSystem
 import kotlin.text.toInt
 
 /**
@@ -56,6 +57,7 @@ class GameView @JvmOverloads constructor(
     private lateinit var musicManager: MusicManager
     private lateinit var soundManager: SoundManager
     private val ammoSystem = AmmoSystem()
+    private val particleSystem = ParticleSystem()
 
     // ===== GAME THREAD MANAGEMENT =====
     // Game chạy trên thread riêng để không block UI thread
@@ -113,6 +115,9 @@ class GameView @JvmOverloads constructor(
 
             println("🎮 Loaded monster: ${monsterId} type=${monsterData.type} at (${monsterData.startRow}, ${monsterData.startColumn})")
         }
+
+        // 🆕 CLEAR PARTICLES khi load level mới
+        particleSystem.clear()
 
         // 🆕 SPAWN AMMO PICKUPS (loại trừ vị trí player start)
         val playerStartPos = gameLogic.getCurrentLevel()?.getPlayerStartPosition()
@@ -307,15 +312,37 @@ class GameView @JvmOverloads constructor(
         }
 
         val collisions = bulletSystem.checkCollisions(monsterPositions)
-        // Trong GameView collision check
+
+        // DEBUG: Log monster positions
+        println("🎯 Checking ${monsterPositions.size} monsters for collisions")
         monsterPositions.forEachIndexed { index, (x, y) ->
             println("👹 Monster $index at screen pos (${x.toInt()}, ${y.toInt()})")
         }
+
+        // DEBUG: Log collisions found
+        println("💥 Found ${collisions.size} collisions")
         collisions.forEach { (bullet, monsterIndex) ->
+            println("🎯 Processing collision: bullet ${bullet.id} hit monster $monsterIndex")
+
             // 🆕 XỬ LÝ KHI BULLET CHẠM MONSTER
             monsterSystem.removeMonster(monsterIndex)  // Xóa monster
-            soundManager.playSound("monster_hit")      // Phát âm thanh
+
+            // 🆕 TẠO EXPLOSION TẠI VỊ TRÍ MONSTER
+            val monsterPos = monsterPositions[monsterIndex]
+            println("💥 Creating explosion at (${monsterPos.first.toInt()}, ${monsterPos.second.toInt()})")
+            particleSystem.createExplosion(monsterPos.first, monsterPos.second)
+
+            // Phát âm thanh
+            soundManager.playSound("monster_hit")
+
             println("💥 Bullet destroyed monster $monsterIndex!")
+        }
+
+        // 🆕 UPDATE PARTICLES
+        particleSystem.update(deltaTime)
+        // Debug: log particle count mỗi frame
+        if (particleSystem.getParticleCount() > 0) {
+            println("🎆 Active particles: ${particleSystem.getParticleCount()}")
         }
 
         val bulletsHitWall = bulletSystem.getBulletsHitWall()
@@ -383,6 +410,9 @@ class GameView @JvmOverloads constructor(
         // Vẽ bullets
         val activeBullets = bulletSystem.getActiveBullets()
         gameRenderer.drawBullets(canvas, activeBullets)
+
+        // 🆕 DRAW PARTICLES (sau khi vẽ game objects)
+        particleSystem.draw(canvas)
         
         // 3. 🖼️ Vẽ UI elements cuối cùng (trên cùng)
         //    Title, instructions, score, etc.

@@ -110,7 +110,14 @@ class BulletSystem {
         val collisions = mutableListOf<Pair<Bullet, Int>>()
         bullets.forEach { bullet ->
             if (bullet.isActive) {  // Chỉ check collision cho active bullets
+                println("🔫 Checking bullet ${bullet.id} at (${bullet.currentX.toInt()}, ${bullet.currentY.toInt()})")
                 monsterPositions.forEachIndexed { monsterIndex, (monsterX, monsterY) ->
+                    val distance = kotlin.math.sqrt(
+                        (bullet.currentX - monsterX) * (bullet.currentX - monsterX) +
+                        (bullet.currentY - monsterY) * (bullet.currentY - monsterY)
+                    )
+                    println("📏 Distance from bullet ${bullet.id} to monster $monsterIndex: ${distance.toInt()}")
+
                     if (bullet.collidesWith(monsterX, monsterY)) {
                         collisions.add(Pair(bullet, monsterIndex))
                         bullet.isActive = false
