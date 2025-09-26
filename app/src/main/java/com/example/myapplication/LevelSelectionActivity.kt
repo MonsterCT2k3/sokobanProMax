@@ -72,7 +72,6 @@ class LevelSelectionActivity : AppCompatActivity() {
 
         // Get last completed level from SharedPreferences
         val lastCompletedLevel = sharedPreferences.getInt("last_completed_level", 0)
-        println("📊 Last completed level: $lastCompletedLevel")
 
         // Setup adapter
         levelAdapter = LevelAdapter(this, levels) { level ->
@@ -101,8 +100,6 @@ class LevelSelectionActivity : AppCompatActivity() {
         // Apply settings
         soundManager.setMuted(!soundEnabled)
         soundManager.setVolume(soundVolume)
-
-        println("🔊 Sound settings loaded - enabled: $soundEnabled, volume: $soundVolume")
     }
     
     private fun startGameWithLevel(levelId: Int) {
@@ -130,12 +127,8 @@ class LevelSelectionActivity : AppCompatActivity() {
         isNavigatingToGame = false
         musicManager.resumeMusic()
 
-        // 🔊 Luôn load sound settings khi resume để đồng bộ với settings đã lưu
+        // Load sound settings when resuming
         loadSoundSettings()
-        println("🔊 LevelSelection resumed - soundManager.isMuted(): ${soundManager.isMuted()}, volume: ${soundManager.getVolume()}")
-
-        // Test sound để xem có hoạt động không
-        soundManager.playSound("move", 0.1f)  // Test với volume nhỏ
     }
 
     override fun onPause() {

@@ -95,7 +95,6 @@ class LevelAdapter(
 
                 // Set click listener on CardView
                 cardView.setOnClickListener {
-                    println("🎯 Level clicked: ${level.id}, isUnlocked: true")
                     onLevelClick(level)
                 }
 
