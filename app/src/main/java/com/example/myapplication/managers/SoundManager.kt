@@ -2,9 +2,10 @@ package com.example.myapplication.managers
 
 import android.content.Context
 import android.media.SoundPool
+import android.util.Log
 import com.example.myapplication.R
 
-class SoundManager(private val context: Context) {
+class SoundManager private constructor(private val context: Context) {
 
     private var soundPool: SoundPool? = null
     private var soundIds = mutableMapOf<String, Int>()
@@ -20,11 +21,16 @@ class SoundManager(private val context: Context) {
                 INSTANCE ?: SoundManager(context.applicationContext).also { INSTANCE = it }
             }
         }
+
+        fun getInstance(): SoundManager? {
+            return INSTANCE
+        }
     }
 
     init {
         initSoundPool()
         loadSounds()
+        // KHÔNG load settings trong init, để activity tự load khi cần
     }
 
     private fun initSoundPool() {
@@ -49,6 +55,7 @@ class SoundManager(private val context: Context) {
         soundIds["victory"] = soundPool?.load(context, R.raw.victory, 1) ?: 0  // 🆕 THÊM ÂM THANH CHIẾN THẮNG
         soundIds["game_over"] = soundPool?.load(context, R.raw.game_over, 1) ?: 0  // 🆕 THÊM ÂM THANH THUA
     }
+
 
     fun playSound(soundName: String, customVolume: Float = -1.0f) {
         if (isMuted) return

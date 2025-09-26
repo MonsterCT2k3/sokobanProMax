@@ -1,61 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/background_color"
-    android:padding="16dp">
+    android:background="@drawable/background_space">
+
+    <!-- Background overlay for better text readability -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000" />
 
     <!-- Header -->
     <LinearLayout
+        android:id="@+id/header_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/textBack"
+        <Button
+            android:id="@+id/btn_back"
+            style="@style/PixelButtonSecondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="← Quay lại"
-            android:textSize="16sp"
-            android:textColor="@color/text_color"
-            android:padding="8dp"
-            android:background="?android:attr/selectableItemBackground" />
+            android:text="← MENU"
+            android:layout_marginEnd="20dp" />
 
         <TextView
+            android:id="@+id/title_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="CHỌN LEVEL"
-            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="@color/text_color"
+            android:shadowColor="#000000"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4"
             android:gravity="center" />
-
-        <View
-            android:layout_width="60dp"
-            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
-    <!-- Progress -->
+    <!-- Progress Info -->
     <TextView
-        android:id="@+id/textProgress"
+        android:id="@+id/progress_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tiến độ: 0/5 (0%)"
+        android:layout_below="@id/header_layout"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="20dp"
+        android:text="Hoàn thành: 0/7 levels"
+        android:textColor="#FFD700"
         android:textSize="16sp"
-        android:textColor="@color/text_secondary"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
+        android:textStyle="bold"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2" />
 
-    <!-- Levels Grid -->
+    <!-- Level Grid -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewLevels"
+        android:id="@+id/levels_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent"
+        android:layout_below="@id/progress_text"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="true" />
 
-</LinearLayout>
+</RelativeLayout>

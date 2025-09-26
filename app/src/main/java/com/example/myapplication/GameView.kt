@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import android.view.MotionEvent
 import android.view.View
@@ -84,7 +85,7 @@ class GameView @JvmOverloads constructor(
      * Setup các listener để các component có thể giao tiếp với nhau
      */
     private fun initGame() {
-        soundManager = SoundManager.getInstance(context)
+        soundManager = SoundManager.getInstance()!!
         musicManager = MusicManager.getInstance()!!
 
         // Setup listeners để tạo communication giữa các component
@@ -513,7 +514,8 @@ class GameView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         stopGame()   // Dừng game loop và clean up
-        soundManager.cleanup()
+        // KHÔNG cleanup SoundManager vì đây là Singleton dùng chung cho tất cả activities
+        // soundManager.cleanup()
     }
 
     // ===== CALLBACK IMPLEMENTATIONS =====
@@ -538,6 +540,17 @@ class GameView @JvmOverloads constructor(
 
     override fun onGameWon() {
         isGameRunning = false  // Dừng game loop
+
+        // 🆕 LƯU PROGRESS: Cập nhật level đã hoàn thành
+        val currentLevelId = gameLogic.getCurrentLevel()?.id ?: 1
+        val sharedPreferences = context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
+        val lastCompletedLevel = sharedPreferences.getInt("last_completed_level", 0)
+
+        // Chỉ cập nhật nếu level hiện tại cao hơn level đã hoàn thành trước đó
+        if (currentLevelId > lastCompletedLevel) {
+            sharedPreferences.edit().putInt("last_completed_level", currentLevelId).apply()
+            Log.d("GameView", "Progress updated: completed level $currentLevelId")
+        }
 
         // 🆕 PHÁT ÂM THANH CHIẾN THẮNG
         soundManager.playSound("victory")
@@ -752,7 +765,7 @@ class GameView @JvmOverloads constructor(
         
         if (newEnabledState) {
             // Bật: play music từ setting đã lưu
-            val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("audio_settings", Context.MODE_PRIVATE)
             val selectedMusic = prefs.getInt("selected_music", MusicManager.MUSIC_GAME_1)
             musicManager.playMusic(selectedMusic, true)
         } else {
@@ -760,11 +773,12 @@ class GameView @JvmOverloads constructor(
             musicManager.setEnabled(false)
         }
 
-        // Lưu setting
-        val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+        // Lưu setting (bao gồm cả volume hiện tại)
+        val prefs = context.getSharedPreferences("audio_settings", Context.MODE_PRIVATE)
         prefs.edit()
-            .putBoolean("sound_effects_enabled", newEnabledState)
+            .putBoolean("sound_enabled", newEnabledState)
             .putBoolean("music_enabled", newEnabledState)
+            .putFloat("sound_volume", soundManager.getVolume())  // Lưu volume hiện tại
             .apply()
 
         // Trigger redraw để cập nhật icon
@@ -774,7 +788,7 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun loadAudioSettings() {
-        val prefs = context.getSharedPreferences("music_settings", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("audio_settings", Context.MODE_PRIVATE)
 
         // Load music setting
         val musicEnabled = prefs.getBoolean("music_enabled", true)
@@ -786,7 +800,9 @@ class GameView @JvmOverloads constructor(
         }
 
         // Load sound effects setting
-        val soundEnabled = prefs.getBoolean("sound_effects_enabled", true)
+        val soundEnabled = prefs.getBoolean("sound_enabled", true)
+        val soundVolume = prefs.getFloat("sound_volume", 0.5f)
         soundManager.setMuted(!soundEnabled)  // muted = false khi soundEnabled = true
+        soundManager.setVolume(soundVolume)
     }
 }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pixel Art Button Styles -->
+    <style name="PixelButtonPrimary" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/pixel_button_primary</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="PixelButtonSecondary" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/pixel_button_secondary</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <!-- Pixel Art Button Pressed States -->
+    <style name="PixelButtonPrimary.Pressed" parent="PixelButtonPrimary">
+        <item name="android:background">@drawable/pixel_button_primary_pressed</item>
+    </style>
+
+    <style name="PixelButtonSecondary.Pressed" parent="PixelButtonSecondary">
+        <item name="android:background">@drawable/pixel_button_secondary_pressed</item>
+    </style>
+</resources>

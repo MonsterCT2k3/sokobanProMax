@@ -10,9 +10,9 @@
 
 
     <!-- Level states -->
-    <color name="level_available">#4CAF50</color>
-    <color name="level_completed">#2196F3</color>
-    <color name="level_locked">#9E9E9E</color>
+    <color name="level_available">#FF4CAF50</color>
+    <color name="level_completed">#FF2196F3</color>
+    <color name="level_locked">#FF424242</color>
 
     <!-- Text colors -->
     <color name="text_available">#FFFFFF</color>

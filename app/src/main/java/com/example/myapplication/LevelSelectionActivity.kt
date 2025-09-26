@@ -1,138 +1,108 @@
 package com.example.myapplication
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.adapters.LevelAdapter
 import com.example.myapplication.managers.LevelManager
 import com.example.myapplication.managers.MusicManager
+import com.example.myapplication.managers.SoundManager
+import com.example.myapplication.models.Level
 
 class LevelSelectionActivity : AppCompatActivity() {
 
     private lateinit var musicManager: MusicManager
+    private lateinit var soundManager: SoundManager
     private var isNavigatingToGame = false
+    private lateinit var levelAdapter: LevelAdapter
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+        setContentView(R.layout.activity_level_selection)
+
         // Khởi tạo MusicManager
         musicManager = MusicManager.getInstance(this)
 
+        // Khởi tạo SoundManager
+        soundManager = SoundManager.getInstance(this)
+
+        // Khởi tạo SharedPreferences
+        sharedPreferences = getSharedPreferences("game_progress", MODE_PRIVATE)
+
         try {
             Log.d("LevelSelection", "Creating level selection layout")
-            createSimpleLayout()
+            setupViews()
+            loadLevels()
         } catch (e: Exception) {
             Log.e("LevelSelection", "Error in onCreate", e)
             Toast.makeText(this, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
             startGameDirectly()
         }
     }
-    
-    private fun createSimpleLayout() {
-        // Tạo layout chính
-        val mainLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 80, 40, 40)
-            setBackgroundColor(0xFF263238.toInt())
+
+    private fun setupViews() {
+        // Setup back button
+        findViewById<Button>(R.id.btn_back).setOnClickListener {
+            finish()
         }
-        
-        // Header
-        val headerLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 0, 0, 40)
-        }
-        
-        // Back button
-        val backButton = Button(this).apply {
-            text = "← Quay lại"
-            setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xFF37474F.toInt())
-            setPadding(30, 20, 30, 20)
-            setOnClickListener { finish() }
-        }
-        
-        // Title
-        val titleText = TextView(this).apply {
-            text = "CHỌN LEVEL"
-            textSize = 24f
-            setTextColor(0xFFFFFFFF.toInt())
-            setPadding(40, 20, 0, 20)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        
-        headerLayout.addView(backButton)
-        headerLayout.addView(titleText)
-        mainLayout.addView(headerLayout)
-        
-        // Progress text
-        val progressText = TextView(this).apply {
-            text = "Chọn level để bắt đầu chơi!"
-            textSize = 16f
-            setTextColor(0xFFCCCCCC.toInt())
-            setPadding(0, 0, 0, 30)
-        }
-        mainLayout.addView(progressText)
-        
-        // Load levels
+
+        // Setup RecyclerView
+        val recyclerView = findViewById<RecyclerView>(R.id.levels_recycler_view)
+        recyclerView.layoutManager = GridLayoutManager(this, 2)
+        recyclerView.setHasFixedSize(true)
+    }
+
+    private fun loadLevels() {
         val levels = LevelManager.getAllLevels()
         Log.d("LevelSelection", "Found ${levels.size} levels")
-        
+
         if (levels.isEmpty()) {
-            val errorText = TextView(this).apply {
-                text = "Không tìm thấy level nào! Sẽ chạy level mặc định."
-                setTextColor(0xFFFF5722.toInt())
-                textSize = 16f
-                setPadding(0, 20, 0, 20)
-            }
-            mainLayout.addView(errorText)
-            
-            // Default level button
-            val defaultButton = createLevelButton("Level Mặc Định", "Dễ") {
-                startGameDirectly()
-            }
-            mainLayout.addView(defaultButton)
-            
-        } else {
-            // Create level buttons
-            levels.forEach { level ->
-                val levelButton = createLevelButton(
-                    "Level ${level.id}: ${level.name}", 
-                    level.difficulty.name
-                ) {
-                    startGameWithLevel(level.id)
-                }
-                mainLayout.addView(levelButton)
-            }
+            Toast.makeText(this, "Không tìm thấy level nào!", Toast.LENGTH_LONG).show()
+            startGameDirectly()
+            return
         }
-        
-        setContentView(mainLayout)
+
+        // Get last completed level from SharedPreferences
+        val lastCompletedLevel = sharedPreferences.getInt("last_completed_level", 0)
+        println("📊 Last completed level: $lastCompletedLevel")
+
+        // Setup adapter
+        levelAdapter = LevelAdapter(this, levels) { level ->
+            println("🎮 Starting game with level ${level.id}")
+            startGameWithLevel(level.id)
+        }
+        levelAdapter.setLastCompletedLevel(lastCompletedLevel)
+
+        findViewById<RecyclerView>(R.id.levels_recycler_view).adapter = levelAdapter
+
+        // Update progress text
+        updateProgressText(levels.size, lastCompletedLevel)
     }
-    
-    private fun createLevelButton(title: String, difficulty: String, onClick: () -> Unit): Button {
-        return Button(this).apply {
-            text = "$title\n($difficulty)"
-            textSize = 16f
-            setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xFF4CAF50.toInt())
-            setPadding(40, 30, 40, 30)
-            
-            // Set margins
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, 15, 0, 15)
-            }
-            
-            setOnClickListener { 
-                Log.d("LevelSelection", "Level button clicked: $title")
-                onClick() 
-            }
-        }
+
+    private fun updateProgressText(totalLevels: Int, completedLevels: Int) {
+        val progressText = findViewById<TextView>(R.id.progress_text)
+        progressText.text = "Hoàn thành: $completedLevels/$totalLevels levels"
+    }
+
+    private fun loadSoundSettings() {
+        // Load sound settings từ SharedPreferences "audio_settings"
+        val audioPrefs = getSharedPreferences("audio_settings", MODE_PRIVATE)
+        val soundEnabled = audioPrefs.getBoolean("sound_enabled", true)
+        val soundVolume = audioPrefs.getFloat("sound_volume", 0.5f)
+
+        // Apply settings
+        soundManager.setMuted(!soundEnabled)
+        soundManager.setVolume(soundVolume)
+
+        println("🔊 Sound settings loaded - enabled: $soundEnabled, volume: $soundVolume")
     }
     
     private fun startGameWithLevel(levelId: Int) {
@@ -159,6 +129,13 @@ class LevelSelectionActivity : AppCompatActivity() {
         // Reset flag và tiếp tục phát nhạc khi quay lại từ game
         isNavigatingToGame = false
         musicManager.resumeMusic()
+
+        // 🔊 Luôn load sound settings khi resume để đồng bộ với settings đã lưu
+        loadSoundSettings()
+        println("🔊 LevelSelection resumed - soundManager.isMuted(): ${soundManager.isMuted()}, volume: ${soundManager.getVolume()}")
+
+        // Test sound để xem có hoạt động không
+        soundManager.playSound("move", 0.1f)  // Test với volume nhỏ
     }
 
     override fun onPause() {

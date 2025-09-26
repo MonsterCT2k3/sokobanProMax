@@ -124,6 +124,7 @@ class MenuActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         musicManager.release()
+        soundManager.cleanup()
     }
 
     override fun onBackPressed() {
