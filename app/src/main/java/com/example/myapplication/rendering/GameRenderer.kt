@@ -11,8 +11,10 @@ import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import com.example.myapplication.R
 import com.example.myapplication.entities.AmmoPickup
+import com.example.myapplication.entities.AmmoType
 import com.example.myapplication.entities.Bullet
 import com.example.myapplication.entities.BulletDirection
+import com.example.myapplication.entities.BulletType
 import com.example.myapplication.game.PlayerDirection
 import kotlin.math.min
 import com.example.myapplication.entities.Monster
@@ -42,6 +44,7 @@ class GameRenderer(private val context: Context) {
     private lateinit var bulletLeft: Drawable
     private lateinit var bulletRight: Drawable
     private lateinit var itemBullet: Drawable  // 🆕 THÊM ITEM BULLET
+    private lateinit var rocket: Drawable     // 🆕 THÊM ROCKET
 
     private lateinit var musicOnIcon: Drawable
     private lateinit var musicOffIcon: Drawable
@@ -100,6 +103,8 @@ class GameRenderer(private val context: Context) {
             ?: throw IllegalStateException("bullet_right drawable not found")
         itemBullet = ContextCompat.getDrawable(context, R.drawable.item_bullet)
             ?: throw IllegalStateException("item_bullet drawable not found")  // 🆕 LOAD ITEM BULLET
+        rocket = ContextCompat.getDrawable(context, R.drawable.rocket)
+            ?: throw IllegalStateException("rocket drawable not found")  // 🆕 LOAD ROCKET
 
         musicOnIcon = ContextCompat.getDrawable(context, R.drawable.music_on)
             ?: throw IllegalStateException("music_on drawable not found")
@@ -374,24 +379,26 @@ class GameRenderer(private val context: Context) {
     fun drawBullets(canvas: Canvas, bullets: List<Bullet>) {
         bullets.forEach { bullet ->
             if (bullet.isActive) {
-                // 🎯 Lấy drawable theo hướng của bullet
+                // 🎯 Lấy drawable theo hướng của bullet (cùng cho cả normal và pierce)
                 val bulletDrawable = getBulletDrawable(bullet.direction)
-                val bulletBitmap = drawableToBitmap(bulletDrawable, 64)
 
-                // Vẽ bullet tại vị trí hiện tại
-                canvas.drawBitmap(
-                    bulletBitmap,
-                    bullet.currentX - 32,  // Center bullet (64/2 = 32)
-                    bullet.currentY - 32,  // Center bullet (64/2 = 32)
-                    tilePaint
-                )
+                bulletDrawable?.let { drawable ->
+                    // Vẽ bullet tại vị trí hiện tại với scale bằng cách set bounds
+                    val bulletSize = 64 * bullet.scale
+                    val halfSize = bulletSize / 2
+                    val left = (bullet.currentX - halfSize).toInt()
+                    val top = (bullet.currentY - halfSize).toInt()
+                    val right = (bullet.currentX + halfSize).toInt()
+                    val bottom = (bullet.currentY + halfSize).toInt()
 
-                // Vẽ trail effect theo màu của hướng
-                val trailColor = when (bullet.direction) {
-                    BulletDirection.UP -> android.graphics.Color.BLUE
-                    BulletDirection.DOWN -> android.graphics.Color.RED
-                    BulletDirection.LEFT -> android.graphics.Color.GREEN
-                    BulletDirection.RIGHT -> android.graphics.Color.YELLOW
+                    drawable.setBounds(left, top, right, bottom)
+                    drawable.draw(canvas)
+                }
+
+                // Vẽ trail effect theo loại bullet
+                val trailColor = when (bullet.bulletType) {
+                    BulletType.NORMAL -> android.graphics.Color.YELLOW
+                    BulletType.PIERCE -> android.graphics.Color.CYAN
                 }
 
                 val trailPaint = Paint().apply {
@@ -532,77 +539,198 @@ class GameRenderer(private val context: Context) {
         return Pair(offsetX, offsetY)
     }
 
-    fun drawAmmoUI(canvas: Canvas, ammo: Int, maxAmmo: Int, screenWidth: Float, screenHeight: Float) {
-        // 🆕 Đặt UI ở vị trí dưới nút reset (góc trên phải, nhưng thấp hơn)
-        val uiRect = RectF(
-            screenWidth - 180f,  // Bên phải màn hình, rộng hơn
-            220f,                 // Thấp hơn 100px (từ 120px xuống 220px)
-            screenWidth - 40f,    // Cách lề phải 40px (từ 20px thành 40px)
-            280f                  // Chiều cao lớn hơn
+    fun drawAmmoUI(canvas: Canvas, normalAmmo: Int, pierceAmmo: Int, screenWidth: Float, screenHeight: Float) {
+        val maxAmmoPerType = 5
+
+        // 🆕 NORMAL AMMO UI (hàng trên)
+        val normalRect = RectF(
+            screenWidth - 180f,  // Bên phải màn hình
+            220f,                 // Vị trí Y
+            screenWidth - 40f,    // Cách lề phải 40px
+            280f                  // Chiều cao
         )
 
-        // 🆕 Vẽ nền nổi bật hơn
-        val uiPaint = Paint().apply {
-            color = Color.parseColor("#DD333333")  // Nền đỏ đậm hơn, ít trong suốt
+        // Vẽ nền cho normal ammo
+        val normalUiPaint = Paint().apply {
+            color = Color.parseColor("#DD333333")  // Nền đỏ
             style = Paint.Style.FILL
         }
-        canvas.drawRoundRect(uiRect, 15f, 15f, uiPaint)
+        canvas.drawRoundRect(normalRect, 15f, 15f, normalUiPaint)
 
-        // 🆕 Vẽ viền vàng nổi bật
+        // Vẽ viền vàng
         val borderPaint = Paint().apply {
             color = Color.YELLOW
             style = Paint.Style.STROKE
             strokeWidth = 3f
         }
-        canvas.drawRoundRect(uiRect, 15f, 15f, borderPaint)
+        canvas.drawRoundRect(normalRect, 15f, 15f, borderPaint)
 
-        // 🆕 Vẽ text lớn hơn và nổi bật hơn
+        // Vẽ text cho normal ammo
         val textPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 36f  // Tăng từ 24f lên 36f
-            textAlign = Paint.Align.CENTER
-            isAntiAlias = true
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 2f
-        }
-
-        val centerX = uiRect.centerX()
-        val centerY = uiRect.centerY() + 12f  // Căn giữa theo Y
-
-        // 🆕 Vẽ text với hiệu ứng shadow
-        val shadowPaint = Paint().apply {
-            color = Color.BLACK
-            textSize = 36f
-            textAlign = Paint.Align.CENTER
+            textSize = 28f
+            textAlign = Paint.Align.LEFT
             isAntiAlias = true
             style = Paint.Style.FILL_AND_STROKE
             strokeWidth = 1f
         }
-        canvas.drawText("$ammo/$maxAmmo", centerX + 2f, centerY + 2f, shadowPaint)
-        canvas.drawText("$ammo/$maxAmmo", centerX, centerY, textPaint)
 
-        // 🆕 Vẽ icon item_bullet thay vì bullet_right
+        // Vẽ icon normal ammo
         itemBullet?.let { drawable ->
-            val bulletSize = 36f
+            val bulletSize = 28f
+            val iconLeft = normalRect.left + 8f
+            val iconTop = normalRect.centerY() - bulletSize / 2
             drawable.setBounds(
-                (uiRect.left + 8f).toInt(),  // 🆕 Tách bullet sang trái hơn
-                (uiRect.centerY() - bulletSize / 2).toInt(),
-                (uiRect.left + 8f + bulletSize).toInt(),  // 🆕 Điều chỉnh right tương ứng
-                (uiRect.centerY() + bulletSize / 2).toInt()
+                iconLeft.toInt(),
+                iconTop.toInt(),
+                (iconLeft + bulletSize).toInt(),
+                (iconTop + bulletSize).toInt()
             )
             drawable.draw(canvas)
         }
+
+        // Vẽ số lượng normal ammo
+        val textX = normalRect.left + 44f
+        val textY = normalRect.centerY() + 8f
+        canvas.drawText("$normalAmmo/$maxAmmoPerType", textX, textY, textPaint)
+
+        // 🆕 PIERCE AMMO UI (hàng dưới)
+        val pierceRect = RectF(
+            screenWidth - 180f,  // Bên phải màn hình
+            290f,                 // Dưới normal ammo
+            screenWidth - 40f,    // Cách lề phải 40px
+            350f                  // Chiều cao
+        )
+
+        // Vẽ nền cho pierce ammo (màu xanh dương)
+        val pierceUiPaint = Paint().apply {
+            color = Color.parseColor("#DD333366")  // Nền xanh dương
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(pierceRect, 15f, 15f, pierceUiPaint)
+
+        // Vẽ viền xanh dương
+        val pierceBorderPaint = Paint().apply {
+            color = Color.CYAN
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawRoundRect(pierceRect, 15f, 15f, pierceBorderPaint)
+
+        // Vẽ icon pierce ammo
+        itemBullet?.let { drawable ->
+            val bulletSize = 28f
+            val iconLeft = pierceRect.left + 8f
+            val iconTop = pierceRect.centerY() - bulletSize / 2
+            drawable.setBounds(
+                iconLeft.toInt(),
+                iconTop.toInt(),
+                (iconLeft + bulletSize).toInt(),
+                (iconTop + bulletSize).toInt()
+            )
+            drawable.draw(canvas)
+        }
+
+        // Vẽ số lượng pierce ammo
+        canvas.drawText("$pierceAmmo/$maxAmmoPerType", textX, pierceRect.centerY() + 8f, textPaint)
+    }
+
+    // 🆕 VẼ NÚT CHỌN LOẠI ĐẠN Ở PHÍA DƯỚI (to và dễ ấn)
+    fun drawBulletTypeButtons(canvas: Canvas, normalAmmo: Int, pierceAmmo: Int, screenWidth: Float, screenHeight: Float, selectedType: BulletType) {
+        val buttonWidth = 200f  // 🆕 Tăng từ 150f lên 200f
+        val buttonHeight = 100f // 🆕 Tăng từ 80f lên 100f
+        val buttonSpacing = 30f  // 🆕 Tăng từ 20f lên 30f
+        val bottomMargin = 150f  // 🆕 Tăng lên 150f để nút xa đáy màn hình thêm 70px nữa
+
+        // Nút normal ammo (bên trái)
+        val normalButtonRect = RectF(
+            screenWidth / 2 - buttonWidth - buttonSpacing / 2,
+            screenHeight - buttonHeight - bottomMargin,
+            screenWidth / 2 - buttonSpacing / 2,
+            screenHeight - bottomMargin
+        )
+
+        // Nút pierce ammo (bên phải)
+        val pierceButtonRect = RectF(
+            screenWidth / 2 + buttonSpacing / 2,
+            screenHeight - buttonHeight - bottomMargin,
+            screenWidth / 2 + buttonWidth + buttonSpacing / 2,
+            screenHeight - bottomMargin
+        )
+
+        val buttonPaint = Paint().apply { style = Paint.Style.FILL }
+        val borderPaint = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 4f } // 🆕 Tăng border từ 3f lên 4f
+        val textPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 32f  // 🆕 Tăng từ 24f lên 32f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+
+        // Vẽ nút normal ammo
+        buttonPaint.color = if (selectedType == BulletType.NORMAL) Color.parseColor("#FF6B35") else Color.parseColor("#DD333333")
+        borderPaint.color = if (selectedType == BulletType.NORMAL) Color.YELLOW else Color.GRAY
+        canvas.drawRoundRect(normalButtonRect, 10f, 10f, buttonPaint)
+        canvas.drawRoundRect(normalButtonRect, 10f, 10f, borderPaint)
+
+        // Vẽ icon normal ammo
+        itemBullet?.let { drawable ->
+            val iconSize = 50f  // 🆕 Tăng từ 32f lên 50f
+            val iconLeft = normalButtonRect.left + 15f  // 🆕 Tăng margin từ 10f lên 15f
+            val iconTop = normalButtonRect.centerY() - iconSize / 2
+            drawable.setBounds(
+                iconLeft.toInt(),
+                iconTop.toInt(),
+                (iconLeft + iconSize).toInt(),
+                (iconTop + iconSize).toInt()
+            )
+            drawable.draw(canvas)
+        }
+
+        // Vẽ số lượng normal ammo
+        canvas.drawText(
+            "$normalAmmo",
+            normalButtonRect.centerX() + 25f,  // 🆕 Tăng từ 15f lên 25f
+            normalButtonRect.centerY() + 10f,  // 🆕 Tăng từ 8f lên 10f
+            textPaint
+        )
+
+        // Vẽ nút pierce ammo
+        buttonPaint.color = if (selectedType == BulletType.PIERCE) Color.parseColor("#4A90E2") else Color.parseColor("#DD333366")
+        borderPaint.color = if (selectedType == BulletType.PIERCE) Color.CYAN else Color.GRAY
+        canvas.drawRoundRect(pierceButtonRect, 10f, 10f, buttonPaint)
+        canvas.drawRoundRect(pierceButtonRect, 10f, 10f, borderPaint)
+
+        // Vẽ icon pierce ammo (dùng rocket)
+        rocket?.let { drawable ->
+            val iconSize = 50f  // 🆕 Tăng từ 32f lên 50f
+            val iconLeft = pierceButtonRect.left + 15f  // 🆕 Tăng margin từ 10f lên 15f
+            val iconTop = pierceButtonRect.centerY() - iconSize / 2
+            drawable.setBounds(
+                iconLeft.toInt(),
+                iconTop.toInt(),
+                (iconLeft + iconSize).toInt(),
+                (iconTop + iconSize).toInt()
+            )
+            drawable.draw(canvas)
+        }
+
+        // Vẽ số lượng pierce ammo
+        canvas.drawText(
+            "$pierceAmmo",
+            pierceButtonRect.centerX() + 25f,  // 🆕 Tăng từ 15f lên 25f
+            pierceButtonRect.centerY() + 10f,  // 🆕 Tăng từ 8f lên 10f
+            textPaint
+        )
     }
 
     // Thêm method vẽ ammo pickups:
 
     fun drawAmmoPickups(canvas: Canvas, ammoPickups: List<AmmoPickup>, tileSize: Float, offsetX: Float, offsetY: Float) {
-        println("🎯 Drawing ${ammoPickups.size} ammo pickups")
-        ammoPickups.forEachIndexed { index, ammo ->
-            println("📦 Drawing ammo pickup ${index} at (${ammo.gridX}, ${ammo.gridY})")
+        ammoPickups.forEach { ammo ->
             val (screenX, screenY) = ammo.getScreenPosition(tileSize, offsetX, offsetY)
 
-            // 🆕 Vẽ nền trắng vuông
+            // Vẽ nền trắng vuông
             val backgroundPaint = Paint().apply {
                 color = Color.WHITE
                 style = Paint.Style.FILL
@@ -616,29 +744,34 @@ class GameRenderer(private val context: Context) {
             )
             canvas.drawRect(backgroundRect, backgroundPaint)
 
-            // 🆕 Vẽ viền đen
+            // Vẽ viền với màu khác nhau theo type
+            val borderColor = when (ammo.ammoType) {
+                AmmoType.NORMAL -> Color.BLACK
+                AmmoType.PIERCE -> Color.CYAN
+            }
             val borderPaint = Paint().apply {
-                color = Color.BLACK
+                color = borderColor
                 style = Paint.Style.STROKE
                 strokeWidth = 2f
             }
             canvas.drawRect(backgroundRect, borderPaint)
 
-            // 🆕 Vẽ hình item_bullet - Sử dụng bitmap để tránh conflict
-            itemBullet?.let { drawable ->
-                println("🔫 Drawing item_bullet for ammo ${index}")
-                val bulletSize = tileSize * 0.4f
-                val left = (screenX - bulletSize / 2).toInt()
-                val top = (screenY - bulletSize / 2).toInt()
-                val right = (screenX + bulletSize / 2).toInt()
-                val bottom = (screenY + bulletSize / 2).toInt()
+            // Vẽ hình ammo theo type - normal dùng item_bullet, pierce dùng rocket
+            val ammoDrawable = when (ammo.ammoType) {
+                AmmoType.NORMAL -> itemBullet
+                AmmoType.PIERCE -> rocket
+            }
 
-                println("📍 Bullet bounds: ($left, $top, $right, $bottom)")
+            ammoDrawable?.let { drawable ->
+                val ammoSize = tileSize * 0.4f
+                val left = (screenX - ammoSize / 2).toInt()
+                val top = (screenY - ammoSize / 2).toInt()
+                val right = (screenX + ammoSize / 2).toInt()
+                val bottom = (screenY + ammoSize / 2).toInt()
 
-                // Set bounds và vẽ trực tiếp (drawable sẽ được reset bounds mỗi lần)
                 drawable.setBounds(left, top, right, bottom)
                 drawable.draw(canvas)
-            } ?: println("❌ itemBullet drawable is null!")
+            }
         }
     }
 }

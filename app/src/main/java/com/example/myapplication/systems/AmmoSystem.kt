@@ -1,6 +1,8 @@
 package com.example.myapplication.systems
 
 import com.example.myapplication.entities.AmmoPickup
+import com.example.myapplication.entities.AmmoType
+import kotlin.random.Random
 
 class AmmoSystem {
     private val ammoPickups = mutableListOf<AmmoPickup>()
@@ -25,44 +27,37 @@ class AmmoSystem {
         println("🎯 Found ${validPositions.size} valid positions for ammo")
         println("🎯 Map size: ${map.size} rows x ${map[0].size} cols")
 
+        val ammoTypes = listOf(AmmoType.NORMAL, AmmoType.PIERCE)
+
         // Chọn ngẫu nhiên các vị trí
         validPositions.shuffle()
         val selectedPositions = validPositions.take(count.coerceAtMost(validPositions.size))
 
-        println("🎯 Selected ${selectedPositions.size} positions for ammo spawn")
-
         // Tạo ammo pickups
         for ((gridX, gridY) in selectedPositions) {
-            val ammo = AmmoPickup(
-                id = "ammo_${nextAmmoId++}",
-                gridX = gridX,
-                gridY = gridY
-            )
+            val randomType = ammoTypes[Random.nextInt(ammoTypes.size)]
+            val ammo = AmmoPickup(id = "ammo_${nextAmmoId++}", gridX = gridX, gridY = gridY, ammoType = randomType)
             ammoPickups.add(ammo)
-            println("📦 Spawned ammo at (${gridX}, ${gridY})")
         }
-
-        println("✅ Total ammo spawned: ${ammoPickups.size}")
     }
 
     // Kiểm tra player có thu thập ammo không
-    fun checkAmmoCollection(playerX: Int, playerY: Int): Boolean {
-        println("🔍 Checking ammo collection at player position (${playerX}, ${playerY})")
-        println("📦 Active ammo count: ${getActiveAmmoPickups().size}")
-
+    fun checkAmmoCollection(playerX: Int, playerY: Int): AmmoType? {
         val collectedAmmo = ammoPickups.find { ammo ->
-            !ammo.isCollected && ammo.gridX == playerX && ammo.gridY == playerY
+            !ammo.isCollected && ammo.gridX == playerY && ammo.gridY == playerX
         }
 
         if (collectedAmmo != null) {
             collectedAmmo.isCollected = true
             ammoPickups.remove(collectedAmmo)
-            println("🎁 Player collected ammo at (${playerX}, ${playerY})!")
-            println("📦 Remaining ammo: ${getActiveAmmoPickups().size}")
-            return true
+            return collectedAmmo.ammoType
         }
 
-        return false
+        return null
+    }
+
+    fun getAmmoCountByType(type: AmmoType): Int {
+        return ammoPickups.count { !it.isCollected && it.ammoType == type }
     }
 
     fun getActiveAmmoPickups(): List<AmmoPickup> {

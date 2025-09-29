@@ -1,5 +1,9 @@
 package com.example.myapplication.entities
 
+enum class BulletType {
+    NORMAL, PIERCE
+}
+
 enum class BulletDirection {
     UP, DOWN, LEFT, RIGHT
 }
@@ -12,8 +16,12 @@ data class Bullet(
     val targetY: Float,
     val direction: BulletDirection,  // Hướng của bullet
     val speed: Float = 800.0f,  // Tăng speed mặc định
-    var isActive: Boolean = true
+    var isActive: Boolean = true,
+    var bulletType: BulletType = BulletType.NORMAL,  // Loại bullet
+    val scale: Float = 1.0f,  // 🆕 Scale cho bullet size (pierce = 3.0f)
 ) {
+    var hitMonsters = mutableSetOf<String>()  // Danh sách monster bị trúng
+
     fun getDirection():Pair<Float, Float> {
         val dx = targetX - currentX
         val dy = targetY - currentY
@@ -22,14 +30,28 @@ data class Bullet(
         return Pair(dx / distance, dy / distance)
     }
 
-    fun collidesWith(monsterX: Float, monsterY: Float, threshold: Float = 40f): Boolean {
+    fun collidesWith(monsterX: Float, monsterY: Float, threshold: Float = 40f, monsterId: String): Boolean {
         val dx = currentX - monsterX
         val dy = currentY - monsterY-77
         val distance = kotlin.math.sqrt(dx * dx + dy * dy)
         // Trong Bullet.collidesWith
         println("🔍 Bullet at (${currentX.toInt()}, ${currentY.toInt()}) checking monster at (${monsterX.toInt()}, ${monsterY.toInt()}), distance: $distance")
 
-        return distance < threshold
+        if(distance>=threshold) return false
+        when(bulletType) {
+            BulletType.NORMAL -> {
+                return true
+            }
+            BulletType.PIERCE -> {
+                // Đạn xuyên: chỉ return true nếu chưa va chạm monster này
+                return if (monsterId !in hitMonsters) {
+                    hitMonsters.add(monsterId)
+                    true  // Va chạm và tiếp tục bay
+                } else {
+                    false // Đã va chạm monster này rồi, bỏ qua
+                }
+            }
+        }
     }
 
     fun isOutOfBounds(screenWidth: Float, screenHeight: Float): Boolean {

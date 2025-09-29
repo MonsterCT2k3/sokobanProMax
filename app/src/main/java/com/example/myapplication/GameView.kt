@@ -16,6 +16,8 @@ import com.example.myapplication.input.InputHandler
 import com.example.myapplication.managers.MusicManager
 import com.example.myapplication.managers.SoundManager
 import com.example.myapplication.entities.AmmoPickup
+import com.example.myapplication.entities.AmmoType
+import com.example.myapplication.entities.BulletType
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
 import com.example.myapplication.systems.AmmoSystem
@@ -73,8 +75,10 @@ class GameView @JvmOverloads constructor(
     // ===== ANIMATION =====
     private var animationTime = 0f                         // Thời gian để tính animation
     private var lastUpdateTime = 0L                        // Thời gian lần cuối update animation
-    private var playerAmmo = 5  // Bắt đầu với 5 viên đạn
-    private val maxAmmo = 5
+    private var normalAmmo = 5
+    private var pierceAmmo = 5
+    private val maxAmmoPerType = 5
+    private var currentBulletType = BulletType.NORMAL
 
     init {
         initGame()
@@ -93,6 +97,13 @@ class GameView @JvmOverloads constructor(
         inputHandler.setPlayerMoveListener(this)    // GameView lắng nghe input từ InputHandler
 
         loadAudioSettings()
+        resetAmmo()
+    }
+
+    private fun resetAmmo() {
+        normalAmmo = 5
+        pierceAmmo = 5
+        currentBulletType = BulletType.NORMAL
     }
 
     // ===== PUBLIC API METHODS =====
@@ -129,8 +140,8 @@ class GameView @JvmOverloads constructor(
         }
         ammoSystem.spawnRandomAmmo(gameLogic.getMap(), 3, excludePositions)
 
-        // 🆕 RESET AMMO (hoặc giữ từ level trước nếu muốn)
-        playerAmmo = 5  // Reset về 5 viên mỗi level
+        // 🆕 RESET AMMO về 0 mỗi level mới
+        resetAmmo()
 
         gameStateChanged = true
     }
@@ -281,19 +292,21 @@ class GameView @JvmOverloads constructor(
         }
 
         // ===== CHECK AMMO COLLECTION =====
-        val playerPos = gameLogic.getPlayerPosition()
-        if (ammoSystem.checkAmmoCollection(playerPos.second, playerPos.first)) {
-            // 🆕 TĂNG ĐẠN (TỐI ĐA 5)
-            if (playerAmmo < maxAmmo) {
-                playerAmmo++
-                println("💚 Ammo collected! Current ammo: $playerAmmo/$maxAmmo")
-
-                // 🆕 PHÁT ÂM THANH AMMO PICKUP
-                soundManager.playSound("ammo_pickup")
-            } else {
-                println("💚 Ammo collected but already at max ($maxAmmo)!")
-                // Vẫn phát âm thanh ngay cả khi đã max ammo
-                soundManager.playSound("ammo_pickup")
+        val collectedType = ammoSystem.checkAmmoCollection(playerX, playerY)
+        if (collectedType != null) {
+            when (collectedType) {
+                AmmoType.NORMAL -> {
+                    if (normalAmmo < maxAmmoPerType) {
+                        normalAmmo++
+                        soundManager.playSound("ammo_pickup")
+                    }
+                }
+                AmmoType.PIERCE -> {
+                    if (pierceAmmo < maxAmmoPerType) {
+                        pierceAmmo++
+                        soundManager.playSound("ammo_pickup")
+                    }
+                }
             }
         }
 
@@ -305,6 +318,7 @@ class GameView @JvmOverloads constructor(
 
         // ===== CHECK BULLET COLLISIONS =====
         // Kiểm tra bullets có chạm monsters không
+        val monsterIds = monsterSystem.getActiveMonsters().map { it.id }
         val monsterPositions = monsterSystem.getActiveMonsters().map { monster ->
             // Convert grid coordinates to screen coordinates
             val screenX = offsetX + monster.currentY * tileSize  // currentY là column
@@ -312,7 +326,7 @@ class GameView @JvmOverloads constructor(
             Pair(screenX, screenY)
         }
 
-        val collisions = bulletSystem.checkCollisions(monsterPositions)
+        val collisions = bulletSystem.checkCollisions(monsterPositions, monsterIds)
 
         // DEBUG: Log monster positions
         println("🎯 Checking ${monsterPositions.size} monsters for collisions")
@@ -392,9 +406,6 @@ class GameView @JvmOverloads constructor(
             gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), gameLogic.getPlayerDirection(), monsters)
         }
 
-        // 🆕 DRAW AMMO UI
-        gameRenderer.drawAmmoUI(canvas, playerAmmo, maxAmmo, width.toFloat(), height.toFloat())
-
         // 🆕 DRAW AMMO PICKUPS
         if (!gameLogic.isMapEmpty()) {
             val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap()).toFloat()
@@ -418,6 +429,9 @@ class GameView @JvmOverloads constructor(
         // 3. 🖼️ Vẽ UI elements cuối cùng (trên cùng)
         //    Title, instructions, score, etc.
         gameRenderer.drawGameUI(canvas)
+
+        // 🆕 DRAW BULLET TYPE BUTTONS (ở phía dưới)
+        gameRenderer.drawBulletTypeButtons(canvas, normalAmmo, pierceAmmo, width.toFloat(), height.toFloat(), currentBulletType)
     }
 
 
@@ -438,6 +452,20 @@ class GameView @JvmOverloads constructor(
                 toggleSound()
                 return true
             }
+
+            // 🆕 Kiểm tra nút Normal Bullet
+            if (isTouchOnBulletTypeButton(touchX, touchY, "normal")) {
+                currentBulletType = BulletType.NORMAL
+                soundManager.playSound("button_click")
+                return true
+            }
+
+            // 🆕 Kiểm tra nút Pierce Bullet
+            if (isTouchOnBulletTypeButton(touchX, touchY, "pierce")) {
+                currentBulletType = BulletType.PIERCE
+                soundManager.playSound("button_click")
+                return true
+            }
         }
 
         // 🔄 DELEGATE CHO INPUT HANDLER TRƯỚC
@@ -453,12 +481,18 @@ class GameView @JvmOverloads constructor(
             MotionEvent.ACTION_UP -> {
                 // 🎯 BẮN ĐẠN THEO HƯỚNG PLAYER
 
-                if (playerAmmo <= 0) {
-                    println("❌ Out of ammo!")
+                // Check xem có đủ ammo cho loại đạn đã chọn không
+                val hasAmmo = when (currentBulletType) {
+                    BulletType.NORMAL -> normalAmmo > 0
+                    BulletType.PIERCE -> pierceAmmo > 0
+                }
+
+                if (!hasAmmo) {
+                    println("❌ Out of ${currentBulletType} ammo!")
                     return true  // Không bắn được
                 }
 
-                // 1️⃣ Lấy vị trí player trên grid
+                // 1️⃣ Lấy vị trí player trên grid và hướng player
                 val playerPos = gameLogic.getPlayerPosition()
                 val playerDirection = gameLogic.getPlayerDirection()
 
@@ -470,33 +504,34 @@ class GameView @JvmOverloads constructor(
                 val playerScreenX = offsetX + playerPos.second * tileSize + tileSize/2  // Center X
                 val playerScreenY = offsetY + playerPos.first * tileSize + tileSize/2   // Center Y
 
-                println("🎯 Player position: Grid(${playerPos.first}, ${playerPos.second}) -> Screen(${playerScreenX.toInt()}, ${playerScreenY.toInt()})")
-
-                // 4️⃣ Tính target position dựa trên hướng player (TĂNG KHOẢNG CÁCH!)
+                // 4️⃣ Tính target position dựa trên hướng player (như cũ)
                 val targetX = when (playerDirection) {
-                    PlayerDirection.LEFT -> playerScreenX - 2000f    // Bắn sang trái xa hơn
-                    PlayerDirection.RIGHT -> playerScreenX + 2000f   // Bắn sang phải xa hơn
-                    PlayerDirection.UP -> playerScreenX             // Giữ nguyên X
-                    PlayerDirection.DOWN -> playerScreenX           // Giữ nguyên X
+                    PlayerDirection.LEFT -> playerScreenX - 2000f
+                    PlayerDirection.RIGHT -> playerScreenX + 2000f
+                    PlayerDirection.UP -> playerScreenX
+                    PlayerDirection.DOWN -> playerScreenX
                 }
 
                 val targetY = when (playerDirection) {
-                    PlayerDirection.LEFT -> playerScreenY           // Giữ nguyên Y
-                    PlayerDirection.RIGHT -> playerScreenY          // Giữ nguyên Y
-                    PlayerDirection.UP -> playerScreenY - 800f      // Bắn lên trên xa hơn
-                    PlayerDirection.DOWN -> playerScreenY + 800f    // Bắn xuống dưới xa hơn
+                    PlayerDirection.LEFT -> playerScreenY
+                    PlayerDirection.RIGHT -> playerScreenY
+                    PlayerDirection.UP -> playerScreenY - 800f
+                    PlayerDirection.DOWN -> playerScreenY + 800f
                 }
 
                 // 5️⃣ Bắn đạn theo hướng player
-                bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY)
+                bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY, currentBulletType)
 
-                // Giảm ammo và in ra debug
-                playerAmmo--
-                println("🔫 Player ammo: $playerAmmo/$maxAmmo")
+                // Giảm ammo tương ứng
+                when (currentBulletType) {
+                    BulletType.NORMAL -> normalAmmo--
+                    BulletType.PIERCE -> pierceAmmo--
+                }
+
+                println("🔫 Fired ${currentBulletType} bullet in direction: $playerDirection. Normal: $normalAmmo, Pierce: $pierceAmmo")
 
                 // 🆕 THÊM ÂM THANH BẮN ĐẠN
                 soundManager.playSound("shoot")
-                println("🎯 Player fired bullet in direction: $playerDirection")
 
                 return true
             }
@@ -504,6 +539,7 @@ class GameView @JvmOverloads constructor(
 
         return super.onTouchEvent(event)
     }
+
 
 
     override fun onAttachedToWindow() {
@@ -717,6 +753,32 @@ class GameView @JvmOverloads constructor(
             "music" -> android.graphics.RectF(20f, buttonY, 20f + buttonSize, buttonY + buttonSize)
             "sound" -> android.graphics.RectF(width - buttonSize - 20f, buttonY,
                 width - 20f, buttonY + buttonSize)
+            else -> return false
+        }
+
+        return buttonRect.contains(x, y)
+    }
+
+    // 🆕 CHECK TOUCH TRÊN NÚT CHỌN LOẠI ĐẠN
+    private fun isTouchOnBulletTypeButton(x: Float, y: Float, buttonType: String): Boolean {
+        val buttonWidth = 200f  // 🆕 Cập nhật kích thước mới
+        val buttonHeight = 100f // 🆕 Cập nhật kích thước mới
+        val buttonSpacing = 30f  // 🆕 Cập nhật spacing mới
+        val bottomMargin = 150f  // 🆕 Cập nhật margin mới (xa đáy màn hình thêm 70px nữa)
+
+        val buttonRect = when (buttonType) {
+            "normal" -> android.graphics.RectF(
+                width / 2f - buttonWidth - buttonSpacing / 2,
+                height - buttonHeight - bottomMargin,
+                width / 2f - buttonSpacing / 2,
+                height - bottomMargin
+            )
+            "pierce" -> android.graphics.RectF(
+                width / 2f + buttonSpacing / 2,
+                height - buttonHeight - bottomMargin,
+                width / 2f + buttonWidth + buttonSpacing / 2,
+                height - bottomMargin
+            )
             else -> return false
         }
 

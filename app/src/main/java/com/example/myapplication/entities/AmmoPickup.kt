@@ -4,7 +4,8 @@ data class AmmoPickup(
     val id: String,
     val gridX: Int,    // Vị trí trên lưới
     val gridY: Int,
-    var isCollected: Boolean = false
+    var isCollected: Boolean = false,
+    var ammoType: AmmoType = AmmoType.NORMAL
 ) {
     fun getScreenPosition(tileSize: Float, offsetX: Float, offsetY: Float): Pair<Float, Float> {
         val screenX = offsetX + gridX * tileSize + tileSize / 2

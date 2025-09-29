@@ -2,6 +2,7 @@ package com.example.myapplication.systems
 
 import com.example.myapplication.entities.Bullet
 import com.example.myapplication.entities.BulletDirection
+import com.example.myapplication.entities.BulletType
 
 class BulletSystem {
     private val bullets = mutableListOf<Bullet>()
@@ -11,7 +12,7 @@ class BulletSystem {
     val bulletsHitWallTemp = mutableListOf<Bullet>()
 
     //public method to add a bullet
-    fun addBullet(startX: Float, startY: Float, targetX: Float, targetY: Float) {
+    fun addBullet(startX: Float, startY: Float, targetX: Float, targetY: Float, bulletType: BulletType = BulletType.NORMAL) {
         // Đảm bảo có khoảng cách tối thiểu để bullet có hướng rõ ràng
         val dx = targetX - startX
         val dy = targetY - startY
@@ -40,6 +41,11 @@ class BulletSystem {
             targetY
         }
 
+        val bulletScale = when (bulletType) {
+            BulletType.NORMAL -> 1.0f
+            BulletType.PIERCE -> 3.0f  // 🆕 Pierce bullets to hơn 3 lần
+        }
+
         val bullet = Bullet(
             id = "bullet_${nextBulletId++}",
             currentX = startX,
@@ -48,11 +54,22 @@ class BulletSystem {
             targetY = finalTargetY,
             direction = bulletDirection,  // Thêm hướng của bullet
             speed = 800.0f,  // Tăng tốc độ để bullet bay nhanh hơn
-            isActive = true
+            isActive = true,
+            bulletType = bulletType,
+            scale = bulletScale
         )
 
         bullets.add(bullet)
-        println("🎯 Bullet created: ${bullet.id}")
+    }
+
+    // Method mới để bắn đạn theo direction vector (dễ sử dụng hơn)
+    fun fireBullet(startX: Float, startY: Float, directionX: Float, directionY: Float, bulletType: BulletType = BulletType.NORMAL) {
+        // Tính target position xa để bullet bay theo hướng đó
+        val distance = 2000f  // Khoảng cách xa
+        val targetX = startX + directionX * distance
+        val targetY = startY + directionY * distance
+
+        addBullet(startX, startY, targetX, targetY, bulletType)
     }
 
     fun updateBullets(deltaTime: Float, screenWidth: Float, screenHeight: Float, map: Array<CharArray>, tileSize: Float, offsetX: Float, offsetY: Float) {
@@ -91,6 +108,7 @@ class BulletSystem {
         bullets.removeAll(bulletsToRemove)
     }
 
+
     private fun isBulletHitWall(bullet: Bullet, map: Array<CharArray>, tileSize: Float, offsetX: Float, offsetY: Float): Boolean {
         // Convert screen position to grid position
         val gridX = ((bullet.currentX - offsetX) / tileSize).toInt()
@@ -106,7 +124,7 @@ class BulletSystem {
         return cell == '#' || cell == 'B'
     }
 
-    fun checkCollisions(monsterPositions: List<Pair<Float, Float>>): List<Pair<Bullet, Int>> {
+    fun checkCollisions(monsterPositions: List<Pair<Float, Float>>, monsterIds: List<String>): List<Pair<Bullet, Int>> {
         val collisions = mutableListOf<Pair<Bullet, Int>>()
         bullets.forEach { bullet ->
             if (bullet.isActive) {  // Chỉ check collision cho active bullets
@@ -118,14 +136,16 @@ class BulletSystem {
                     )
                     println("📏 Distance from bullet ${bullet.id} to monster $monsterIndex: ${distance.toInt()}")
 
-                    if (bullet.collidesWith(monsterX, monsterY)) {
+                    if (bullet.collidesWith(monsterX, monsterY, monsterId = monsterIds[monsterIndex])){
                         collisions.add(Pair(bullet, monsterIndex))
-                        bullet.isActive = false
-                        println("💥 Bullet ${bullet.id} hit monster ${monsterIndex} at (${monsterX.toInt()}, ${monsterY.toInt()}) - Bullet position: (${bullet.currentX.toInt()}, ${bullet.currentY.toInt()})")
+                        if (bullet.bulletType == BulletType.NORMAL){
+                            bullet.isActive = false
+                        }
                     }
                 }
             }
         }
+        bullets.removeAll { !it.isActive }
         return collisions
     }
 
