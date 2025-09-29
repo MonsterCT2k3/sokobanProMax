@@ -27,7 +27,7 @@ class AmmoSystem {
         println("🎯 Found ${validPositions.size} valid positions for ammo")
         println("🎯 Map size: ${map.size} rows x ${map[0].size} cols")
 
-        val ammoTypes = listOf(AmmoType.NORMAL, AmmoType.PIERCE)
+        val ammoTypes = listOf(AmmoType.NORMAL, AmmoType.NORMAL, AmmoType.PIERCE, AmmoType.STUN)  // 50% normal, 25% pierce, 25% stun
 
         // Chọn ngẫu nhiên các vị trí
         validPositions.shuffle()

@@ -24,9 +24,15 @@ class MonsterSystem {
     fun updateMonsters(deltaTime:Float, playerX: Int, playerY: Int, map:Array<CharArray>) {
         monsters.forEach { monster ->
             if(monster.isActive) {
-                updateMonsterAI(monster, playerX, playerY, map)
-                updateMonsterMovement(monster, deltaTime, map)
-                updateMonsterDirection(monster)
+                // Update stun status
+                monster.updateStun(deltaTime)
+
+                // Nếu không bị stun thì update AI và di chuyển
+                if (!monster.isStunned()) {
+                    updateMonsterAI(monster, playerX, playerY, map)
+                    updateMonsterMovement(monster, deltaTime, map)
+                    updateMonsterDirection(monster)
+                }
             }
         }
     }
@@ -313,8 +319,8 @@ class MonsterSystem {
             return false
         }
 
-        // Check không phải tường
-        if (map[x][y] == '#' || map[x][y] == 'B') {
+        // Check không phải tường và không phải safe zone (ô dành riêng cho player)
+        if (map[x][y] == '#' || map[x][y] == 'B' || map[x][y] == 'S') {
             return false
         }
 
@@ -421,6 +427,17 @@ class MonsterSystem {
             println("💀 Monster ${monsterToRemove.id} (index $index) removed!")
         } else {
             println("❌ Invalid monster index $index, cannot remove!")
+        }
+    }
+
+    // 🆕 Stun monster tại index
+    fun stunMonster(index: Int, duration: Float = 5.0f) {
+        if (index >= 0 && index < monsters.size) {
+            val monster = monsters[index]
+            monster.stun(duration)
+            println("⚡ Monster ${monster.id} stunned for ${duration}s!")
+        } else {
+            println("❌ Invalid monster index $index, cannot stun!")
         }
     }
 

@@ -80,8 +80,10 @@ class GameView @JvmOverloads constructor(
     private var lastUpdateTime = 0L                        // Thời gian lần cuối update animation
     private var normalAmmo = 5
     private var pierceAmmo = 5
+    private var stunAmmo = 5
     private val maxAmmoPerType = 5
     private var currentBulletType = BulletType.NORMAL
+    private var buildMode = false
 
     // 🆕 LIVES SYSTEM
     private var lives = 3
@@ -110,11 +112,128 @@ class GameView @JvmOverloads constructor(
     private fun resetAmmo() {
         normalAmmo = 5
         pierceAmmo = 5
+        stunAmmo = 5
         currentBulletType = BulletType.NORMAL
+        buildMode = false
     }
 
     private fun resetLives() {
         lives = 3
+    }
+
+    // 🆕 METHOD BẮN ĐẠN
+    private fun fireBullet() {
+        // Check xem có đủ ammo cho loại đạn đã chọn không
+        val hasAmmo = when (currentBulletType) {
+            BulletType.NORMAL -> normalAmmo > 0
+            BulletType.PIERCE -> pierceAmmo > 0
+            BulletType.STUN -> stunAmmo > 0
+        }
+
+        if (!hasAmmo) {
+            println("❌ Out of ${currentBulletType} ammo!")
+            return
+        }
+
+        // 1️⃣ Lấy vị trí player trên grid và hướng player
+        val playerPos = gameLogic.getPlayerPosition()
+        val playerDirection = gameLogic.getPlayerDirection()
+
+        // 2️⃣ Convert grid position → screen position
+        val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap())
+        val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
+
+        // 3️⃣ Tính vị trí player trên màn hình (CENTER của tile)
+        val playerScreenX = offsetX + playerPos.second * tileSize + tileSize/2  // Center X
+        val playerScreenY = offsetY + playerPos.first * tileSize + tileSize/2   // Center Y
+
+        // 4️⃣ Tính target position dựa trên hướng player
+        val targetX = when (playerDirection) {
+            PlayerDirection.LEFT -> playerScreenX - 2000f
+            PlayerDirection.RIGHT -> playerScreenX + 2000f
+            PlayerDirection.UP -> playerScreenX
+            PlayerDirection.DOWN -> playerScreenX
+        }
+
+        val targetY = when (playerDirection) {
+            PlayerDirection.LEFT -> playerScreenY
+            PlayerDirection.RIGHT -> playerScreenY
+            PlayerDirection.UP -> playerScreenY - 800f
+            PlayerDirection.DOWN -> playerScreenY + 800f
+        }
+
+        // 5️⃣ Bắn đạn theo hướng player
+        bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY, currentBulletType)
+
+        // Giảm ammo tương ứng
+        when (currentBulletType) {
+            BulletType.NORMAL -> normalAmmo--
+            BulletType.PIERCE -> pierceAmmo--
+            BulletType.STUN -> stunAmmo--
+        }
+
+        println("🔫 Fired ${currentBulletType} bullet in direction: $playerDirection")
+
+        // Phát âm thanh bắn đạn
+        soundManager.playSound("shoot")
+    }
+
+    // 🆕 METHOD SPAWN SAFE ZONES TRÊN MAP
+    private fun spawnSafeZones(map: Array<CharArray>, count: Int, excludePositions: List<Pair<Int, Int>> = emptyList()) {
+        val validPositions = mutableListOf<Pair<Int, Int>>()
+
+        // Tìm tất cả vị trí hợp lệ (không phải tường, không phải hộp, không phải goal, không phải vị trí loại trừ)
+        for (y in map.indices) {
+            for (x in map[y].indices) {
+                val position = Pair(x, y)
+                val cell = map[y][x]
+                if (cell == '.' && position !in excludePositions) {  // Chỉ trên ô trống, không phải goal, box, wall
+                    validPositions.add(position)
+                }
+            }
+        }
+
+        // Chọn ngẫu nhiên các vị trí
+        validPositions.shuffle()
+        val selectedPositions = validPositions.take(count.coerceAtMost(validPositions.size))
+
+        // Đặt 'S' tại các vị trí đã chọn
+        for ((gridX, gridY) in selectedPositions) {
+            map[gridY][gridX] = 'S'  // gridY là row, gridX là col
+            println("🛡️ Spawned safe zone at ($gridX, $gridY)")
+        }
+
+        println("✅ Spawned ${selectedPositions.size} safe zones")
+    }
+
+    // 🆕 METHOD XÂY TƯỜNG Ở PHÍA TRƯỚC PLAYER
+    private fun buildWallInFront() {
+        val playerPos = gameLogic.getPlayerPosition()
+        val playerDirection = gameLogic.getPlayerDirection()
+
+        // Tính vị trí ô phía trước player
+        val (frontRow, frontCol) = when (playerDirection) {
+            PlayerDirection.UP -> Pair(playerPos.first - 1, playerPos.second)
+            PlayerDirection.DOWN -> Pair(playerPos.first + 1, playerPos.second)
+            PlayerDirection.LEFT -> Pair(playerPos.first, playerPos.second - 1)
+            PlayerDirection.RIGHT -> Pair(playerPos.first, playerPos.second + 1)
+        }
+
+        // Kiểm tra bounds và không xây trên player hoặc goal
+        val map = gameLogic.getMap()
+        if (frontRow in map.indices && frontCol in map[frontRow].indices) {
+            val currentCell = map[frontRow][frontCol]
+            if (currentCell == '.' || currentCell == ' ') {  // Chỉ xây trên ô trống
+                map[frontRow][frontCol] = '#'  // Xây tường
+                println("🧱 Built wall at ($frontRow, $frontCol)")
+                soundManager.playSound("bump_wall")  // Phát âm thanh xây tường
+                gameStateChanged = true  // Trigger redraw
+            } else {
+                println("❌ Cannot build wall at ($frontRow, $frontCol) - cell: $currentCell")
+            }
+        } else {
+            println("❌ Cannot build wall - out of bounds ($frontRow, $frontCol)")
+        }
     }
 
 
@@ -158,6 +277,9 @@ class GameView @JvmOverloads constructor(
 
         // 🆕 SPAWN LIVES PICKUPS
         livesSystem.spawnRandomLives(gameLogic.getMap(), 1, excludePositions)
+
+        // 🆕 SPAWN SAFE ZONES (ô 'S' - chỉ player đi vào được)
+        spawnSafeZones(gameLogic.getMap(), 2, excludePositions)
 
         gameStateChanged = true
     }
@@ -329,6 +451,15 @@ class GameView @JvmOverloads constructor(
                     soundManager.playSound("ammo_pickup")  // Tạm dùng cùng sound
 
                 }
+                AmmoType.STUN -> {
+                    if (stunAmmo < maxAmmoPerType) {
+                        stunAmmo++
+                        soundManager.playSound("ammo_pickup")
+                        println("🔫 Collected stun ammo! Stun ammo: $stunAmmo/$maxAmmoPerType")
+                    } else {
+                        println("🔫 Stun ammo already at max ($maxAmmoPerType)")
+                    }
+                }
             }
         }
 
@@ -372,20 +503,36 @@ class GameView @JvmOverloads constructor(
         // DEBUG: Log collisions found
         println("💥 Found ${collisions.size} collisions")
         collisions.forEach { (bullet, monsterIndex) ->
-            println("🎯 Processing collision: bullet ${bullet.id} hit monster $monsterIndex")
+            println("🎯 Processing collision: ${bullet.bulletType} bullet ${bullet.id} hit monster $monsterIndex")
 
-            // 🆕 XỬ LÝ KHI BULLET CHẠM MONSTER
-            monsterSystem.removeMonster(monsterIndex)  // Xóa monster
+            when (bullet.bulletType) {
+                BulletType.NORMAL, BulletType.PIERCE -> {
+                    // NORMAL/PIERCE: XÓA MONSTER
+                    monsterSystem.removeMonster(monsterIndex)
 
-            // 🆕 TẠO EXPLOSION TẠI VỊ TRÍ MONSTER
-            val monsterPos = monsterPositions[monsterIndex]
-            println("💥 Creating explosion at (${monsterPos.first.toInt()}, ${monsterPos.second.toInt()})")
-            particleSystem.createExplosion(monsterPos.first, monsterPos.second)
+                    // Tạo explosion
+                    val monsterPos = monsterPositions[monsterIndex]
+                    println("💥 Creating explosion at (${monsterPos.first.toInt()}, ${monsterPos.second.toInt()})")
+                    particleSystem.createExplosion(monsterPos.first, monsterPos.second)
 
-            // Phát âm thanh
-            soundManager.playSound("monster_hit")
+                    // Phát âm thanh
+                    soundManager.playSound("monster_hit")
+                    println("💥 Bullet destroyed monster $monsterIndex!")
+                }
+                BulletType.STUN -> {
+                    // STUN: CHOÁNG VÁNG MONSTER 5 GIÂY
+                    println("⚡ STUN bullet hit! Processing stun for monster $monsterIndex")
+                    monsterSystem.stunMonster(monsterIndex, 5.0f)
 
-            println("💥 Bullet destroyed monster $monsterIndex!")
+                    // Tạo hiệu ứng stun (có thể tạo particle khác hoặc effect khác)
+                    val monsterPos = monsterPositions[monsterIndex]
+                    println("⚡ Stunning monster at (${monsterPos.first.toInt()}, ${monsterPos.second.toInt()})")
+
+                    // Phát âm thanh khác cho stun
+                    soundManager.playSound("monster_hit")  // Có thể dùng sound khác sau
+                    println("⚡ Monster $monsterIndex stunned for 5 seconds!")
+                }
+            }
         }
 
         // 🆕 UPDATE PARTICLES
@@ -473,7 +620,7 @@ class GameView @JvmOverloads constructor(
         gameRenderer.drawGameUI(canvas)
 
         // 🆕 DRAW BULLET TYPE BUTTONS (ở phía dưới)
-        gameRenderer.drawBulletTypeButtons(canvas, normalAmmo, pierceAmmo, width.toFloat(), height.toFloat(), currentBulletType)
+        gameRenderer.drawBulletTypeButtons(canvas, normalAmmo, pierceAmmo, stunAmmo, width.toFloat(), height.toFloat(), currentBulletType, buildMode)
     }
 
 
@@ -508,6 +655,22 @@ class GameView @JvmOverloads constructor(
                 soundManager.playSound("button_click")
                 return true
             }
+
+            // 🆕 Kiểm tra nút Stun Bullet
+            if (isTouchOnBulletTypeButton(touchX, touchY, "stun")) {
+                currentBulletType = BulletType.STUN
+                buildMode = false  // Tắt build mode khi chọn đạn
+                soundManager.playSound("button_click")
+                return true
+            }
+
+            // 🆕 Kiểm tra nút Build Wall
+            if (isTouchOnBulletTypeButton(touchX, touchY, "build")) {
+                buildMode = !buildMode  // Toggle build mode
+                currentBulletType = BulletType.NORMAL  // Reset về normal bullet
+                soundManager.playSound("button_click")
+                return true
+            }
         }
 
         // 🔄 DELEGATE CHO INPUT HANDLER TRƯỚC
@@ -518,63 +681,16 @@ class GameView @JvmOverloads constructor(
             return true
         }
 
-        // Nếu InputHandler không xử lý (tap), thì bắn đạn
+        // Nếu InputHandler không xử lý (tap), thì xử lý theo chế độ
         when (event.action) {
             MotionEvent.ACTION_UP -> {
-                // 🎯 BẮN ĐẠN THEO HƯỚNG PLAYER
-
-                // Check xem có đủ ammo cho loại đạn đã chọn không
-                val hasAmmo = when (currentBulletType) {
-                    BulletType.NORMAL -> normalAmmo > 0
-                    BulletType.PIERCE -> pierceAmmo > 0
+                if (buildMode) {
+                    // 🆕 CHẾ ĐỘ XÂY TƯỜNG
+                    buildWallInFront()
+                } else {
+                    // 🎯 CHẾ ĐỘ BẮN ĐẠN
+                    fireBullet()
                 }
-
-                if (!hasAmmo) {
-                    println("❌ Out of ${currentBulletType} ammo!")
-                    return true  // Không bắn được
-                }
-
-                // 1️⃣ Lấy vị trí player trên grid và hướng player
-                val playerPos = gameLogic.getPlayerPosition()
-                val playerDirection = gameLogic.getPlayerDirection()
-
-                // 2️⃣ Convert grid position → screen position
-                val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap())
-                val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
-
-                // 3️⃣ Tính vị trí player trên màn hình (CENTER của tile)
-                val playerScreenX = offsetX + playerPos.second * tileSize + tileSize/2  // Center X
-                val playerScreenY = offsetY + playerPos.first * tileSize + tileSize/2   // Center Y
-
-                // 4️⃣ Tính target position dựa trên hướng player (như cũ)
-                val targetX = when (playerDirection) {
-                    PlayerDirection.LEFT -> playerScreenX - 2000f
-                    PlayerDirection.RIGHT -> playerScreenX + 2000f
-                    PlayerDirection.UP -> playerScreenX
-                    PlayerDirection.DOWN -> playerScreenX
-                }
-
-                val targetY = when (playerDirection) {
-                    PlayerDirection.LEFT -> playerScreenY
-                    PlayerDirection.RIGHT -> playerScreenY
-                    PlayerDirection.UP -> playerScreenY - 800f
-                    PlayerDirection.DOWN -> playerScreenY + 800f
-                }
-
-                // 5️⃣ Bắn đạn theo hướng player
-                bulletSystem.addBullet(playerScreenX, playerScreenY, targetX, targetY, currentBulletType)
-
-                // Giảm ammo tương ứng
-                when (currentBulletType) {
-                    BulletType.NORMAL -> normalAmmo--
-                    BulletType.PIERCE -> pierceAmmo--
-                }
-
-                println("🔫 Fired ${currentBulletType} bullet in direction: $playerDirection. Normal: $normalAmmo, Pierce: $pierceAmmo")
-
-                // 🆕 THÊM ÂM THANH BẮN ĐẠN
-                soundManager.playSound("shoot")
-
                 return true
             }
         }
@@ -771,7 +887,7 @@ class GameView @JvmOverloads constructor(
             }
         } else {
             // VẪN CÒN MẠNG - CHỈ TRỪ MẠNG, TIẾP TỤC CHƠI TỪ VỊ TRÍ HIỆN TẠI
-            soundManager.playSound("game_over")  // Hoặc sound khác cho mất mạng
+            soundManager.playSound("loose_health")  // Hoặc sound khác cho mất mạng
             println("💔 Lost a life! Lives remaining: $lives/$maxLives")
 
             // Reset monsters về vị trí ban đầu (để tránh bị spawn trap)
@@ -825,22 +941,34 @@ class GameView @JvmOverloads constructor(
 
     // 🆕 CHECK TOUCH TRÊN NÚT CHỌN LOẠI ĐẠN
     private fun isTouchOnBulletTypeButton(x: Float, y: Float, buttonType: String): Boolean {
-        val buttonWidth = 200f  // 🆕 Cập nhật kích thước mới
-        val buttonHeight = 100f // 🆕 Cập nhật kích thước mới
-        val buttonSpacing = 30f  // 🆕 Cập nhật spacing mới
-        val bottomMargin = 150f  // 🆕 Cập nhật margin mới (xa đáy màn hình thêm 70px nữa)
+        val buttonWidth = 150f  // Cập nhật kích thước mới cho 3 nút
+        val buttonHeight = 120f
+        val buttonSpacing = 20f
+        val bottomMargin = 150f
 
         val buttonRect = when (buttonType) {
             "normal" -> android.graphics.RectF(
-                width / 2f - buttonWidth - buttonSpacing / 2,
+                width / 2f - buttonWidth * 1.5f - buttonSpacing,
                 height - buttonHeight - bottomMargin,
-                width / 2f - buttonSpacing / 2,
+                width / 2f - buttonWidth * 0.5f - buttonSpacing / 2,
                 height - bottomMargin
             )
             "pierce" -> android.graphics.RectF(
-                width / 2f + buttonSpacing / 2,
+                width / 2f - buttonWidth * 0.5f,
                 height - buttonHeight - bottomMargin,
-                width / 2f + buttonWidth + buttonSpacing / 2,
+                width / 2f + buttonWidth * 0.5f,
+                height - bottomMargin
+            )
+            "stun" -> android.graphics.RectF(
+                width / 2f + buttonWidth * 0.5f + buttonSpacing / 2,
+                height - buttonHeight - bottomMargin,
+                width / 2f + buttonWidth * 1.5f + buttonSpacing,
+                height - bottomMargin
+            )
+            "build" -> android.graphics.RectF(
+                width / 2f + buttonWidth * 1.5f + buttonSpacing * 1.5f,
+                height - buttonHeight - bottomMargin,
+                width / 2f + buttonWidth * 2.5f + buttonSpacing * 2,
                 height - bottomMargin
             )
             else -> return false

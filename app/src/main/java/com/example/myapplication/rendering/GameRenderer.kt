@@ -200,6 +200,7 @@ class GameRenderer(private val context: Context) {
                 '#' to drawableToBitmap(wall, tileSize),
                 'B' to drawableToBitmap(box, tileSize),
                 'G' to drawableToBitmap(goal, tileSize),
+                'S' to drawableToBitmap(goal, tileSize),  // Safe zone dùng goal drawable
                 '.' to drawableToBitmap(floor, tileSize)
             )
         }
@@ -225,6 +226,23 @@ class GameRenderer(private val context: Context) {
                 // Vẽ tile (tường, hộp, mục tiêu, sàn)
                 val bitmap = bitmaps[map[i][j]] ?: bitmaps['.']!!
                 canvas.drawBitmap(bitmap, x, y, tilePaint)
+
+                // 🆕 Overlay cho safe zone (ô 'S')
+                if (map[i][j] == 'S') {
+                    val safeZonePaint = Paint().apply {
+                        color = Color.argb(120, 0, 150, 255)  // Màu xanh dương trong suốt
+                        style = Paint.Style.FILL
+                    }
+                    canvas.drawRect(x, y, x + tileSize, y + tileSize, safeZonePaint)
+
+                    // Vẽ viền xanh dương
+                    val borderPaint = Paint().apply {
+                        color = Color.rgb(0, 100, 200)
+                        style = Paint.Style.STROKE
+                        strokeWidth = 2f
+                    }
+                    canvas.drawRect(x, y, x + tileSize, y + tileSize, borderPaint)
+                }
             }
         }
 
@@ -326,6 +344,21 @@ class GameRenderer(private val context: Context) {
     private fun drawMonsters(canvas: Canvas, monsters: List<Monster>, tileSize: Int, offsetX: Float, offsetY: Float) {
         monsters.forEach { monster ->
             if (monster.isActive) {
+                // 🆕 Effect cho monster bị stun
+                if (monster.isStunned()) {
+                    // Vẽ hiệu ứng stun (vòng tròn tím xung quanh)
+                    val stunPaint = Paint().apply {
+                        color = Color.MAGENTA
+                        style = Paint.Style.STROKE
+                        strokeWidth = 3f
+                        alpha = 180
+                    }
+                    val stunRadius = tileSize * 0.6f
+                    val stunX = offsetX + monster.currentY * tileSize.toFloat()
+                    val stunY = offsetY + monster.currentX * tileSize.toFloat()
+                    canvas.drawCircle(stunX, stunY, stunRadius, stunPaint)
+                }
+
                 // 1️⃣ Lấy drawable cho monster
                 val monsterDrawable = getMonsterDrawable(monster.type)
                 
@@ -400,6 +433,7 @@ class GameRenderer(private val context: Context) {
                 val trailColor = when (bullet.bulletType) {
                     BulletType.NORMAL -> android.graphics.Color.YELLOW
                     BulletType.PIERCE -> android.graphics.Color.CYAN
+                    BulletType.STUN -> android.graphics.Color.MAGENTA
                 }
 
                 val trailPaint = Paint().apply {
@@ -701,25 +735,41 @@ class GameRenderer(private val context: Context) {
     }
 
     // 🆕 VẼ NÚT CHỌN LOẠI ĐẠN Ở PHÍA DƯỚI (to và dễ ấn)
-    fun drawBulletTypeButtons(canvas: Canvas, normalAmmo: Int, pierceAmmo: Int, screenWidth: Float, screenHeight: Float, selectedType: BulletType) {
-        val buttonWidth = 200f  // 🆕 Tăng từ 150f lên 200f
-        val buttonHeight = 150f // 🆕 Tăng từ 80f lên 100f
-        val buttonSpacing = 30f  // 🆕 Tăng từ 20f lên 30f
-        val bottomMargin = 150f  // 🆕 Tăng lên 150f để nút xa đáy màn hình thêm 70px nữa
+    fun drawBulletTypeButtons(canvas: Canvas, normalAmmo: Int, pierceAmmo: Int, stunAmmo: Int, screenWidth: Float, screenHeight: Float, selectedType: BulletType, buildMode: Boolean) {
+        val buttonWidth = 150f  // Giảm kích thước cho 3 nút
+        val buttonHeight = 120f
+        val buttonSpacing = 20f
+        val bottomMargin = 150f
 
         // Nút normal ammo (bên trái)
         val normalButtonRect = RectF(
-            screenWidth / 2 - buttonWidth - buttonSpacing / 2,
+            screenWidth / 2 - buttonWidth * 1.5f - buttonSpacing,
             screenHeight - buttonHeight - bottomMargin,
-            screenWidth / 2 - buttonSpacing / 2,
+            screenWidth / 2 - buttonWidth * 0.5f - buttonSpacing / 2,
             screenHeight - bottomMargin
         )
 
-        // Nút pierce ammo (bên phải)
+        // Nút pierce ammo (giữa)
         val pierceButtonRect = RectF(
-            screenWidth / 2 + buttonSpacing / 2,
+            screenWidth / 2 - buttonWidth * 0.5f,
             screenHeight - buttonHeight - bottomMargin,
-            screenWidth / 2 + buttonWidth + buttonSpacing / 2,
+            screenWidth / 2 + buttonWidth * 0.5f,
+            screenHeight - bottomMargin
+        )
+
+        // Nút stun ammo (bên phải)
+        val stunButtonRect = RectF(
+            screenWidth / 2 + buttonWidth * 0.5f + buttonSpacing / 2,
+            screenHeight - buttonHeight - bottomMargin,
+            screenWidth / 2 + buttonWidth * 1.5f + buttonSpacing,
+            screenHeight - bottomMargin
+        )
+
+        // Nút build wall (cạnh bên phải stun)
+        val buildButtonRect = RectF(
+            screenWidth / 2 + buttonWidth * 1.5f + buttonSpacing * 1.5f,
+            screenHeight - buttonHeight - bottomMargin,
+            screenWidth / 2 + buttonWidth * 2.5f + buttonSpacing * 2,
             screenHeight - bottomMargin
         )
 
@@ -783,9 +833,69 @@ class GameRenderer(private val context: Context) {
         // Vẽ số lượng pierce ammo
         canvas.drawText(
             "$pierceAmmo",
-            pierceButtonRect.centerX() + 25f,  // 🆕 Tăng từ 15f lên 25f
-            pierceButtonRect.centerY() + 10f,  // 🆕 Tăng từ 8f lên 10f
+            pierceButtonRect.centerX() + 15f,
+            pierceButtonRect.centerY() + 10f,
             textPaint
+        )
+
+        // Vẽ nút stun ammo
+        buttonPaint.color = if (selectedType == BulletType.STUN) Color.parseColor("#9933FF") else Color.parseColor("#DD6600CC")  // Màu tím cho stun
+        borderPaint.color = if (selectedType == BulletType.STUN) Color.MAGENTA else Color.GRAY
+        canvas.drawRoundRect(stunButtonRect, 10f, 10f, buttonPaint)
+        canvas.drawRoundRect(stunButtonRect, 10f, 10f, borderPaint)
+
+        // Vẽ icon stun ammo (⚡) ở bên trái
+        val stunIconPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 52f
+            textAlign = Paint.Align.LEFT
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 2f
+        }
+        canvas.drawText(
+            "⚡",
+            stunButtonRect.left + 30f,
+            stunButtonRect.centerY() + 10f,
+            stunIconPaint
+        )
+
+        // Vẽ số lượng stun ammo ở bên phải (cùng dòng)
+        val stunNumberPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 48f
+            textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+        canvas.drawText(
+            "$stunAmmo",
+            stunButtonRect.right - 40f,
+            stunButtonRect.centerY() + 10f,
+            stunNumberPaint
+        )
+
+        // Vẽ nút build wall
+        buttonPaint.color = if (buildMode) Color.parseColor("#FF6600") else Color.parseColor("#DD444444")  // Màu cam cho build
+        borderPaint.color = if (buildMode) Color.parseColor("#FFAA00") else Color.GRAY
+        canvas.drawRoundRect(buildButtonRect, 10f, 10f, buttonPaint)
+        canvas.drawRoundRect(buildButtonRect, 10f, 10f, borderPaint)
+
+        // Vẽ icon build wall (🧱 hoặc wall symbol)
+        val buildIconPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 32f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 2f
+        }
+        canvas.drawText(
+            "🧱",
+            buildButtonRect.centerX(),
+            buildButtonRect.centerY() + 10f,
+            buildIconPaint
         )
     }
 
@@ -853,6 +963,7 @@ class GameRenderer(private val context: Context) {
             val borderColor = when (ammo.ammoType) {
                 AmmoType.NORMAL -> Color.BLACK
                 AmmoType.PIERCE -> Color.CYAN
+                AmmoType.STUN -> Color.MAGENTA  // Tím cho stun ammo
             }
             val borderPaint = Paint().apply {
                 color = borderColor
@@ -861,10 +972,11 @@ class GameRenderer(private val context: Context) {
             }
             canvas.drawRect(backgroundRect, borderPaint)
 
-            // Vẽ hình ammo theo type - normal dùng item_bullet, pierce dùng rocket
+            // Vẽ hình ammo theo type - normal dùng item_bullet, pierce dùng rocket, stun dùng item_bullet với border khác
             val ammoDrawable = when (ammo.ammoType) {
                 AmmoType.NORMAL -> itemBullet
                 AmmoType.PIERCE -> rocket
+                AmmoType.STUN -> itemBullet  // STUN dùng item_bullet nhưng border khác
             }
 
             ammoDrawable?.let { drawable ->

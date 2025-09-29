@@ -10,7 +10,8 @@ data class Monster(
     var direction: MonsterDirection = MonsterDirection.DOWN,
     val speed: Float = 2.0f,
     var aiState: MonsterAIState? = null,
-    var isActive: Boolean = true
+    var isActive: Boolean = true,
+    var stunTime: Float = 0.0f  // 🆕 Thời gian còn lại bị stun (giây)
 ){
     fun hasReachedTarget(): Boolean {
         val threshold = 0.1f
@@ -21,6 +22,24 @@ data class Monster(
         val dx = currentX - playerX
         val dy = currentY - playerY
         return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+
+    // 🆕 Check xem monster có đang bị stun không
+    fun isStunned(): Boolean = stunTime > 0.0f
+
+    // 🆕 Stun monster trong thời gian nhất định
+    fun stun(duration: Float) {
+        stunTime = duration
+    }
+
+    // 🆕 Update stun time (gọi mỗi frame)
+    fun updateStun(deltaTime: Float) {
+        if (stunTime > 0.0f) {
+            stunTime -= deltaTime
+            if (stunTime < 0.0f) {
+                stunTime = 0.0f
+            }
+        }
     }
 }
 

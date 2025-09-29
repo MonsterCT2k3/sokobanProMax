@@ -10,6 +10,7 @@ class GameLogic {
     private var playerX: Int = 0
     private var playerY: Int = 0
     private val goalPositions = mutableSetOf<Pair<Int, Int>>()
+    private val safeZonePositions = mutableSetOf<Pair<Int, Int>>()  // Track safe zones
     private var currentLevel: Level? = null
     private var playerDirection = PlayerDirection.DOWN
     
@@ -38,6 +39,17 @@ class GameLogic {
             playerY = y
             goalPositions.clear()
             goalPositions.addAll(level.getGoalPositions())
+
+            // Scan và lưu vị trí safe zones
+            safeZonePositions.clear()
+            for (i in map.indices) {
+                for (j in map[i].indices) {
+                    if (map[i][j] == 'S') {
+                        safeZonePositions.add(Pair(i, j))  // (row, col)
+                    }
+                }
+            }
+
             isGameWon = false
             gameStateListener?.onGameStateChanged()
         }
@@ -59,7 +71,12 @@ class GameLogic {
                     // Di chuyển hộp
                     map[boxNewX][boxNewY] = 'B'
                     map[newX][newY] = '@'
-                    map[playerX][playerY] = if (goalPositions.contains(Pair(playerX, playerY))) 'G' else '.'
+                    // Khôi phục ký tự đúng khi player rời khỏi vị trí cũ
+                    map[playerX][playerY] = when {
+                        goalPositions.contains(Pair(playerX, playerY)) -> 'G'
+                        safeZonePositions.contains(Pair(playerX, playerY)) -> 'S'
+                        else -> '.'
+                    }
                     playerX = newX
                     playerY = newY
                     
@@ -71,10 +88,15 @@ class GameLogic {
             } else {
                 // Di chuyển người chơi
                 map[newX][newY] = '@'
-                map[playerX][playerY] = if (goalPositions.contains(Pair(playerX, playerY))) 'G' else '.'
+                // Khôi phục ký tự đúng khi player rời khỏi vị trí cũ
+                map[playerX][playerY] = when {
+                    goalPositions.contains(Pair(playerX, playerY)) -> 'G'
+                    safeZonePositions.contains(Pair(playerX, playerY)) -> 'S'
+                    else -> '.'
+                }
                 playerX = newX
                 playerY = newY
-                
+
                 // Kiểm tra win condition
                 checkWinCondition()
                 gameStateListener?.onGameStateChanged()
@@ -85,7 +107,8 @@ class GameLogic {
     }
     
     private fun isValidMove(x: Int, y: Int): Boolean {
-        return x >= 0 && x < map.size && y >= 0 && y < map[0].size && map[x][y] != '#'
+        return x >= 0 && x < map.size && y >= 0 && y < map[0].size &&
+               map[x][y] != '#'  // Player có thể đi vào ô trống '.', 'G' (goal), 'S' (safe zone)
     }
     
     private fun checkWinCondition() {

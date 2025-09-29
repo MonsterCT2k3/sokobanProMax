@@ -43,7 +43,8 @@ class BulletSystem {
 
         val bulletScale = when (bulletType) {
             BulletType.NORMAL -> 1.0f
-            BulletType.PIERCE -> 3.0f  // 🆕 Pierce bullets to hơn 3 lần
+            BulletType.PIERCE -> 3.0f  // Pierce bullets to hơn 3 lần
+            BulletType.STUN -> 2.0f    // Stun bullets to hơn 2 lần
         }
 
         val bullet = Bullet(
@@ -138,7 +139,8 @@ class BulletSystem {
 
                     if (bullet.collidesWith(monsterX, monsterY, monsterId = monsterIds[monsterIndex])){
                         collisions.add(Pair(bullet, monsterIndex))
-                        if (bullet.bulletType == BulletType.NORMAL){
+                        // NORMAL và STUN bullets dừng lại sau khi va chạm, PIERCE tiếp tục bay
+                        if (bullet.bulletType == BulletType.NORMAL || bullet.bulletType == BulletType.STUN){
                             bullet.isActive = false
                         }
                     }

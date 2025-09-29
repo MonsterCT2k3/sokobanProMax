@@ -1,7 +1,7 @@
 package com.example.myapplication.entities
 
 enum class BulletType {
-    NORMAL, PIERCE
+    NORMAL, PIERCE, STUN
 }
 
 enum class BulletDirection {
@@ -50,6 +50,11 @@ data class Bullet(
                 } else {
                     false // Đã va chạm monster này rồi, bỏ qua
                 }
+            }
+
+            BulletType.STUN -> {
+                // Đạn choáng: va chạm 1 monster và dừng lại (như NORMAL)
+                return true
             }
         }
     }
