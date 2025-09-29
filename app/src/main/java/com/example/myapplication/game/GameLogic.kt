@@ -10,7 +10,6 @@ class GameLogic {
     private var playerX: Int = 0
     private var playerY: Int = 0
     private val goalPositions = mutableSetOf<Pair<Int, Int>>()
-    private val safeZonePositions = mutableSetOf<Pair<Int, Int>>()  // Track safe zones
     private var currentLevel: Level? = null
     private var playerDirection = PlayerDirection.DOWN
     
@@ -40,16 +39,6 @@ class GameLogic {
             goalPositions.clear()
             goalPositions.addAll(level.getGoalPositions())
 
-            // Scan và lưu vị trí safe zones
-            safeZonePositions.clear()
-            for (i in map.indices) {
-                for (j in map[i].indices) {
-                    if (map[i][j] == 'S') {
-                        safeZonePositions.add(Pair(i, j))  // (row, col)
-                    }
-                }
-            }
-
             isGameWon = false
             gameStateListener?.onGameStateChanged()
         }
@@ -68,15 +57,8 @@ class GameLogic {
                 val boxNewX = newX + dx
                 val boxNewY = newY + dy
                 if (isValidMove(boxNewX, boxNewY)) {
-                    // Di chuyển hộp
+                    // Di chuyển hộp - giữ nguyên ký tự gốc trên map
                     map[boxNewX][boxNewY] = 'B'
-                    map[newX][newY] = '@'
-                    // Khôi phục ký tự đúng khi player rời khỏi vị trí cũ
-                    map[playerX][playerY] = when {
-                        goalPositions.contains(Pair(playerX, playerY)) -> 'G'
-                        safeZonePositions.contains(Pair(playerX, playerY)) -> 'S'
-                        else -> '.'
-                    }
                     playerX = newX
                     playerY = newY
                     
@@ -86,14 +68,7 @@ class GameLogic {
                     return true
                 }
             } else {
-                // Di chuyển người chơi
-                map[newX][newY] = '@'
-                // Khôi phục ký tự đúng khi player rời khỏi vị trí cũ
-                map[playerX][playerY] = when {
-                    goalPositions.contains(Pair(playerX, playerY)) -> 'G'
-                    safeZonePositions.contains(Pair(playerX, playerY)) -> 'S'
-                    else -> '.'
-                }
+                // Di chuyển người chơi - giữ nguyên ký tự gốc trên map
                 playerX = newX
                 playerY = newY
 

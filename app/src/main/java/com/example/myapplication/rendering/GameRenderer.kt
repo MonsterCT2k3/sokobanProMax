@@ -188,7 +188,7 @@ class GameRenderer(private val context: Context) {
         screenHeight = height
     }
     
-    fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerDirection: PlayerDirection, monsters: List<Monster>) {
+    fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerRow: Int, playerCol: Int, playerDirection: PlayerDirection, monsters: List<Monster>) {
         if (map.isEmpty() || map[0].isEmpty()) return
 
         val tileSize = min(screenWidth / map[0].size, screenHeight / map.size)
@@ -247,14 +247,14 @@ class GameRenderer(private val context: Context) {
         }
 
         // BƯỚC 2: Vẽ entities (player + monsters) theo thứ tự depth (Y-coordinate)
-        drawEntitiesWithDepthSort(canvas, map, monsters, playerDirection, tileSize, offsetX, offsetY)
+        drawEntitiesWithDepthSort(canvas, map, playerRow, playerCol, monsters, playerDirection, tileSize, offsetX, offsetY)
     }
 
     /**
      * 🎭 Vẽ tất cả entities (player + monsters) theo thứ tự depth sorting
      * Entities ở phía dưới (Y lớn hơn) sẽ được vẽ sau để che entities ở phía trên
      */
-    private fun drawEntitiesWithDepthSort(canvas: Canvas, map: Array<CharArray>, monsters: List<Monster>, 
+    private fun drawEntitiesWithDepthSort(canvas: Canvas, map: Array<CharArray>, playerRow: Int, playerCol: Int, monsters: List<Monster>,
                                         playerDirection: PlayerDirection, tileSize: Int, offsetX: Float, offsetY: Float) {
         
         // 1️⃣ Tạo danh sách tất cả entities với thông tin depth
@@ -268,16 +268,10 @@ class GameRenderer(private val context: Context) {
         
         val entitiesToDraw = mutableListOf<EntityToDraw>()
         
-        // 2️⃣ Thêm player vào danh sách
-        for (i in map.indices) {
-            for (j in map[i].indices) {
-                if (map[i][j] == '@') {
-                    val x = offsetX + j * tileSize.toFloat()
-                    val y = offsetY + i * tileSize.toFloat()
-                    entitiesToDraw.add(EntityToDraw("player", x, y, i))  // i là row = depth
-                }
-            }
-        }
+        // 2️⃣ Thêm player vào danh sách (dùng position trực tiếp)
+        val playerScreenX = offsetX + playerCol * tileSize.toFloat()  // playerCol là column
+        val playerScreenY = offsetY + playerRow * tileSize.toFloat()  // playerRow là row
+        entitiesToDraw.add(EntityToDraw("player", playerScreenX, playerScreenY, playerRow))  // playerRow là row = depth
         
         // 3️⃣ Thêm monsters vào danh sách
         monsters.forEach { monster ->

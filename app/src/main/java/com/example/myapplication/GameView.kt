@@ -585,7 +585,8 @@ class GameView @JvmOverloads constructor(
         //    Chỉ vẽ nếu đã load level
         if (!gameLogic.isMapEmpty()) {
             val monsters = monsterSystem.getActiveMonsters()
-            gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), gameLogic.getPlayerDirection(), monsters)
+            val (playerRow, playerCol) = gameLogic.getPlayerPosition()
+            gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), playerRow, playerCol, gameLogic.getPlayerDirection(), monsters)
         }
 
         // 🆕 DRAW AMMO PICKUPS
