@@ -51,22 +51,31 @@ class SoundManager private constructor(private val context: Context) {
         soundIds["bullet_wall"] = soundPool?.load(context, R.raw.bullet_wall, 1) ?: 0
         soundIds["bump_wall"] = soundPool?.load(context, R.raw.bump_wall, 1) ?: 0
         soundIds["ammo_pickup"] = soundPool?.load(context, R.raw.ammo_pickup, 1) ?: 0
+        soundIds["pierce_ammo_pickup"] = soundPool?.load(context, R.raw.ammo_pickup, 1) ?: 0  // Tạm dùng cùng sound
         soundIds["monster_hit"] = soundPool?.load(context, R.raw.monster_hit, 1) ?: 0  // 🆕 THÊM ÂM THANH KHI BẮN TRÚNG MONSTER
         soundIds["victory"] = soundPool?.load(context, R.raw.victory, 1) ?: 0  // 🆕 THÊM ÂM THANH CHIẾN THẮNG
         soundIds["game_over"] = soundPool?.load(context, R.raw.game_over, 1) ?: 0  // 🆕 THÊM ÂM THANH THUA
+
+        println("🎵 SoundManager loaded sounds: ${soundIds.keys}")
     }
 
 
     fun playSound(soundName: String, customVolume: Float = -1.0f) {
-        if (isMuted) return
+        if (isMuted) {
+            println("🔇 Sound muted, not playing: $soundName")
+            return
+        }
 
         soundIds[soundName]?.let { soundId ->
             if (soundId != 0) {
                 // Sử dụng customVolume nếu được truyền, nếu không thì dùng volume mặc định
                 val finalVolume = if (customVolume >= 0.0f) customVolume else volume
                 soundPool?.play(soundId, finalVolume, finalVolume, 1, 0, 1.0f)
+                println("🔊 Playing sound: $soundName (id: $soundId, volume: $finalVolume)")
+            } else {
+                println("❌ Sound ID is 0 for: $soundName")
             }
-        }
+        } ?: println("❌ Sound not found: $soundName")
     }
 
     fun setMuted(muted: Boolean) {

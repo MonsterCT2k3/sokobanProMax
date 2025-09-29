@@ -15,6 +15,7 @@ import com.example.myapplication.entities.AmmoType
 import com.example.myapplication.entities.Bullet
 import com.example.myapplication.entities.BulletDirection
 import com.example.myapplication.entities.BulletType
+import com.example.myapplication.entities.LivesPickup
 import com.example.myapplication.game.PlayerDirection
 import kotlin.math.min
 import com.example.myapplication.entities.Monster
@@ -635,10 +636,74 @@ class GameRenderer(private val context: Context) {
         canvas.drawText("$pierceAmmo/$maxAmmoPerType", textX, pierceRect.centerY() + 8f, textPaint)
     }
 
+    // 🆕 VẼ LIVES UI Ở GIỮA MÀN HÌNH
+    fun drawLivesUI(canvas: Canvas, lives: Int, maxLives: Int, screenWidth: Float, screenHeight: Float) {
+        // Vẽ ở giữa màn hình, phía trên ammo buttons
+        val uiWidth = 150f
+        val uiHeight = 100f
+        val uiRect = RectF(
+            screenWidth / 2 - uiWidth / 2,  // Căn giữa ngang
+            200f,                           // Cách top 250px (thấp xuống thêm 100px)
+            screenWidth / 2 + uiWidth / 2,  // Căn giữa ngang
+            250f + uiHeight                 // Chiều cao
+        )
+
+        // Vẽ nền
+        val uiPaint = Paint().apply {
+            color = Color.parseColor("#FFFF99")  // Nền đỏ cho lives
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, uiPaint)
+
+        // Vẽ viền
+        val borderPaint = Paint().apply {
+            color = Color.RED
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, borderPaint)
+
+        // Vẽ text
+        val textPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 62f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 2f
+        }
+
+        val centerX = uiRect.centerX()
+        val centerY = uiRect.centerY() + 8f
+
+        // Vẽ "❤️" emoji
+        val shadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 50f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+        canvas.drawText("❤️", centerX + 1f, centerY + 1f, shadowPaint)
+        canvas.drawText("❤️", centerX, centerY, textPaint)
+
+        // Vẽ số lives
+        val numberPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 40f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+        canvas.drawText("$lives/$maxLives", centerX, centerY + 50f, numberPaint)
+    }
+
     // 🆕 VẼ NÚT CHỌN LOẠI ĐẠN Ở PHÍA DƯỚI (to và dễ ấn)
     fun drawBulletTypeButtons(canvas: Canvas, normalAmmo: Int, pierceAmmo: Int, screenWidth: Float, screenHeight: Float, selectedType: BulletType) {
         val buttonWidth = 200f  // 🆕 Tăng từ 150f lên 200f
-        val buttonHeight = 100f // 🆕 Tăng từ 80f lên 100f
+        val buttonHeight = 150f // 🆕 Tăng từ 80f lên 100f
         val buttonSpacing = 30f  // 🆕 Tăng từ 20f lên 30f
         val bottomMargin = 150f  // 🆕 Tăng lên 150f để nút xa đáy màn hình thêm 70px nữa
 
@@ -662,7 +727,7 @@ class GameRenderer(private val context: Context) {
         val borderPaint = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 4f } // 🆕 Tăng border từ 3f lên 4f
         val textPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 32f  // 🆕 Tăng từ 24f lên 32f
+            textSize = 48f  // 🆕 Tăng từ 24f lên 32f
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
         }
@@ -675,7 +740,7 @@ class GameRenderer(private val context: Context) {
 
         // Vẽ icon normal ammo
         itemBullet?.let { drawable ->
-            val iconSize = 50f  // 🆕 Tăng từ 32f lên 50f
+            val iconSize = 62f  // 🆕 Tăng từ 32f lên 50f
             val iconLeft = normalButtonRect.left + 15f  // 🆕 Tăng margin từ 10f lên 15f
             val iconTop = normalButtonRect.centerY() - iconSize / 2
             drawable.setBounds(
@@ -703,7 +768,7 @@ class GameRenderer(private val context: Context) {
 
         // Vẽ icon pierce ammo (dùng rocket)
         rocket?.let { drawable ->
-            val iconSize = 50f  // 🆕 Tăng từ 32f lên 50f
+            val iconSize = 62f  // 🆕 Tăng từ 32f lên 50f
             val iconLeft = pierceButtonRect.left + 15f  // 🆕 Tăng margin từ 10f lên 15f
             val iconTop = pierceButtonRect.centerY() - iconSize / 2
             drawable.setBounds(
@@ -722,6 +787,46 @@ class GameRenderer(private val context: Context) {
             pierceButtonRect.centerY() + 10f,  // 🆕 Tăng từ 8f lên 10f
             textPaint
         )
+    }
+
+    // 🆕 VẼ LIVES PICKUPS TRÊN MAP
+    fun drawLivesPickups(canvas: Canvas, livesPickups: List<LivesPickup>, tileSize: Float, offsetX: Float, offsetY: Float) {
+        livesPickups.forEach { lives ->
+            val (screenX, screenY) = lives.getScreenPosition(tileSize, offsetX, offsetY)
+
+            // Vẽ nền tim đỏ
+            val backgroundPaint = Paint().apply {
+                color = Color.RED
+                style = Paint.Style.FILL
+            }
+            val backgroundSize = tileSize * 0.6f
+            val backgroundRect = RectF(
+                screenX - backgroundSize / 2,
+                screenY - backgroundSize / 2,
+                screenX + backgroundSize / 2,
+                screenY + backgroundSize / 2
+            )
+            canvas.drawRoundRect(backgroundRect, backgroundSize * 0.2f, backgroundSize * 0.2f, backgroundPaint)
+
+            // Vẽ viền vàng
+            val borderPaint = Paint().apply {
+                color = Color.YELLOW
+                style = Paint.Style.STROKE
+                strokeWidth = 2f
+            }
+            canvas.drawRoundRect(backgroundRect, backgroundSize * 0.2f, backgroundSize * 0.2f, borderPaint)
+
+            // Vẽ text "❤️" nhỏ
+            val textPaint = Paint().apply {
+                color = Color.WHITE
+                textSize = tileSize * 0.4f
+                textAlign = Paint.Align.CENTER
+                isAntiAlias = true
+                style = Paint.Style.FILL_AND_STROKE
+                strokeWidth = 1f
+            }
+            canvas.drawText("❤️", screenX, screenY + textPaint.textSize * 0.3f, textPaint)
+        }
     }
 
     // Thêm method vẽ ammo pickups:

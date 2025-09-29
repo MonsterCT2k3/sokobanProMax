@@ -18,10 +18,12 @@ import com.example.myapplication.managers.SoundManager
 import com.example.myapplication.entities.AmmoPickup
 import com.example.myapplication.entities.AmmoType
 import com.example.myapplication.entities.BulletType
+import com.example.myapplication.entities.LivesPickup
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
 import com.example.myapplication.systems.AmmoSystem
 import com.example.myapplication.systems.BulletSystem
+import com.example.myapplication.systems.LivesSystem
 import com.example.myapplication.systems.MonsterSystem
 import com.example.myapplication.systems.ParticleSystem
 import kotlin.text.toInt
@@ -60,6 +62,7 @@ class GameView @JvmOverloads constructor(
     private lateinit var musicManager: MusicManager
     private lateinit var soundManager: SoundManager
     private val ammoSystem = AmmoSystem()
+    private val livesSystem = LivesSystem()
     private val particleSystem = ParticleSystem()
 
     // ===== GAME THREAD MANAGEMENT =====
@@ -79,6 +82,10 @@ class GameView @JvmOverloads constructor(
     private var pierceAmmo = 5
     private val maxAmmoPerType = 5
     private var currentBulletType = BulletType.NORMAL
+
+    // 🆕 LIVES SYSTEM
+    private var lives = 3
+    private val maxLives = 3
 
     init {
         initGame()
@@ -105,6 +112,11 @@ class GameView @JvmOverloads constructor(
         pierceAmmo = 5
         currentBulletType = BulletType.NORMAL
     }
+
+    private fun resetLives() {
+        lives = 3
+    }
+
 
     // ===== PUBLIC API METHODS =====
     // Các method public để Activity/Fragment có thể điều khiển game
@@ -140,8 +152,12 @@ class GameView @JvmOverloads constructor(
         }
         ammoSystem.spawnRandomAmmo(gameLogic.getMap(), 3, excludePositions)
 
-        // 🆕 RESET AMMO về 0 mỗi level mới
+        // 🆕 RESET AMMO và LIVES mỗi level mới (khi vào màn chơi lần đầu)
         resetAmmo()
+        resetLives()
+
+        // 🆕 SPAWN LIVES PICKUPS
+        livesSystem.spawnRandomLives(gameLogic.getMap(), 1, excludePositions)
 
         gameStateChanged = true
     }
@@ -298,16 +314,35 @@ class GameView @JvmOverloads constructor(
                 AmmoType.NORMAL -> {
                     if (normalAmmo < maxAmmoPerType) {
                         normalAmmo++
-                        soundManager.playSound("ammo_pickup")
                     }
+                    soundManager.playSound("ammo_pickup")
+
                 }
                 AmmoType.PIERCE -> {
                     if (pierceAmmo < maxAmmoPerType) {
                         pierceAmmo++
-                        soundManager.playSound("ammo_pickup")
+                        println("🔫 About to play pierce_ammo_pickup sound...")
+                        println("🔫 Collected pierce ammo! Pierce ammo: $pierceAmmo/$maxAmmoPerType")
+                    } else {
+                        println("🔫 Pierce ammo already at max ($maxAmmoPerType)")
                     }
+                    soundManager.playSound("ammo_pickup")  // Tạm dùng cùng sound
+
                 }
             }
+        }
+
+        // ===== CHECK LIVES COLLECTION =====
+        println("🩸 Checking lives collection at (row=$playerX, col=$playerY)")
+        val collectedLives = livesSystem.checkLivesCollection(playerX, playerY)
+        if (collectedLives) {
+            if (lives < maxLives) {
+                lives++
+                println("❤️ Lives increased to $lives/$maxLives")
+            } else {
+                println("❤️ Lives already at max ($maxLives)")
+            }
+            soundManager.playSound("victory")  // Hoặc sound khác cho lives pickup
         }
 
         // Update bullets
@@ -412,7 +447,14 @@ class GameView @JvmOverloads constructor(
             val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
             val ammoPickups = ammoSystem.getActiveAmmoPickups()
             gameRenderer.drawAmmoPickups(canvas, ammoPickups, tileSize, offsetX, offsetY)
+
+            // 🆕 DRAW LIVES PICKUPS
+            val livesPickups = livesSystem.getActiveLivesPickups()
+            gameRenderer.drawLivesPickups(canvas, livesPickups, tileSize, offsetX, offsetY)
         }
+
+        // 🆕 DRAW LIVES UI
+        gameRenderer.drawLivesUI(canvas, lives, maxLives, width.toFloat(), height.toFloat())
 
         // 🎛️ Vẽ nút toggle phía trên map
         val musicEnabled = musicManager.isEnabled()
@@ -550,6 +592,7 @@ class GameView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         stopGame()   // Dừng game loop và clean up
+        livesSystem.clearLives()  // 🆕 Cleanup lives system
         // KHÔNG cleanup SoundManager vì đây là Singleton dùng chung cho tất cả activities
         // soundManager.cleanup()
     }
@@ -717,14 +760,35 @@ class GameView @JvmOverloads constructor(
      * 💀 Xử lý khi player chết (chạm monster)
      */
     private fun onPlayerDied() {
-        isGameRunning = false  // Dừng game loop
+        lives--  // Giảm 1 mạng
 
-        // 🆕 Phát âm thanh thua
-        soundManager.playSound("game_over")
+        if (lives <= 0) {
+            // HẾT MẠNG - GAME OVER
+            isGameRunning = false
+            soundManager.playSound("game_over")
+            post {
+                showLoseDialog()
+            }
+        } else {
+            // VẪN CÒN MẠNG - CHỈ TRỪ MẠNG, TIẾP TỤC CHƠI TỪ VỊ TRÍ HIỆN TẠI
+            soundManager.playSound("game_over")  // Hoặc sound khác cho mất mạng
+            println("💔 Lost a life! Lives remaining: $lives/$maxLives")
 
-        post {
-            // 🆕 HIỂN THỊ DIALOG THUA
-            showLoseDialog()
+            // Reset monsters về vị trí ban đầu (để tránh bị spawn trap)
+            monsterSystem.clearMonsters()
+            val level = gameLogic.getCurrentLevel()
+            level?.monsters?.forEachIndexed { index, monsterData ->
+                val monsterId = "monster_${level.id}_${index}"
+                val monster = monsterSystem.createMonsterFromData(monsterData, monsterId)
+                monsterSystem.addMonster(monster)
+            }
+
+            // Reset bullets và particles
+            bulletSystem.clearBullets()
+            particleSystem.clear()
+
+            // Thông báo game state changed để redraw
+            gameStateChanged = true
         }
     }
 
