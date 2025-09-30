@@ -10,6 +10,7 @@ class GameLogic {
     private var playerX: Int = 0
     private var playerY: Int = 0
     private val goalPositions = mutableSetOf<Pair<Int, Int>>()
+    private val safeZonePositions = mutableSetOf<Pair<Int, Int>>()
     private var currentLevel: Level? = null
     private var playerDirection = PlayerDirection.DOWN
     
@@ -39,6 +40,16 @@ class GameLogic {
             goalPositions.clear()
             goalPositions.addAll(level.getGoalPositions())
 
+            // Scan safe zone positions ('S' characters)
+            safeZonePositions.clear()
+            for (i in map.indices) {
+                for (j in map[i].indices) {
+                    if (map[i][j] == 'S') {
+                        safeZonePositions.add(Pair(i, j))
+                    }
+                }
+            }
+
             isGameWon = false
             gameStateListener?.onGameStateChanged()
         }
@@ -57,11 +68,22 @@ class GameLogic {
                 val boxNewX = newX + dx
                 val boxNewY = newY + dy
                 if (isValidMove(boxNewX, boxNewY)) {
-                    // Di chuyển hộp - giữ nguyên ký tự gốc trên map
+                    // Di chuyển hộp - xóa hộp cũ và đặt hộp mới
+                    // Khôi phục ký tự gốc của vị trí hộp cũ
+                    val originalChar = when {
+                        Pair(newX, newY) in goalPositions -> 'G'
+                        Pair(newX, newY) in safeZonePositions -> 'S'
+                        else -> '.'
+                    }
+                    map[newX][newY] = originalChar
+
+                    // Đặt hộp mới
                     map[boxNewX][boxNewY] = 'B'
+
+                    // Di chuyển player
                     playerX = newX
                     playerY = newY
-                    
+
                     // Kiểm tra win condition
                     checkWinCondition()
                     gameStateListener?.onGameStateChanged()

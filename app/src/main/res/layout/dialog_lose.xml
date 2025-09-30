@@ -49,6 +49,18 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
+        <!-- Back to Level Selection Button -->
+        <Button
+            android:id="@+id/btn_back_to_level_selection"
+            android:layout_width="180dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/pixel_button_secondary"
+            android:text="VỀ CHỌN LEVEL"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
         <!-- Back to Menu Button -->
         <Button
             android:id="@+id/btn_back_to_menu"

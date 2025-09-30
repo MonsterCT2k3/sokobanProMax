@@ -767,6 +767,7 @@ class GameView @JvmOverloads constructor(
         val titleText = dialogView.findViewById<android.widget.TextView>(R.id.win_title)
         val messageText = dialogView.findViewById<android.widget.TextView>(R.id.win_message)
         val nextButton = dialogView.findViewById<android.widget.Button>(R.id.btn_next_level)
+        val levelSelectionButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_level_selection)
         val menuButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_menu)
 
         titleText.text = "🎉 CHÚC MỪNG! 🎉"
@@ -793,6 +794,17 @@ class GameView @JvmOverloads constructor(
 
         }
 
+        levelSelectionButton.setOnClickListener {
+            soundManager.playSound("move")
+
+            val intent = Intent(context, LevelSelectionActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            context.startActivity(intent)
+            (context as? GameButtonActivity)?.finish()
+
+            dialog.dismiss()
+        }
+
         menuButton.setOnClickListener {
             soundManager.playSound("move")
 
@@ -816,6 +828,7 @@ class GameView @JvmOverloads constructor(
         val titleText = dialogView.findViewById<android.widget.TextView>(R.id.lose_title)
         val messageText = dialogView.findViewById<android.widget.TextView>(R.id.lose_message)
         val retryButton = dialogView.findViewById<android.widget.Button>(R.id.btn_retry)
+        val levelSelectionButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_level_selection)
         val menuButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_menu)
 
         titleText.text = "💀 GAME OVER! 💀"
@@ -835,6 +848,17 @@ class GameView @JvmOverloads constructor(
             // Retry level hiện tại
             loadLevel(levelId)
             startGame()  // Restart game loop
+            dialog.dismiss()
+        }
+
+        levelSelectionButton.setOnClickListener {
+            soundManager.playSound("move")
+
+            val intent = Intent(context, LevelSelectionActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            context.startActivity(intent)
+            (context as? GameButtonActivity)?.finish()
+
             dialog.dismiss()
         }
 
