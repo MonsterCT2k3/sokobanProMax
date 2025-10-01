@@ -361,7 +361,7 @@ class GameView @JvmOverloads constructor(
         // ===== CHECK BULLET COLLISIONS =====
         // Kiểm tra bullets có chạm monsters không
         val monsterIds = monsterSystem.getActiveMonsters().map { it.id }
-        val monsterPositions = monsterSystem.getActiveMonsters().map { monster ->
+        val monsterPositions = monsterSystem.getActiveMonsters().map { monster: com.example.myapplication.entities.Monster ->
             // Convert grid coordinates to screen coordinates
             val screenX = offsetX + monster.currentY * tileSize  // currentY là column
             val screenY = offsetY + monster.currentX * tileSize  // currentX là row
@@ -372,7 +372,8 @@ class GameView @JvmOverloads constructor(
 
         // DEBUG: Log monster positions
         println("🎯 Checking ${monsterPositions.size} monsters for collisions")
-        monsterPositions.forEachIndexed { index, (x, y) ->
+        monsterPositions.forEachIndexed { index: Int, pair: Pair<Float, Float> ->
+            val (x, y) = pair
             println("👹 Monster $index at screen pos (${x.toInt()}, ${y.toInt()})")
         }
 
@@ -437,10 +438,11 @@ class GameView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        
+
         // Thông báo kích thước mới cho các component
         gameRenderer.setScreenSize(w, h)       // Để tính toán tile size và layout
         backgroundManager.setScreenSize(w, h)  // Để scale background cho phù hợp
+        uiManager.updateScreenSize(w, h)       // Để tính toán touch detection cho buttons
     }
 
     override fun onDraw(canvas: Canvas) {

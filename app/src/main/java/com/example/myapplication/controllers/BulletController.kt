@@ -87,7 +87,7 @@ class BulletController(
         val playerDirection = gameLogic.getPlayerDirection()
 
         // 2️⃣ Convert grid position → screen position
-        val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap())
+        val tileSize = gameRenderer.calculateTileSize(gameLogic.getMap()).toFloat()
         val (offsetX, offsetY) = gameRenderer.calculateBoardOffset(gameLogic.getMap())
 
         // 3️⃣ Tính vị trí player trên màn hình (CENTER của tile)
