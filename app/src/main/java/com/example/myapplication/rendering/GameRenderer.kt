@@ -22,13 +22,13 @@ import com.example.myapplication.entities.Monster
 import com.example.myapplication.entities.MonsterType
 
 class GameRenderer(private val context: Context) {
-    
+
     // Monster size constants - dễ dàng điều chỉnh
     companion object {
         private const val MONSTER_WIDTH_RATIO = 1.0f   // 70% chiều rộng tile
         private const val MONSTER_HEIGHT_RATIO = 1.0f  // 100% chiều cao tile (giữ nguyên)
     }
-    
+
     // Drawable resources
     private lateinit var wall: Drawable
     private lateinit var box: Drawable
@@ -51,26 +51,26 @@ class GameRenderer(private val context: Context) {
     private lateinit var musicOffIcon: Drawable
     private lateinit var soundOnIcon: Drawable
     private lateinit var soundOffIcon: Drawable
-    
+
     // Paint objects
     private lateinit var tilePaint: Paint
     private lateinit var textPaint: Paint
     private lateinit var shadowPaint: Paint
     private lateinit var monsterPaint: Paint
-    
+
     // Cached bitmaps for performance
     private var cachedBitmaps: Map<Char, Bitmap>? = null
     private var cachedTileSize: Int = 0
-    
+
     // Screen dimensions
     private var screenWidth = 0
     private var screenHeight = 0
-    
+
     init {
         initResources()
         initPaints()
     }
-    
+
     private fun initResources() {
         wall = ContextCompat.getDrawable(context, R.drawable.wall)
             ?: throw IllegalStateException("wall drawable not found")
@@ -152,7 +152,7 @@ class GameRenderer(private val context: Context) {
             PlayerDirection.RIGHT -> playerRight
         }
     }
-    
+
     private fun initPaints() {
         tilePaint = Paint().apply {
             isAntiAlias = true
@@ -182,12 +182,12 @@ class GameRenderer(private val context: Context) {
             xfermode = null  // SRC_OVER default - tốt nhất cho PNG với alpha
         }
     }
-    
+
     fun setScreenSize(width: Int, height: Int) {
         screenWidth = width
         screenHeight = height
     }
-    
+
     fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerRow: Int, playerCol: Int, playerDirection: PlayerDirection, monsters: List<Monster>) {
         if (map.isEmpty() || map[0].isEmpty()) return
 
@@ -255,24 +255,24 @@ class GameRenderer(private val context: Context) {
      * Entities ở phía dưới (Y lớn hơn) sẽ được vẽ sau để che entities ở phía trên
      */
     private fun drawEntitiesWithDepthSort(canvas: Canvas, map: Array<CharArray>, playerRow: Int, playerCol: Int, monsters: List<Monster>,
-                                        playerDirection: PlayerDirection, tileSize: Int, offsetX: Float, offsetY: Float) {
-        
+                                          playerDirection: PlayerDirection, tileSize: Int, offsetX: Float, offsetY: Float) {
+
         // 1️⃣ Tạo danh sách tất cả entities với thông tin depth
         data class EntityToDraw(
             val type: String,  // "player" hoặc "monster"
             val x: Float,
-            val y: Float, 
+            val y: Float,
             val depth: Int,    // Y-coordinate cho sorting (row index)
             val monster: Monster? = null
         )
-        
+
         val entitiesToDraw = mutableListOf<EntityToDraw>()
-        
+
         // 2️⃣ Thêm player vào danh sách (dùng position trực tiếp)
         val playerScreenX = offsetX + playerCol * tileSize.toFloat()  // playerCol là column
         val playerScreenY = offsetY + playerRow * tileSize.toFloat()  // playerRow là row
         entitiesToDraw.add(EntityToDraw("player", playerScreenX, playerScreenY, playerRow))  // playerRow là row = depth
-        
+
         // 3️⃣ Thêm monsters vào danh sách
         monsters.forEach { monster ->
             if (monster.isActive) {
@@ -281,10 +281,10 @@ class GameRenderer(private val context: Context) {
                 entitiesToDraw.add(EntityToDraw("monster", x, y, monster.currentX.toInt(), monster))  // Convert currentX to Int for depth
             }
         }
-        
+
         // 4️⃣ Sort theo depth (Y-coordinate): entities ở trên vẽ trước, ở dưới vẽ sau
         entitiesToDraw.sortBy { it.depth }
-        
+
         // 5️⃣ Vẽ theo thứ tự đã sort
         entitiesToDraw.forEach { entity ->
             when (entity.type) {
@@ -311,13 +311,13 @@ class GameRenderer(private val context: Context) {
 
         // 2️⃣ Lấy drawable cho monster
         val monsterDrawable = getMonsterDrawable(monster.type)
-        
+
         // 3️⃣ Tùy chỉnh kích thước monster theo constants
         val monsterWidth = (tileSize * MONSTER_WIDTH_RATIO).toInt()   // Chiều rộng tùy chỉnh
         val monsterHeight = (tileSize * MONSTER_HEIGHT_RATIO).toInt() // Chiều cao tùy chỉnh
-        
+
         val monsterBitmap = drawableToBitmapCustomSize(monsterDrawable, monsterWidth, monsterHeight)
-        
+
         // 4️⃣ Tính vị trí center để monster không bị lệch
         val centerOffsetX = (tileSize - monsterWidth) / 2f
         val drawX = x + centerOffsetX
@@ -355,7 +355,7 @@ class GameRenderer(private val context: Context) {
 
                 // 1️⃣ Lấy drawable cho monster
                 val monsterDrawable = getMonsterDrawable(monster.type)
-                
+
                 // 2️⃣ Tính vị trí render (smooth position)
                 val x = offsetX + monster.currentY * tileSize.toFloat()  // currentY là column
                 val y = offsetY + monster.currentX * tileSize.toFloat()  // currentX là row
@@ -363,9 +363,9 @@ class GameRenderer(private val context: Context) {
                 // 3️⃣ Tùy chỉnh kích thước monster theo constants
                 val monsterWidth = (tileSize * MONSTER_WIDTH_RATIO).toInt()   // Chiều rộng tùy chỉnh
                 val monsterHeight = (tileSize * MONSTER_HEIGHT_RATIO).toInt() // Chiều cao tùy chỉnh
-                
+
                 val monsterBitmap = drawableToBitmapCustomSize(monsterDrawable, monsterWidth, monsterHeight)
-                
+
                 // 4️⃣ Tính vị trí center để monster không bị lệch
                 val centerOffsetX = (tileSize - monsterWidth) / 2f
                 val drawX = x + centerOffsetX
@@ -379,7 +379,7 @@ class GameRenderer(private val context: Context) {
             }
         }
     }
-    
+
     fun drawGameUI(canvas: Canvas) {
         // Vẽ tiêu đề game
         canvas.drawText("Sokoban Game", screenWidth / 2f, 120f, textPaint)
@@ -391,9 +391,9 @@ class GameRenderer(private val context: Context) {
             textAlign = Paint.Align.CENTER
         }
         canvas.drawText(
-            "Vuốt để di chuyển - Đẩy hộp vào mục tiêu", 
-            screenWidth / 2f, 
-            screenHeight - 60f, 
+            "Vuốt để di chuyển - Đẩy hộp vào mục tiêu",
+            screenWidth / 2f,
+            screenHeight - 60f,
             instructionsPaint
         )
     }
@@ -438,14 +438,14 @@ class GameRenderer(private val context: Context) {
             }
         }
     }
-    
+
     private fun drawableToBitmap(drawable: Drawable, size: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        
+
         // Xóa hoàn toàn nền - đảm bảo trong suốt 100%
         canvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR)
-        
+
         drawable.setBounds(0, 0, size, size)
         drawable.draw(canvas)
         return bitmap
@@ -460,17 +460,17 @@ class GameRenderer(private val context: Context) {
     private fun drawableToBitmapCustomSize(drawable: Drawable, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        
+
         // Đảm bảo nền hoàn toàn trong suốt với nhiều method
         canvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR)
-        
+
         // Tạo Paint đặc biệt cho drawable
         val drawablePaint = Paint().apply {
             isAntiAlias = true
             isFilterBitmap = true
             isDither = true
         }
-        
+
         drawable.setBounds(0, 0, width, height)
         drawable.draw(canvas)
         return bitmap
@@ -479,8 +479,8 @@ class GameRenderer(private val context: Context) {
     /**
      * 🎛️ Vẽ các nút toggle nhạc/sound phía trên map
      */
-    fun drawToggleButtons(canvas: Canvas, map: Array<CharArray>, 
-                         musicEnabled: Boolean, soundEnabled: Boolean) {
+    fun drawToggleButtons(canvas: Canvas, map: Array<CharArray>,
+                          musicEnabled: Boolean, soundEnabled: Boolean) {
         if (map.isEmpty() || map[0].isEmpty()) return
 
         // Tính vị trí các nút phía trên map
@@ -493,13 +493,13 @@ class GameRenderer(private val context: Context) {
         // Vị trí nút: phía trên map, cách top 20px
         val buttonY = offsetY - 140f  // Tăng khoảng cách để nút lớn hơn không bị che
         val buttonSize = 120f         // Tăng kích thước nút từ 80f lên 120f
-        
+
         // Nút trái: Toggle Music (bên trái màn hình)
         val musicButtonX = 20f
         val musicIcon = if (musicEnabled) musicOnIcon else musicOffIcon
         drawToggleButton(canvas, musicIcon, musicButtonX, buttonY, buttonSize)
-        
-        // Nút phải: Toggle Sound (bên phải màn hình) 
+
+        // Nút phải: Toggle Sound (bên phải màn hình)
         val soundButtonX = screenWidth - buttonSize - 20f
         val soundIcon = if (soundEnabled) soundOnIcon else soundOffIcon
         drawToggleButton(canvas, soundIcon, soundButtonX, buttonY, buttonSize)
@@ -515,24 +515,24 @@ class GameRenderer(private val context: Context) {
             style = Paint.Style.FILL
         }
         canvas.drawRoundRect(x + 4, y + 4, x + size + 4, y + size + 4, 15f, 15f, shadowPaint)
-        
+
         // 2️⃣ Vẽ background trắng cho nút để dễ nhìn
         val buttonPaint = Paint().apply {
             color = Color.WHITE  // Nền trắng
             style = Paint.Style.FILL
         }
         canvas.drawRoundRect(x, y, x + size, y + size, 15f, 15f, buttonPaint)
-        
+
         // 3️⃣ Vẽ icon với padding
         val iconPadding = size * 0.15f  // 15% padding
         val iconLeft = x + iconPadding
         val iconTop = y + iconPadding
         val iconRight = x + size - iconPadding
         val iconBottom = y + size - iconPadding
-        
+
         icon.setBounds(iconLeft.toInt(), iconTop.toInt(), iconRight.toInt(), iconBottom.toInt())
         icon.draw(canvas)
-        
+
         // 4️⃣ Vẽ border xám đậm cho contrast
         val borderPaint = Paint().apply {
             color = Color.DKGRAY  // Viền xám đậm
@@ -541,7 +541,7 @@ class GameRenderer(private val context: Context) {
         }
         canvas.drawRoundRect(x, y, x + size, y + size, 15f, 15f, borderPaint)
     }
-    
+
     fun getTileDrawable(tile: Char): Drawable {
         return when (tile) {
             '#' -> wall
@@ -550,21 +550,21 @@ class GameRenderer(private val context: Context) {
             else -> floor
         }
     }
-    
+
     fun calculateTileSize(map: Array<CharArray>): Int {
         if (map.isEmpty() || map[0].isEmpty()) return 0
         return min(screenWidth / map[0].size, screenHeight / map.size)
     }
-    
+
     fun calculateBoardOffset(map: Array<CharArray>): Pair<Float, Float> {
         if (map.isEmpty() || map[0].isEmpty()) return Pair(0f, 0f)
-        
+
         val tileSize = calculateTileSize(map)
         val boardWidth = map[0].size * tileSize
         val boardHeight = map.size * tileSize
         val offsetX = (screenWidth - boardWidth) / 2f
         val offsetY = (screenHeight - boardHeight) / 2f
-        
+
         return Pair(offsetX, offsetY)
     }
 
@@ -983,6 +983,104 @@ class GameRenderer(private val context: Context) {
                 drawable.setBounds(left, top, right, bottom)
                 drawable.draw(canvas)
             }
+        }
+    }
+
+    /**
+     * 🛡️ Draw player shield effect when on safe zone
+     */
+    fun drawPlayerShield(canvas: Canvas, playerRow: Int, playerCol: Int, gameLogic: com.example.myapplication.game.GameLogic, animationTime: Float) {
+        // Check bằng map character trực tiếp
+        val mapChar = gameLogic.getMap().getOrNull(playerRow)?.getOrNull(playerCol)
+        if (mapChar != 'S') return
+
+        val tileSize = min(screenWidth / gameLogic.getMap()[0].size, screenHeight / gameLogic.getMap().size)
+        val boardWidth = gameLogic.getMap()[0].size * tileSize
+        val boardHeight = gameLogic.getMap().size * tileSize
+        val offsetX = (screenWidth - boardWidth) / 2f
+        val offsetY = (screenHeight - boardHeight) / 2f
+
+        // Calculate player center position
+        val playerCenterX = offsetX + playerCol * tileSize + tileSize / 2f
+        val playerCenterY = offsetY + playerRow * tileSize + tileSize / 2f
+
+        // Shield radius with pulsing animation - TĂNG TỐC ĐỘ RÕ RÀNG
+        val baseShieldRadius = tileSize * 0.6f
+        val pulseSpeed = 0.003f  // Chu kỳ: ~2 giây
+        val pulseFactor = (Math.sin((animationTime * pulseSpeed).toDouble()) * 0.2f + 1f).toFloat()
+        val shieldRadius = baseShieldRadius * pulseFactor
+
+        // Draw shield glow effect
+        val shieldPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#00BFFF") // Deep sky blue
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = 4f
+            alpha = 220
+            setShadowLayer(12f, 0f, 0f, android.graphics.Color.parseColor("#00BFFF"))
+        }
+
+        // Draw outer glow with animation - NHẤP NHÁY NHANH HƠN
+        val alphaSpeed1 = 0.005f
+        shieldPaint.alpha = (150 + Math.sin((animationTime * alphaSpeed1).toDouble()) * 70).toInt().coerceIn(100, 220)
+        shieldPaint.strokeWidth = 16f
+        canvas.drawCircle(playerCenterX, playerCenterY, shieldRadius + 8f, shieldPaint)
+
+        // Draw main shield ring - NHẤP NHÁY NHANH HƠN
+        val alphaSpeed2 = 0.006f
+        shieldPaint.alpha = (200 + Math.sin((animationTime * alphaSpeed2).toDouble()) * 55).toInt().coerceIn(180, 255)
+        shieldPaint.strokeWidth = 8f
+        canvas.drawCircle(playerCenterX, playerCenterY, shieldRadius, shieldPaint)
+
+        // Draw inner shield ring
+        shieldPaint.alpha = 255
+        shieldPaint.strokeWidth = 3f
+        canvas.drawCircle(playerCenterX, playerCenterY, shieldRadius - 4f, shieldPaint)
+
+        // Draw shield particles (small dots around the circle) with rotation - QUAY NHANH HƠN
+        val particlePaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#FFFFFF")
+            style = android.graphics.Paint.Style.FILL
+            alpha = (220 + Math.sin((animationTime * 0.008f).toDouble()) * 55).toInt().coerceIn(200, 275)
+            setShadowLayer(4f, 0f, 0f, android.graphics.Color.WHITE)
+        }
+
+        val particleCount = 12
+        val particleRadius = 4f
+        val particleDistance = shieldRadius + 10f
+        val rotationSpeed = 0.05f  // TĂNG TỐC ĐỘ QUAY x50 lần! (1 vòng trong ~4 giây)
+        val rotationOffset = animationTime * rotationSpeed
+
+        for (i in 0 until particleCount) {
+            val angle = ((i * 360f / particleCount) + rotationOffset) * Math.PI / 180f
+            val particleX = playerCenterX + particleDistance * Math.cos(angle).toFloat()
+            val particleY = playerCenterY + particleDistance * Math.sin(angle).toFloat()
+            canvas.drawCircle(particleX, particleY, particleRadius, particlePaint)
+        }
+
+        // Draw energy arcs (lightning-like effects) - XOAY NHANH HƠN
+        val arcPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#FFFFFF")
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = 3f
+            alpha = (180 + Math.sin((animationTime * 0.01f).toDouble()) * 75).toInt().coerceIn(150, 255)
+            strokeCap = android.graphics.Paint.Cap.ROUND
+            setShadowLayer(6f, 0f, 0f, android.graphics.Color.WHITE)
+        }
+
+        // Draw 3 energy arcs - QUAY NGƯỢC CHIỀU VÀ NHANH HƠN
+        val arcRotationSpeed = 0.08f  // TĂNG TỐC ĐỘ QUAY x53 lần! (1 vòng trong ~2.5 giây)
+        for (j in 0 until 3) {
+            val arcAngle = (j * 120f - animationTime * arcRotationSpeed) * Math.PI / 180f
+            val arcStartAngle = arcAngle - Math.PI / 6
+            val arcEndAngle = arcAngle + Math.PI / 6
+            val arcRadius = shieldRadius - 2f
+
+            val startX = playerCenterX + arcRadius * Math.cos(arcStartAngle).toFloat()
+            val startY = playerCenterY + arcRadius * Math.sin(arcStartAngle).toFloat()
+            val endX = playerCenterX + arcRadius * Math.cos(arcEndAngle).toFloat()
+            val endY = playerCenterY + arcRadius * Math.sin(arcEndAngle).toFloat()
+
+            canvas.drawLine(startX, startY, endX, endY, arcPaint)
         }
     }
 }

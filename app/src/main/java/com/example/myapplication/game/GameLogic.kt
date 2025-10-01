@@ -129,6 +129,16 @@ class GameLogic {
     fun getMap(): Array<CharArray> = map
     fun getPlayerPosition(): Pair<Int, Int> = Pair(playerX, playerY)
     fun getGoalPositions(): Set<Pair<Int, Int>> = goalPositions.toSet()
+
+    /**
+     * 🛡️ Check if player is currently on a safe zone
+     */
+    fun isPlayerOnSafeZone(): Boolean {
+        val result = Pair(playerX, playerY) in safeZonePositions
+        println("🛡️ isPlayerOnSafeZone check: player=($playerX,$playerY), safeZones=$safeZonePositions, result=$result")
+        println("🛡️ Map at player position: ${map.getOrNull(playerX)?.getOrNull(playerY)}")
+        return result
+    }
     fun getCurrentLevel(): Level? = currentLevel
     fun isGameWon(): Boolean = isGameWon
     
