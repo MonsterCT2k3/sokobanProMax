@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp"
+    android:layout_margin="4dp">
+
+    <!-- Background for top 3 -->
+    <LinearLayout
+        android:id="@+id/top3Background"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/top3_background"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <!-- Rank with medal -->
+        <TextView
+            android:id="@+id/tvRank"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:text="#1"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <!-- Time info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvFormattedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0ms"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- "YOU!" indicator -->
+        <TextView
+            android:id="@+id/tvIsYourTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← BẠN!"
+            android:textColor="#FFD700"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Regular background for rank 4+ -->
+    <LinearLayout
+        android:id="@+id/regularBackground"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/item_background"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center_vertical">
+
+        <!-- Rank -->
+        <TextView
+            android:id="@+id/tvRankRegular"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:text="#1"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <!-- Time info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvFormattedTimeRegular"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTimeRegular"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0ms"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- "YOU!" indicator -->
+        <TextView
+            android:id="@+id/tvIsYourTimeRegular"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← BẠN!"
+            android:textColor="#FFD700"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</RelativeLayout>

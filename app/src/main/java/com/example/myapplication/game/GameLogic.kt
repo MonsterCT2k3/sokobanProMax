@@ -2,6 +2,7 @@ package com.example.myapplication.game
 
 import com.example.myapplication.managers.LevelManager
 import com.example.myapplication.models.Level
+import kotlin.math.min
 
 class GameLogic {
     
@@ -16,17 +17,68 @@ class GameLogic {
     
     // Game status
     private var isGameWon = false
+    private var boxesInGoal = 0  // Số hộp đang ở trong goal
+
+    // Timer for level completion tracking
+    private var levelStartTime = 0L
+    private var levelElapsedTime = 0L  // milliseconds
     
     // Callback interfaces
     interface GameStateListener {
         fun onGameStateChanged()
         fun onGameWon()
     }
-    
+
+    // Callback for goal reached effect
+    var onGoalReachedEffect: ((centerX: Float, centerY: Float) -> Unit)? = null
+
+    // Callback for goal left effect (when box is removed from goal)
+    var onGoalLeftEffect: ((centerX: Float, centerY: Float) -> Unit)? = null
+
+    // Callback for goal count update
+    var onGoalCountChanged: ((count: Int, total: Int) -> Unit)? = null
+
+    // Callback for timer update
+    var onTimerUpdate: ((elapsedTime: Long) -> Unit)? = null
+
+    // Screen dimensions for effect positioning
+    private var screenWidth = 1080f
+    private var screenHeight = 1920f
+
+    fun setScreenSize(width: Int, height: Int) {
+        screenWidth = width.toFloat()
+        screenHeight = height.toFloat()
+    }
+
     private var gameStateListener: GameStateListener? = null
-    
+
     fun setGameStateListener(listener: GameStateListener) {
         gameStateListener = listener
+    }
+
+    // Get current goal count
+    fun getBoxesInGoal(): Int = boxesInGoal
+    fun getTotalGoals(): Int = goalPositions.size
+
+    // Timer methods
+    fun startLevelTimer() {
+        levelStartTime = System.currentTimeMillis()
+        levelElapsedTime = 0L
+    }
+
+    fun updateLevelTimer() {
+        if (levelStartTime > 0) {
+            levelElapsedTime = System.currentTimeMillis() - levelStartTime
+            onTimerUpdate?.invoke(levelElapsedTime)
+        }
+    }
+
+    fun getLevelElapsedTime(): Long = levelElapsedTime
+
+    fun stopLevelTimer() {
+        if (levelStartTime > 0) {
+            levelElapsedTime = System.currentTimeMillis() - levelStartTime
+        }
     }
     
     // Level management
@@ -51,6 +103,9 @@ class GameLogic {
             }
 
             isGameWon = false
+            boxesInGoal = 0  // Reset counter khi load level mới
+            levelStartTime = 0L  // Reset timer
+            levelElapsedTime = 0L
             gameStateListener?.onGameStateChanged()
         }
     }
@@ -68,6 +123,28 @@ class GameLogic {
                 val boxNewX = newX + dx
                 val boxNewY = newY + dy
                 if (isValidMove(boxNewX, boxNewY)) {
+                    // 🔒 NGĂN CHẶN ĐẨY 2 HỘP LIỀN NHAU
+                    // Nếu ô đích của hộp cũng là hộp thì không cho phép đẩy
+                    if (map[boxNewX][boxNewY] == 'B') {
+                        return false  // Không thể đẩy vì có 2 hộp liền nhau
+                    }
+
+                    // 🎯 CHECK IF BOX IS LEAVING GOAL - tính vị trí center của hộp cũ
+                    if (Pair(newX, newY) in goalPositions) {
+                        val tileSize = min(screenWidth / map[0].size.toFloat(), screenHeight / map.size.toFloat())
+                        val boardWidth = map[0].size.toFloat() * tileSize
+                        val boardHeight = map.size.toFloat() * tileSize
+                        val offsetX = (screenWidth - boardWidth) / 2f
+                        val offsetY = (screenHeight - boardHeight) / 2f
+
+                        val oldCenterX = offsetX + newY.toFloat() * tileSize + tileSize / 2f
+                        val oldCenterY = offsetY + newX.toFloat() * tileSize + tileSize / 2f
+
+                        onGoalLeftEffect?.invoke(oldCenterX, oldCenterY)
+                        boxesInGoal--  // Giảm counter khi box ra khỏi goal
+                        onGoalCountChanged?.invoke(boxesInGoal, goalPositions.size)
+                    }
+
                     // Di chuyển hộp - xóa hộp cũ và đặt hộp mới
                     // Khôi phục ký tự gốc của vị trí hộp cũ
                     val originalChar = when {
@@ -79,6 +156,23 @@ class GameLogic {
 
                     // Đặt hộp mới
                     map[boxNewX][boxNewY] = 'B'
+
+                    // 🎯 TRIGGER GOAL REACHED EFFECT nếu hộp được đẩy vào goal
+                    if (Pair(boxNewX, boxNewY) in goalPositions) {
+                        // Tính vị trí center của hộp (tọa độ màn hình)
+                        val tileSize = min(screenWidth / map[0].size.toFloat(), screenHeight / map.size.toFloat())
+                        val boardWidth = map[0].size.toFloat() * tileSize
+                        val boardHeight = map.size.toFloat() * tileSize
+                        val offsetX = (screenWidth - boardWidth) / 2f
+                        val offsetY = (screenHeight - boardHeight) / 2f
+
+                        val centerX = offsetX + boxNewY.toFloat() * tileSize + tileSize / 2f
+                        val centerY = offsetY + boxNewX.toFloat() * tileSize + tileSize / 2f
+
+                        onGoalReachedEffect?.invoke(centerX, centerY)
+                        boxesInGoal++  // Tăng counter khi box vào goal
+                        onGoalCountChanged?.invoke(boxesInGoal, goalPositions.size)
+                    }
 
                     // Di chuyển player
                     playerX = newX

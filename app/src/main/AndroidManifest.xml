@@ -48,6 +48,18 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
+        <!-- Records Activity -->
+        <activity
+            android:name=".RecordsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <!-- Victory Activity -->
+        <activity
+            android:name=".VictoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
         <!-- Win Screen Activity -->
         <activity
             android:name=".WinScreenActivity"

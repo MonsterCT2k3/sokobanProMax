@@ -21,6 +21,9 @@ class DialogManager(private val context: Context, private val soundManager: Soun
     // ===== DIALOG WIN =====
     fun showWinDialog(
         gameLogic: GameLogic,
+        levelTime: Long,
+        isNewRecord: Boolean,
+        bestTime: Long?,
         onNextLevel: (Int) -> Unit,
         onDismiss: () -> Unit = {}
     ) {
@@ -34,8 +37,28 @@ class DialogManager(private val context: Context, private val soundManager: Soun
         val levelSelectionButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_level_selection)
         val menuButton = dialogView.findViewById<android.widget.Button>(R.id.btn_back_to_menu)
 
-        titleText.text = "🎉 CHÚC MỪNG! 🎉"
-        messageText.text = "Bạn đã hoàn thành Level $levelId!"
+        // Format thời gian
+        val timeFormatter = java.text.SimpleDateFormat("mm:ss", java.util.Locale.getDefault())
+        timeFormatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val currentTimeStr = timeFormatter.format(java.util.Date(levelTime))
+
+        val titleTextStr = if (isNewRecord) "🏆 KỶ LỤC MỚI! 🏆" else "🎉 CHÚC MỪNG! 🎉"
+
+        val messageBuilder = StringBuilder("Bạn đã hoàn thành Level $levelId!\n\n")
+        messageBuilder.append("⏱️ Thời gian: $currentTimeStr\n")
+
+        if (bestTime != null) {
+            val bestTimeStr = timeFormatter.format(java.util.Date(bestTime))
+            messageBuilder.append("🏆 Kỷ lục: $bestTimeStr")
+            if (isNewRecord) {
+                messageBuilder.append(" ⭐")
+            }
+        } else {
+            messageBuilder.append("🏆 Kỷ lục: $currentTimeStr ⭐")
+        }
+
+        titleText.text = titleTextStr
+        messageText.text = messageBuilder.toString()
 
         val dialog = AlertDialog.Builder(context)
             .setView(dialogView)

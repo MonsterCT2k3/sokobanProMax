@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_records_background"
+    android:padding="16dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:text="🏆 HIGH SCORES 🏆"
+        android:textColor="@android:color/white"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <!-- Level selector -->
+    <LinearLayout
+        android:id="@+id/levelSelectorLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvTitle"
+        android:layout_marginTop="25dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎯 Chọn Level:"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="15dp" />
+
+        <Spinner
+            android:id="@+id/spinnerLevels"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/spinner_background"
+            android:popupBackground="@drawable/spinner_popup_background" />
+
+    </LinearLayout>
+
+    <!-- Selected level title -->
+    <TextView
+        android:id="@+id/tvSelectedLevel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/levelSelectorLayout"
+        android:text="Level 1 - Top 10 Kỷ lục"
+        android:textColor="#FFD700"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginTop="10dp"
+        android:visibility="gone" />
+
+    <!-- No records message -->
+    <TextView
+        android:id="@+id/tvNoRecords"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="Chưa có kỷ lục nào!\nHoàn thành level để tạo kỷ lục đầu tiên! 🎯"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:gravity="center"
+        android:visibility="gone" />
+
+    <!-- RecyclerView for high scores -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewRecords"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_below="@id/tvSelectedLevel"
+        android:layout_above="@id/btnBackToMenu"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp" />
+
+    <!-- Back button -->
+    <Button
+        android:id="@+id/btnBackToMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"
+        android:text="🏠 QUAY LẠI MENU"
+        android:textColor="@android:color/white"
+        android:background="@drawable/records_button_back"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:stateListAnimator="@null"
+        android:elevation="6dp"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="3"
+        android:shadowRadius="6" />
+
+</RelativeLayout>

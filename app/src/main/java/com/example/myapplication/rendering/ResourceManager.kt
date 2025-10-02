@@ -54,6 +54,8 @@ class ResourceManager(private val context: Context) {
         private set
     lateinit var bulletRight: Drawable
         private set
+    lateinit var stunBullet: Drawable
+        private set
     lateinit var itemBullet: Drawable
         private set
     lateinit var rocket: Drawable
@@ -65,6 +67,10 @@ class ResourceManager(private val context: Context) {
     lateinit var musicOffIcon: Drawable
         private set
     lateinit var soundOnIcon: Drawable
+        private set
+    lateinit var boxIcon: Drawable
+        private set
+    lateinit var timeIcon: Drawable
         private set
     lateinit var soundOffIcon: Drawable
         private set
@@ -109,6 +115,7 @@ class ResourceManager(private val context: Context) {
         bulletDown = getDrawable(R.drawable.bullet_down)
         bulletLeft = getDrawable(R.drawable.bullet_left)
         bulletRight = getDrawable(R.drawable.bullet_right)
+        stunBullet = getDrawable(R.drawable.stun)
         itemBullet = getDrawable(R.drawable.item_bullet)
         rocket = getDrawable(R.drawable.rocket)
 
@@ -117,6 +124,8 @@ class ResourceManager(private val context: Context) {
         musicOffIcon = getDrawable(R.drawable.music_off)
         soundOnIcon = getDrawable(R.drawable.sound_on)
         soundOffIcon = getDrawable(R.drawable.sound_off)
+        boxIcon = getDrawable(R.drawable.box)
+        timeIcon = getDrawable(R.drawable.time)
     }
 
     /**

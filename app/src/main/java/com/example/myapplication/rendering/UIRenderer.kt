@@ -31,8 +31,30 @@ class UIRenderer(private val resourceManager: ResourceManager) {
      * 🎮 Vẽ UI chính của game (tiêu đề và hướng dẫn)
      */
     fun drawGameUI(canvas: Canvas) {
-        // Vẽ tiêu đề game
-        canvas.drawText("Sokoban Game", screenWidth / 2f, 120f, resourceManager.textPaint)
+        // Vẽ tiêu đề game với font lớn và màu trắng
+        val titlePaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 55f  // Tăng từ ~60f (size mặc định) lên 80f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 2f
+        }
+
+        // Vẽ shadow cho tiêu đề
+        val shadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 55f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+
+        canvas.drawText("Sokoban Game", screenWidth / 2f + 2f, 122f, shadowPaint)
+        canvas.drawText("Sokoban Game", screenWidth / 2f, 120f, titlePaint)
 
         // Vẽ hướng dẫn
         val instructionsPaint = Paint().apply {
@@ -119,40 +141,46 @@ class UIRenderer(private val resourceManager: ResourceManager) {
      */
     fun drawBulletTypeButtons(canvas: Canvas, normalAmmo: Int, pierceAmmo: Int, stunAmmo: Int,
                              selectedType: BulletType, buildMode: Boolean) {
-        val buttonWidth = 150f  // Giảm kích thước cho 3 nút
-        val buttonHeight = 120f
-        val buttonSpacing = 20f
+        val buttonWidth = 140f  // Giảm kích thước cho 4 nút
+        val buttonHeight = 110f
+        val buttonSpacing = 15f
         val bottomMargin = 150f
 
-        // Nút normal ammo (bên trái)
+        // Tổng chiều rộng của 4 nút và 3 khoảng trống
+        val totalWidth = buttonWidth * 4 + buttonSpacing * 3
+
+        // Bắt đầu từ giữa màn hình, lùi về bên trái để căn giữa
+        val startX = screenWidth / 2 - totalWidth / 2
+
+        // Nút normal ammo (thứ 1 từ trái)
         val normalButtonRect = RectF(
-            screenWidth / 2 - buttonWidth * 1.5f - buttonSpacing,
+            startX,
             screenHeight - buttonHeight - bottomMargin,
-            screenWidth / 2 - buttonWidth * 0.5f - buttonSpacing / 2,
+            startX + buttonWidth,
             screenHeight - bottomMargin
         )
 
-        // Nút pierce ammo (giữa)
+        // Nút pierce ammo (thứ 2 từ trái)
         val pierceButtonRect = RectF(
-            screenWidth / 2 - buttonWidth * 0.5f,
+            startX + buttonWidth + buttonSpacing,
             screenHeight - buttonHeight - bottomMargin,
-            screenWidth / 2 + buttonWidth * 0.5f,
+            startX + buttonWidth * 2 + buttonSpacing,
             screenHeight - bottomMargin
         )
 
-        // Nút stun ammo (bên phải)
+        // Nút stun ammo (thứ 3 từ trái)
         val stunButtonRect = RectF(
-            screenWidth / 2 + buttonWidth * 0.5f + buttonSpacing / 2,
+            startX + buttonWidth * 2 + buttonSpacing * 2,
             screenHeight - buttonHeight - bottomMargin,
-            screenWidth / 2 + buttonWidth * 1.5f + buttonSpacing,
+            startX + buttonWidth * 3 + buttonSpacing * 2,
             screenHeight - bottomMargin
         )
 
-        // Nút build wall (cạnh bên phải stun)
+        // Nút build wall (thứ 4 từ trái)
         val buildButtonRect = RectF(
-            screenWidth / 2 + buttonWidth * 1.5f + buttonSpacing * 1.5f,
+            startX + buttonWidth * 3 + buttonSpacing * 3,
             screenHeight - buttonHeight - bottomMargin,
-            screenWidth / 2 + buttonWidth * 2.5f + buttonSpacing * 2,
+            startX + buttonWidth * 4 + buttonSpacing * 3,
             screenHeight - bottomMargin
         )
 
@@ -160,7 +188,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         val borderPaint = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 4f } // 🆕 Tăng border từ 3f lên 4f
         val textPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 48f  // 🆕 Tăng từ 24f lên 32f
+            textSize = 42f  // Giảm từ 48f để phù hợp với nút nhỏ hơn
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
         }
@@ -173,8 +201,8 @@ class UIRenderer(private val resourceManager: ResourceManager) {
 
         // Vẽ icon normal ammo
         resourceManager.itemBullet.let { drawable ->
-            val iconSize = 62f  // 🆕 Tăng từ 32f lên 50f
-            val iconLeft = normalButtonRect.left + 15f  // 🆕 Tăng margin từ 10f lên 15f
+            val iconSize = 52f  // Giảm từ 62f để phù hợp với nút nhỏ hơn
+            val iconLeft = normalButtonRect.left + 12f  // Giảm margin
             val iconTop = normalButtonRect.centerY() - iconSize / 2
             drawable.setBounds(
                 iconLeft.toInt(),
@@ -188,8 +216,8 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         // Vẽ số lượng normal ammo
         canvas.drawText(
             "$normalAmmo",
-            normalButtonRect.centerX() + 25f,  // 🆕 Tăng từ 15f lên 25f
-            normalButtonRect.centerY() + 10f,  // 🆕 Tăng từ 8f lên 10f
+            normalButtonRect.centerX() + 20f,  // Giảm từ 25f
+            normalButtonRect.centerY() + 8f,   // Giảm từ 10f
             textPaint
         )
 
@@ -201,8 +229,8 @@ class UIRenderer(private val resourceManager: ResourceManager) {
 
         // Vẽ icon pierce ammo (dùng rocket)
         resourceManager.rocket.let { drawable ->
-            val iconSize = 62f  // 🆕 Tăng từ 32f lên 50f
-            val iconLeft = pierceButtonRect.left + 15f  // 🆕 Tăng margin từ 10f lên 15f
+            val iconSize = 52f  // Giảm từ 62f để phù hợp với nút nhỏ hơn
+            val iconLeft = pierceButtonRect.left + 12f  // Giảm margin
             val iconTop = pierceButtonRect.centerY() - iconSize / 2
             drawable.setBounds(
                 iconLeft.toInt(),
@@ -217,7 +245,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         canvas.drawText(
             "$pierceAmmo",
             pierceButtonRect.centerX() + 15f,
-            pierceButtonRect.centerY() + 10f,
+            pierceButtonRect.centerY() + 8f,
             textPaint
         )
 
@@ -227,36 +255,26 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         canvas.drawRoundRect(stunButtonRect, 10f, 10f, buttonPaint)
         canvas.drawRoundRect(stunButtonRect, 10f, 10f, borderPaint)
 
-        // Vẽ icon stun ammo (⚡) ở bên trái
-        val stunIconPaint = Paint().apply {
-            color = Color.WHITE
-            textSize = 52f
-            textAlign = Paint.Align.LEFT
-            isAntiAlias = true
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 2f
+        // Vẽ icon stun ammo (dùng stun drawable)
+        resourceManager.stunBullet.let { drawable ->
+            val iconSize = 52f  // Giảm từ 62f để phù hợp với nút nhỏ hơn
+            val iconLeft = stunButtonRect.left + 12f  // Giảm margin
+            val iconTop = stunButtonRect.centerY() - iconSize / 2
+            drawable.setBounds(
+                iconLeft.toInt(),
+                iconTop.toInt(),
+                (iconLeft + iconSize).toInt(),
+                (iconTop + iconSize).toInt()
+            )
+            drawable.draw(canvas)
         }
-        canvas.drawText(
-            "⚡",
-            stunButtonRect.left + 30f,
-            stunButtonRect.centerY() + 10f,
-            stunIconPaint
-        )
 
-        // Vẽ số lượng stun ammo ở bên phải (cùng dòng)
-        val stunNumberPaint = Paint().apply {
-            color = Color.WHITE
-            textSize = 48f
-            textAlign = Paint.Align.RIGHT
-            isAntiAlias = true
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 1f
-        }
+        // Vẽ số lượng stun ammo
         canvas.drawText(
             "$stunAmmo",
-            stunButtonRect.right - 40f,
-            stunButtonRect.centerY() + 10f,
-            stunNumberPaint
+            stunButtonRect.centerX() + 15f,
+            stunButtonRect.centerY() + 8f,
+            textPaint
         )
 
         // Vẽ nút build wall
@@ -268,7 +286,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         // Vẽ icon build wall (🧱 hoặc wall symbol)
         val buildIconPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 32f
+            textSize = 28f  // Giảm từ 32f để phù hợp với nút nhỏ hơn
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
             style = Paint.Style.FILL_AND_STROKE
@@ -277,8 +295,256 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         canvas.drawText(
             "🧱",
             buildButtonRect.centerX(),
-            buildButtonRect.centerY() + 10f,
+            buildButtonRect.centerY() + 8f,  // Giảm từ 10f
             buildIconPaint
         )
+    }
+
+    /**
+     * ❤️ Vẽ UI chính với lives, goal counter và timer - căn giữa cả ba
+     */
+    fun drawMainUI(canvas: Canvas, lives: Int, maxLives: Int, currentGoalCount: Int, totalGoalCount: Int, elapsedTime: Long) {
+        // Tính toán vị trí để căn giữa cả ba elements
+        val elementWidth = 150f  // Width của lives và goal UI
+        val timerWidth = 120f    // Width của timer UI
+        val gap = 15f           // Khoảng cách giữa các elements
+
+        // Tổng width của cả ba elements và gaps
+        val totalWidth = elementWidth + gap + elementWidth + gap + timerWidth
+        val startX = screenWidth / 2f - totalWidth / 2f  // Căn giữa toàn bộ nhóm
+
+        // Vẽ từng element với vị trí tính toán
+        drawLivesUI(canvas, lives, maxLives, startX)
+        drawGoalCounter(canvas, currentGoalCount, totalGoalCount, startX + elementWidth + gap)
+        drawTimerUI(canvas, elapsedTime, startX + elementWidth + gap + elementWidth + gap)
+    }
+
+    /**
+     * ❤️ Vẽ lives UI (di chuyển từ EffectRenderer)
+     */
+    private fun drawLivesUI(canvas: Canvas, lives: Int, maxLives: Int, startX: Float = screenWidth / 2f - 150f - 10f) {
+        // Vẽ lives UI tại vị trí startX
+        val uiWidth = 150f
+        val uiHeight = 100f
+        val uiRect = RectF(
+            startX,                           // Vị trí được truyền vào
+            200f,                             // Cách top 250px (thấp xuống thêm 100px)
+            startX + uiWidth,                 // Width 150px
+            250f + uiHeight                   // Chiều cao
+        )
+
+        // Vẽ nền
+        val uiPaint = Paint().apply {
+            color = Color.parseColor("#FFFF99")  // Nền vàng cho lives
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, uiPaint)
+
+        // Vẽ viền
+        val borderPaint = Paint().apply {
+            color = Color.RED
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, borderPaint)
+
+        // Vẽ text
+        val textPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 62f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 2f
+        }
+
+        val centerX = uiRect.centerX()
+        val centerY = uiRect.centerY() + 8f
+
+        // Vẽ "❤️" emoji
+        val shadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 50f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+        canvas.drawText("❤️", centerX + 1f, centerY + 1f, shadowPaint)
+        canvas.drawText("❤️", centerX, centerY, textPaint)
+
+        // Vẽ số mạng ở dưới dạng current/max
+        val livesTextPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 40f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+        canvas.drawText("$lives/$maxLives", centerX, uiRect.bottom - 20f, livesTextPaint)
+    }
+
+    /**
+     * 🎯 Vẽ counter hiển thị số hộp đã vào goal (tương tự lives UI)
+     */
+    fun drawGoalCounter(canvas: Canvas, currentCount: Int, totalCount: Int, startX: Float = screenWidth / 2f + 10f) {
+        // Đặt goal counter tại vị trí startX
+        val uiWidth = 150f
+        val uiHeight = 100f
+
+        val counterRect = RectF(
+            startX,                                  // Vị trí được truyền vào
+            200f,                                     // Cùng level y với lives UI
+            startX + uiWidth,                         // Width 150px (giống lives)
+            250f + uiHeight                           // Height 100px (giống lives)
+        )
+
+        // Vẽ nền (tương tự lives UI nhưng màu khác)
+        val uiPaint = Paint().apply {
+            color = Color.parseColor("#99FF99")  // Nền xanh lá cho boxes (tương tự vàng của lives)
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(counterRect, 15f, 15f, uiPaint)
+
+        // Vẽ viền (tương tự lives UI)
+        val borderPaint = Paint().apply {
+            color = Color.parseColor("#00AA00")  // Viền xanh lá đậm
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawRoundRect(counterRect, 15f, 15f, borderPaint)
+
+        // Vẽ box icon (thay vì text "Boxes:")
+        val iconSize = 62f
+        val iconLeft = counterRect.centerX() - iconSize / 2
+        val iconTop = counterRect.top + 20f
+        val iconRight = iconLeft + iconSize
+        val iconBottom = iconTop + iconSize
+
+        resourceManager.boxIcon.setBounds(
+            iconLeft.toInt(),
+            iconTop.toInt(),
+            iconRight.toInt(),
+            iconBottom.toInt()
+        )
+        resourceManager.boxIcon.draw(canvas)
+
+        // Vẽ số lượng current/total (ở dưới icon, tương tự lives UI)
+        val textPaint = Paint().apply {
+            color = if (currentCount == totalCount) Color.GREEN else Color.BLACK
+            textSize = 40f  // Nhỏ hơn lives UI (62f) vì có ít số hơn
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+
+        val centerX = counterRect.centerX()
+        val centerY = counterRect.bottom - 20f  // Cách bottom 20px
+
+        // Shadow effect nhẹ
+        val shadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 40f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 0.5f
+        }
+        val countText = "$currentCount/$totalCount"
+        canvas.drawText(countText, centerX + 1f, centerY + 1f, shadowPaint)
+        canvas.drawText(countText, centerX, centerY, textPaint)
+
+        // Vẽ star emoji nếu đã hoàn thành (ở góc trên phải)
+        if (currentCount == totalCount && totalCount > 0) {
+            val starPaint = Paint().apply {
+                textSize = 24f
+                textAlign = Paint.Align.RIGHT
+                isAntiAlias = true
+            }
+            canvas.drawText(
+                "⭐",
+                counterRect.right - 10f,
+                counterRect.top + 30f,
+                starPaint
+            )
+        }
+    }
+
+    /**
+     * ⏱️ Vẽ timer hiển thị thời gian level (cạnh lives và goal counter)
+     */
+    private fun drawTimerUI(canvas: Canvas, elapsedTime: Long, startX: Float = screenWidth / 2f + 150f + 40f) {
+        // Đặt timer tại vị trí startX
+        val timerWidth = 120f  // Thu nhỏ để vừa cả ba elements
+        val timerHeight = 100f  // Cùng height với lives/goal UI
+
+        val timerRect = RectF(
+            startX,                          // Vị trí được truyền vào
+            200f,                           // Cùng level y với lives/goal UI
+            startX + timerWidth,            // Width nhỏ hơn
+            250f + timerHeight              // Cùng height
+        )
+
+        // Vẽ nền với gradient effect
+        val bgPaint = Paint().apply {
+            color = Color.parseColor("#CC000000")  // Semi-transparent black
+            style = Paint.Style.FILL
+        }
+        canvas.drawRoundRect(timerRect, 10f, 10f, bgPaint)
+
+        // Vẽ border
+        val borderPaint = Paint().apply {
+            color = Color.parseColor("#FF4444")  // Red border
+            style = Paint.Style.STROKE
+            strokeWidth = 2f
+        }
+        canvas.drawRoundRect(timerRect, 10f, 10f, borderPaint)
+
+        // Convert elapsed time to minutes:seconds format
+        val totalSeconds = elapsedTime / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+
+        val timeText = String.format("%02d:%02d", minutes, seconds)
+
+        // Vẽ text thời gian
+        val timePaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 32f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)  // Monospace để căn chỉnh số
+        }
+
+        val centerX = timerRect.centerX()
+        val centerY = timerRect.bottom - 20f  // Ở dòng dưới, cách bottom 20px
+
+        // Shadow effect
+        val shadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 32f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        }
+        canvas.drawText(timeText, centerX + 1f, centerY + 1f, shadowPaint)
+        canvas.drawText(timeText, centerX, centerY, timePaint)
+
+        // Vẽ time icon ở dòng trên
+        val iconSize = 62f
+        val iconLeft = timerRect.centerX() - iconSize / 2  // Căn giữa ngang
+        val iconTop = timerRect.top + 20f                  // Cách top 15px
+        val iconRight = iconLeft + iconSize
+        val iconBottom = iconTop + iconSize
+
+        resourceManager.timeIcon.setBounds(
+            iconLeft.toInt(),
+            iconTop.toInt(),
+            iconRight.toInt(),
+            iconBottom.toInt()
+        )
+        resourceManager.timeIcon.draw(canvas)
     }
 }

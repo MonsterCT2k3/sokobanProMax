@@ -44,7 +44,7 @@ class BulletSystem {
         val bulletScale = when (bulletType) {
             BulletType.NORMAL -> 1.0f
             BulletType.PIERCE -> 3.0f  // Pierce bullets to hơn 3 lần
-            BulletType.STUN -> 2.0f    // Stun bullets to hơn 2 lần
+            BulletType.STUN -> 1.0f  // Stun bullets nhỏ hơn 1/3 lần
         }
 
         val bullet = Bullet(

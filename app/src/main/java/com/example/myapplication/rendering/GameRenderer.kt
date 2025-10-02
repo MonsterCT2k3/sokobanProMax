@@ -110,8 +110,8 @@ class GameRenderer(private val context: Context) {
     /**
      * ❤️ Vẽ lives UI
      */
-    fun drawLivesUI(canvas: Canvas, lives: Int, maxLives: Int, screenWidth: Float, screenHeight: Float) {
-        effectRenderer.drawLivesUI(canvas, lives, maxLives)
+    fun drawMainUI(canvas: Canvas, lives: Int, maxLives: Int, currentGoalCount: Int, totalGoalCount: Int, elapsedTime: Long) {
+        uiRenderer.drawMainUI(canvas, lives, maxLives, currentGoalCount, totalGoalCount, elapsedTime)
     }
 
     /**
@@ -146,6 +146,28 @@ class GameRenderer(private val context: Context) {
         val offsetY = (screenHeight - boardHeight) / 2f
 
         effectRenderer.drawPlayerShield(canvas, playerRow, playerCol, gameLogic, animationTime, tileSize.toInt(), offsetX, offsetY)
+    }
+
+    /**
+     * 🎯 Vẽ hiệu ứng khi hộp đạt goal
+     */
+    fun drawGoalReachedEffects(canvas: Canvas, currentTime: Long) {
+        effectRenderer.drawGoalReachedEffects(canvas, currentTime)
+    }
+
+    /**
+     * 🎯 Thêm hiệu ứng khi hộp đạt goal
+     */
+    fun addGoalReachedEffect(centerX: Float, centerY: Float) {
+        effectRenderer.addGoalReachedEffect(centerX, centerY)
+    }
+
+    fun removeGoalReachedEffect(centerX: Float, centerY: Float) {
+        effectRenderer.removeGoalReachedEffect(centerX, centerY)
+    }
+
+    fun drawGoalCounter(canvas: Canvas, currentCount: Int, totalCount: Int) {
+        uiRenderer.drawGoalCounter(canvas, currentCount, totalCount)
     }
 
     // ==================== BACKWARD COMPATIBILITY METHODS ====================

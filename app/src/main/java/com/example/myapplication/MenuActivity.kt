@@ -72,7 +72,8 @@ class MenuActivity : AppCompatActivity() {
 
         // Nút Record - hiển thị kỷ lục
         findViewById<Button>(R.id.btnRecord).setOnClickListener {
-            showToast("Kỷ lục cao nhất sẽ được hiển thị ở đây!")
+            val intent = Intent(this, RecordsActivity::class.java)
+            startActivity(intent)
         }
 
         // MUSIC - giữ nhạc phát tiếp

@@ -13,8 +13,10 @@ import android.view.View
 import com.example.myapplication.game.GameLogic
 import com.example.myapplication.game.PlayerDirection
 import com.example.myapplication.input.InputHandler
+import com.example.myapplication.managers.HighScoreManager
 import com.example.myapplication.managers.MusicManager
 import com.example.myapplication.managers.SoundManager
+import com.example.myapplication.VictoryActivity
 import com.example.myapplication.controllers.AudioController
 import com.example.myapplication.controllers.BulletController
 import com.example.myapplication.controllers.UIManager
@@ -58,6 +60,11 @@ class GameView @JvmOverloads constructor(
     // Mỗi component có nhiệm vụ riêng biệt, tách biệt trách nhiệm
     private val gameLogic = GameLogic()                    // 🎯 Xử lý logic game
     private val gameRenderer = GameRenderer(context)       // 🖼️ Vẽ game board và UI
+
+    // 🏆 High score system
+    private val highScoreManager = HighScoreManager(context)
+    private var levelStartTime = 0L
+    private var currentLevelBestTime: Long? = null
     private val backgroundManager = BackgroundManager(context) // 🎨 Quản lý background
     private val inputHandler = InputHandler()              // 👆 Xử lý touch input
     private val monsterSystem = MonsterSystem()            // 👾 Xử lý logic monster
@@ -163,6 +170,8 @@ class GameView @JvmOverloads constructor(
 
     fun loadLevel(levelId: Int) {
         gameLogic.loadLevel(levelId)
+        // 🏆 Load kỷ lục cho level hiện tại
+        currentLevelBestTime = highScoreManager.getBestHighScore(levelId)
         // ⭐ LOAD MONSTERS từ level data
         monsterSystem.clearMonsters()  // Xóa monsters cũ
 
@@ -217,6 +226,7 @@ class GameView @JvmOverloads constructor(
         if (!isGameRunning) {
             isGameRunning = true
             animationStartTime = System.currentTimeMillis() // 🆕 Ghi lại thời điểm bắt đầu
+            levelStartTime = System.currentTimeMillis()     // 🏆 Bắt đầu đếm thời gian level
             gameThread = GameThread()   // Tạo thread mới
             gameThread?.start()         // Bắt đầu game loop
         }
@@ -471,8 +481,8 @@ class GameView @JvmOverloads constructor(
             gameRenderer.drawLivesPickups(canvas, livesPickups, tileSize, offsetX, offsetY)
         }
 
-        // 🆕 DRAW LIVES UI
-        gameRenderer.drawLivesUI(canvas, lives, maxLives, width.toFloat(), height.toFloat())
+        // 🆕 DRAW MAIN UI (lives + goal counter + timer)
+        gameRenderer.drawMainUI(canvas, lives, maxLives, 0, 0, System.currentTimeMillis() - levelStartTime)
 
         // 🎛️ Vẽ nút toggle phía trên map
         val uiState = uiManager.getUIState()
@@ -563,8 +573,16 @@ class GameView @JvmOverloads constructor(
     override fun onGameWon() {
         isGameRunning = false  // Dừng game loop
 
-        // 🆕 LƯU PROGRESS: Cập nhật level đã hoàn thành
+        // 🏆 LƯU KỶ LỤC: Tính thời gian hoàn thành level và lưu kỷ lục
+        val levelEndTime = System.currentTimeMillis()
+        val levelTime = levelEndTime - levelStartTime
         val currentLevelId = gameLogic.getCurrentLevel()?.id ?: 1
+        val isNewRecord = highScoreManager.isNewHighScore(currentLevelId, levelTime)
+
+        // Lưu kỷ lục nếu là thời gian tốt hơn
+        highScoreManager.saveHighScore(currentLevelId, levelTime)
+
+        // 🆕 LƯU PROGRESS: Cập nhật level đã hoàn thành
         val sharedPreferences = context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
         val lastCompletedLevel = sharedPreferences.getInt("last_completed_level", 0)
 
@@ -578,11 +596,16 @@ class GameView @JvmOverloads constructor(
         soundManager.playSound("victory")
 
         post {
-            // 🆕 HIỂN THỊ DIALOG CHIẾN THẮNG
-            dialogManager.showWinDialog(gameLogic, { newLevelId ->
-                loadLevel(newLevelId)
-                startGame()
-            })
+            // 🎉 MỞ MÀN VICTORY SCREEN với BXH
+            val intent = Intent(context, VictoryActivity::class.java).apply {
+                putExtra("level_id", currentLevelId)
+                putExtra("your_time", levelTime)
+                putExtra("is_new_record", isNewRecord)
+            }
+            context.startActivity(intent)
+
+            // Kết thúc activity hiện tại
+            (context as? android.app.Activity)?.finish()
         }
     }
 

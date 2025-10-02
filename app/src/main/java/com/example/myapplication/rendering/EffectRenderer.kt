@@ -13,6 +13,16 @@ import com.example.myapplication.game.GameLogic
 import kotlin.math.min
 
 /**
+ * 🎯 Hiệu ứng khi hộp đạt goal
+ */
+data class GoalReachedEffect(
+    val centerX: Float,
+    val centerY: Float,
+    val startTime: Long,
+    val duration: Long = Long.MAX_VALUE  // Vô hạn - chỉ xóa khi box ra khỏi goal
+)
+
+/**
  * ✨ EffectRenderer - Vẽ các hiệu ứng và effects
  *
  * Nhiệm vụ:
@@ -28,9 +38,119 @@ class EffectRenderer(private val resourceManager: ResourceManager) {
     private var screenWidth = 0
     private var screenHeight = 0
 
+    // 🎯 Danh sách các hiệu ứng khi hộp đạt goal
+    private val goalReachedEffects = mutableListOf<GoalReachedEffect>()
+
     fun setScreenSize(width: Int, height: Int) {
         screenWidth = width
         screenHeight = height
+    }
+
+    /**
+     * 🎯 Thêm hiệu ứng khi hộp đạt goal
+     */
+    fun addGoalReachedEffect(centerX: Float, centerY: Float) {
+        val effect = GoalReachedEffect(centerX, centerY, System.currentTimeMillis())
+        goalReachedEffects.add(effect)
+    }
+
+    /**
+     * 🎯 Xóa hiệu ứng khi hộp ra khỏi goal
+     */
+    fun removeGoalReachedEffect(centerX: Float, centerY: Float) {
+        goalReachedEffects.removeAll { effect ->
+            // Check nếu vị trí gần giống nhau (cho phép sai số nhỏ)
+            Math.abs(effect.centerX - centerX) < 5f && Math.abs(effect.centerY - centerY) < 5f
+        }
+    }
+
+    /**
+     * 🎯 Vẽ hiệu ứng khi hộp đạt goal - Star Burst Effect
+     */
+    fun drawGoalReachedEffects(canvas: Canvas, currentTime: Long) {
+        val iterator = goalReachedEffects.iterator()
+        while (iterator.hasNext()) {
+            val effect = iterator.next()
+            val elapsed = currentTime - effect.startTime
+
+            // Sau duration thì xóa effect
+            if (elapsed >= effect.duration) {
+                iterator.remove()
+                continue
+            }
+
+            // Tính progress và scale
+            val progress = min(elapsed.toFloat() / 1500f, 1.0f)  // Scale trong 1.5 giây đầu
+            val scale = progress * 1.2f  // Scale từ 0 đến 1.2x
+
+            // Vẽ center glow effect
+            val glowPaint = Paint().apply {
+                color = Color.parseColor("#FFFF00")  // Bright yellow
+                style = Paint.Style.FILL
+                alpha = (200 * (1.0f - progress * 0.3f)).toInt()  // Fade slightly
+                isAntiAlias = true
+            }
+            canvas.drawCircle(effect.centerX, effect.centerY, 20f * scale, glowPaint)
+
+            // Vẽ star burst rays
+            val rayPaint = Paint().apply {
+                color = Color.parseColor("#FFD700")  // Gold
+                style = Paint.Style.STROKE
+                strokeWidth = 3f
+                alpha = (255 * (1.0f - progress * 0.2f)).toInt()
+                strokeCap = Paint.Cap.ROUND
+                isAntiAlias = true
+            }
+
+            val rayLength = 40f * scale
+            val rayCount = 8
+
+            for (i in 0 until rayCount) {
+                val angle = (i * 360f / rayCount) + (elapsed * 0.002f)  // Rotate slowly
+                val radian = Math.toRadians(angle.toDouble())
+
+                val startX = effect.centerX + Math.cos(radian).toFloat() * 15f
+                val startY = effect.centerY + Math.sin(radian).toFloat() * 15f
+                val endX = effect.centerX + Math.cos(radian).toFloat() * (15f + rayLength)
+                val endY = effect.centerY + Math.sin(radian).toFloat() * (15f + rayLength)
+
+                canvas.drawLine(startX, startY, endX, endY, rayPaint)
+            }
+
+            // Vẽ sparkle particles
+            val sparklePaint = Paint().apply {
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+
+            val sparkleCount = 12
+            for (i in 0 until sparkleCount) {
+                val angle = (i * 360f / sparkleCount) + (elapsed * 0.003f)
+                val distance = 35f + Math.sin((elapsed * 0.008f + i).toDouble()).toFloat() * 10f
+                val radian = Math.toRadians(angle.toDouble())
+
+                val sparkleX = effect.centerX + Math.cos(radian).toFloat() * distance * scale
+                val sparkleY = effect.centerY + Math.sin(radian).toFloat() * distance * scale
+
+                // Alternate colors for sparkles
+                sparklePaint.color = if (i % 3 == 0) Color.parseColor("#FFFF00")  // Yellow
+                                   else if (i % 3 == 1) Color.parseColor("#FFD700") // Gold
+                                   else Color.parseColor("#FFFFFF") // White
+
+                sparklePaint.alpha = (200 * (1.0f - progress * 0.1f)).toInt()
+
+                canvas.drawCircle(sparkleX, sparkleY, 3f, sparklePaint)
+            }
+
+            // Vẽ center star emoji
+            val starPaint = Paint().apply {
+                textSize = 30f * scale
+                textAlign = Paint.Align.CENTER
+                alpha = (255 * (1.0f - progress * 0.1f)).toInt()
+                isAntiAlias = true
+            }
+            canvas.drawText("⭐", effect.centerX, effect.centerY + starPaint.textSize * 0.35f, starPaint)
+        }
     }
 
     /**
@@ -39,8 +159,11 @@ class EffectRenderer(private val resourceManager: ResourceManager) {
     fun drawBullets(canvas: Canvas, bullets: List<Bullet>) {
         bullets.forEach { bullet ->
             if (bullet.isActive) {
-                // 🎯 Lấy drawable theo hướng của bullet (cùng cho cả normal và pierce)
-                val bulletDrawable = resourceManager.getBulletDrawable(bullet.direction)
+                // 🎯 Lấy drawable theo loại bullet
+                val bulletDrawable = when (bullet.bulletType) {
+                    BulletType.STUN -> resourceManager.stunBullet
+                    else -> resourceManager.getBulletDrawable(bullet.direction)
+                }
 
                 bulletDrawable?.let { drawable ->
                     // Vẽ bullet tại vị trí hiện tại với scale bằng cách set bounds
@@ -109,7 +232,7 @@ class EffectRenderer(private val resourceManager: ResourceManager) {
             val ammoDrawable = when (ammo.ammoType) {
                 AmmoType.NORMAL -> resourceManager.itemBullet
                 AmmoType.PIERCE -> resourceManager.rocket
-                AmmoType.STUN -> resourceManager.itemBullet
+                AmmoType.STUN -> resourceManager.stunBullet
             }
 
             ammoDrawable.let { drawable ->
@@ -165,72 +288,6 @@ class EffectRenderer(private val resourceManager: ResourceManager) {
             }
             canvas.drawText("❤️", screenX, screenY + textPaint.textSize * 0.3f, textPaint)
         }
-    }
-
-    /**
-     * ❤️ Vẽ lives UI (hiển thị số mạng còn lại)
-     */
-    fun drawLivesUI(canvas: Canvas, lives: Int, maxLives: Int) {
-        // Vẽ ở giữa màn hình, phía trên ammo buttons
-        val uiWidth = 150f
-        val uiHeight = 100f
-        val uiRect = RectF(
-            screenWidth / 2f - uiWidth / 2,  // Căn giữa ngang
-            200f,                           // Cách top 250px (thấp xuống thêm 100px)
-            screenWidth / 2f + uiWidth / 2,  // Căn giữa ngang
-            250f + uiHeight                 // Chiều cao
-        )
-
-        // Vẽ nền
-        val uiPaint = Paint().apply {
-            color = Color.parseColor("#FFFF99")  // Nền đỏ cho lives
-            style = Paint.Style.FILL
-        }
-        canvas.drawRoundRect(uiRect, 15f, 15f, uiPaint)
-
-        // Vẽ viền
-        val borderPaint = Paint().apply {
-            color = Color.RED
-            style = Paint.Style.STROKE
-            strokeWidth = 3f
-        }
-        canvas.drawRoundRect(uiRect, 15f, 15f, borderPaint)
-
-        // Vẽ text
-        val textPaint = Paint().apply {
-            color = Color.BLACK
-            textSize = 62f
-            textAlign = Paint.Align.CENTER
-            isAntiAlias = true
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 2f
-        }
-
-        val centerX = uiRect.centerX()
-        val centerY = uiRect.centerY() + 8f
-
-        // Vẽ "❤️" emoji
-        val shadowPaint = Paint().apply {
-            color = Color.BLACK
-            textSize = 50f
-            textAlign = Paint.Align.CENTER
-            isAntiAlias = true
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 1f
-        }
-        canvas.drawText("❤️", centerX + 1f, centerY + 1f, shadowPaint)
-        canvas.drawText("❤️", centerX, centerY, textPaint)
-
-        // Vẽ số lives
-        val numberPaint = Paint().apply {
-            color = Color.BLACK
-            textSize = 40f
-            textAlign = Paint.Align.CENTER
-            isAntiAlias = true
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 1f
-        }
-        canvas.drawText("$lives/$maxLives", centerX, centerY + 50f, numberPaint)
     }
 
     /**
