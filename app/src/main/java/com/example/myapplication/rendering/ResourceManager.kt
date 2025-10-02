@@ -26,6 +26,8 @@ class ResourceManager(private val context: Context) {
         private set
     lateinit var goal: Drawable
         private set
+    lateinit var safeZone: Drawable
+        private set
     lateinit var floor: Drawable
         private set
 
@@ -98,6 +100,7 @@ class ResourceManager(private val context: Context) {
         wall = getDrawable(R.drawable.wall)
         box = getDrawable(R.drawable.box)
         goal = getDrawable(R.drawable.goal)
+        safeZone = getDrawable(R.drawable.safe_zone)
         floor = getDrawable(R.drawable.floor)
 
         // Player

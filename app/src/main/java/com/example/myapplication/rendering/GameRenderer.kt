@@ -53,6 +53,7 @@ class GameRenderer(private val context: Context) {
     internal fun getWall(): Drawable = resourceManager.wall
     internal fun getBox(): Drawable = resourceManager.box
     internal fun getGoal(): Drawable = resourceManager.goal
+    internal fun getSafeZone(): Drawable = resourceManager.safeZone
     internal fun getFloor(): Drawable = resourceManager.floor
     internal fun getMonsterPaint(): Paint = resourceManager.monsterPaint
     internal fun getTilePaint(): Paint = resourceManager.tilePaint
@@ -70,8 +71,8 @@ class GameRenderer(private val context: Context) {
     }
 
     fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerRow: Int, playerCol: Int,
-                     playerDirection: PlayerDirection, monsters: List<Monster>) {
-        boardRenderer.drawGameBoard(canvas, map, playerRow, playerCol, playerDirection, monsters)
+                     playerDirection: PlayerDirection, monsters: List<Monster>, safeZonePositions: Set<Pair<Int, Int>>) {
+        boardRenderer.drawGameBoard(canvas, map, playerRow, playerCol, playerDirection, monsters, safeZonePositions)
     }
 
     
@@ -184,5 +185,18 @@ class GameRenderer(private val context: Context) {
      */
     fun calculateBoardOffset(map: Array<CharArray>): Pair<Float, Float> {
         return boardRenderer.calculateBoardOffset(map)
+    }
+
+    /**
+     * 📍 Tính center position của một tile trên màn hình
+     */
+    fun calculateTileCenter(map: Array<CharArray>, row: Int, col: Int): Pair<Float, Float> {
+        val (offsetX, offsetY) = calculateBoardOffset(map)
+        val tileSize = calculateTileSize(map).toFloat()
+
+        val centerX = offsetX + col.toFloat() * tileSize + tileSize / 2f
+        val centerY = offsetY + row.toFloat() * tileSize + tileSize / 2f
+
+        return Pair(centerX, centerY)
     }
 }

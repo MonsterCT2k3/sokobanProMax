@@ -122,6 +122,16 @@ class GameView @JvmOverloads constructor(
         gameLogic.setGameStateListener(this)        // GameView lắng nghe thay đổi từ GameLogic
         inputHandler.setPlayerMoveListener(this)    // GameView lắng nghe input từ InputHandler
 
+        // 🏆 Setup goal effect callbacks
+        gameLogic.onGoalReachedEffect = { row, col ->
+            val (centerX, centerY) = gameRenderer.calculateTileCenter(gameLogic.getMap(), row, col)
+            gameRenderer.addGoalReachedEffect(centerX, centerY)
+        }
+        gameLogic.onGoalLeftEffect = { row, col ->
+            val (centerX, centerY) = gameRenderer.calculateTileCenter(gameLogic.getMap(), row, col)
+            gameRenderer.removeGoalReachedEffect(centerX, centerY)
+        }
+
         audioController.loadAudioSettings()
         bulletController.resetAmmo()
     }
@@ -132,33 +142,6 @@ class GameView @JvmOverloads constructor(
     }
 
 
-    // 🆕 METHOD SPAWN SAFE ZONES TRÊN MAP
-    private fun spawnSafeZones(map: Array<CharArray>, count: Int, excludePositions: List<Pair<Int, Int>> = emptyList()) {
-        val validPositions = mutableListOf<Pair<Int, Int>>()
-
-        // Tìm tất cả vị trí hợp lệ (không phải tường, không phải hộp, không phải goal, không phải vị trí loại trừ)
-        for (row in map.indices) {
-            for (col in map[row].indices) {
-                val position = Pair(row, col)  // (row, col) để match với GameLogic
-                val cell = map[row][col]
-                if (cell == '.' && position !in excludePositions) {  // Chỉ trên ô trống, không phải goal, box, wall
-                    validPositions.add(position)
-                }
-            }
-        }
-
-        // Chọn ngẫu nhiên các vị trí
-        validPositions.shuffle()
-        val selectedPositions = validPositions.take(count.coerceAtMost(validPositions.size))
-
-        // Đặt 'S' tại các vị trí đã chọn
-        for ((row, col) in selectedPositions) {
-            map[row][col] = 'S'  // row là index đầu tiên, col là index thứ hai
-            println("🛡️ GameView: Spawned safe zone at (row=$row, col=$col), char='S'")
-        }
-
-        println("✅ GameView: Spawned ${selectedPositions.size} safe zones")
-    }
 
     // ===== PUBLIC API METHODS =====
     // Các method public để Activity/Fragment có thể điều khiển game
@@ -204,9 +187,7 @@ class GameView @JvmOverloads constructor(
         // 🆕 SPAWN LIVES PICKUPS
         livesSystem.spawnRandomLives(gameLogic.getMap(), 1, excludePositions)
 
-        // 🆕 SPAWN SAFE ZONES (ô 'S' - chỉ player đi vào được)
-        println("🛡️ GameView: About to spawn safe zones...")
-        spawnSafeZones(gameLogic.getMap(), 2, excludePositions)
+        // Safe zones đã được định nghĩa trực tiếp trong map với ký tự 'S'
         
         // DEBUG: In ra map để xem safe zones
         println("🛡️ GameView: Map after spawning safe zones:")
@@ -466,7 +447,7 @@ class GameView @JvmOverloads constructor(
         if (!gameLogic.isMapEmpty()) {
             val monsters = monsterSystem.getActiveMonsters()
             val (playerRow, playerCol) = gameLogic.getPlayerPosition()
-            gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), playerRow, playerCol, gameLogic.getPlayerDirection(), monsters)
+            gameRenderer.drawGameBoard(canvas, gameLogic.getMap(), playerRow, playerCol, gameLogic.getPlayerDirection(), monsters, gameLogic.getSafeZonePositions())
         }
 
         // 🆕 DRAW AMMO PICKUPS
@@ -482,7 +463,9 @@ class GameView @JvmOverloads constructor(
         }
 
         // 🆕 DRAW MAIN UI (lives + goal counter + timer)
-        gameRenderer.drawMainUI(canvas, lives, maxLives, 0, 0, System.currentTimeMillis() - levelStartTime)
+        val currentGoalCount = gameLogic.getBoxesInGoal()
+        val totalGoalCount = gameLogic.getGoalPositions().size
+        gameRenderer.drawMainUI(canvas, lives, maxLives, currentGoalCount, totalGoalCount, System.currentTimeMillis() - levelStartTime)
 
         // 🎛️ Vẽ nút toggle phía trên map
         val uiState = uiManager.getUIState()
@@ -494,7 +477,10 @@ class GameView @JvmOverloads constructor(
 
         // 🆕 DRAW PARTICLES (sau khi vẽ game objects)
         particleSystem.draw(canvas)
-        
+
+        // 🏆 DRAW GOAL REACHED EFFECTS (sao chổi vàng)
+        gameRenderer.drawGoalReachedEffects(canvas, System.currentTimeMillis())
+
         // 3. 🖼️ Vẽ UI elements cuối cùng (trên cùng)
         //    Title, instructions, score, etc.
         gameRenderer.drawGameUI(canvas)

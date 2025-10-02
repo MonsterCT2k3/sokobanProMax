@@ -29,11 +29,11 @@ class GameLogic {
         fun onGameWon()
     }
 
-    // Callback for goal reached effect
-    var onGoalReachedEffect: ((centerX: Float, centerY: Float) -> Unit)? = null
+    // Callback for goal reached effect - pass row/col instead of screen coordinates
+    var onGoalReachedEffect: ((row: Int, col: Int) -> Unit)? = null
 
-    // Callback for goal left effect (when box is removed from goal)
-    var onGoalLeftEffect: ((centerX: Float, centerY: Float) -> Unit)? = null
+    // Callback for goal left effect (when box is removed from goal) - pass row/col
+    var onGoalLeftEffect: ((row: Int, col: Int) -> Unit)? = null
 
     // Callback for goal count update
     var onGoalCountChanged: ((count: Int, total: Int) -> Unit)? = null
@@ -92,7 +92,7 @@ class GameLogic {
             goalPositions.clear()
             goalPositions.addAll(level.getGoalPositions())
 
-            // Scan safe zone positions ('S' characters)
+            // Scan safe zone positions ('S' characters) from map
             safeZonePositions.clear()
             for (i in map.indices) {
                 for (j in map[i].indices) {
@@ -137,10 +137,7 @@ class GameLogic {
                         val offsetX = (screenWidth - boardWidth) / 2f
                         val offsetY = (screenHeight - boardHeight) / 2f
 
-                        val oldCenterX = offsetX + newY.toFloat() * tileSize + tileSize / 2f
-                        val oldCenterY = offsetY + newX.toFloat() * tileSize + tileSize / 2f
-
-                        onGoalLeftEffect?.invoke(oldCenterX, oldCenterY)
+                        onGoalLeftEffect?.invoke(newX, newY)
                         boxesInGoal--  // Giảm counter khi box ra khỏi goal
                         onGoalCountChanged?.invoke(boxesInGoal, goalPositions.size)
                     }
@@ -154,22 +151,12 @@ class GameLogic {
                     }
                     map[newX][newY] = originalChar
 
-                    // Đặt hộp mới
+                    // Đặt hộp mới - luôn là 'B' bất kể có safe zone hay không
                     map[boxNewX][boxNewY] = 'B'
 
                     // 🎯 TRIGGER GOAL REACHED EFFECT nếu hộp được đẩy vào goal
                     if (Pair(boxNewX, boxNewY) in goalPositions) {
-                        // Tính vị trí center của hộp (tọa độ màn hình)
-                        val tileSize = min(screenWidth / map[0].size.toFloat(), screenHeight / map.size.toFloat())
-                        val boardWidth = map[0].size.toFloat() * tileSize
-                        val boardHeight = map.size.toFloat() * tileSize
-                        val offsetX = (screenWidth - boardWidth) / 2f
-                        val offsetY = (screenHeight - boardHeight) / 2f
-
-                        val centerX = offsetX + boxNewY.toFloat() * tileSize + tileSize / 2f
-                        val centerY = offsetY + boxNewX.toFloat() * tileSize + tileSize / 2f
-
-                        onGoalReachedEffect?.invoke(centerX, centerY)
+                        onGoalReachedEffect?.invoke(boxNewX, boxNewY)
                         boxesInGoal++  // Tăng counter khi box vào goal
                         onGoalCountChanged?.invoke(boxesInGoal, goalPositions.size)
                     }
@@ -227,6 +214,8 @@ class GameLogic {
     /**
      * 🛡️ Check if player is currently on a safe zone
      */
+    fun getSafeZonePositions(): Set<Pair<Int, Int>> = safeZonePositions.toSet()
+
     fun isPlayerOnSafeZone(): Boolean {
         val result = Pair(playerX, playerY) in safeZonePositions
         println("🛡️ isPlayerOnSafeZone check: player=($playerX,$playerY), safeZones=$safeZonePositions, result=$result")

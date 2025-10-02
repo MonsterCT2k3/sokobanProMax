@@ -89,7 +89,7 @@ class RecordsActivity : AppCompatActivity() {
     private fun loadHighScoresForLevel(levelId: Int) {
         val highScores = highScoreManager.getHighScores(levelId)
 
-        tvSelectedLevel.text = "Level $levelId - Top 10 Kỷ lục"
+        tvSelectedLevel.text = "Level $levelId - Top 6 Kỷ lục"
 
         if (highScores.isEmpty()) {
             recyclerView.visibility = View.GONE

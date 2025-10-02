@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * 🏆 HighScoreManager - Quản lý top 10 kỷ lục thời gian hoàn thành level
+ * 🏆 HighScoreManager - Quản lý top 6 kỷ lục thời gian hoàn thành level
  */
 class HighScoreManager(private val context: Context) {
 
@@ -14,11 +14,11 @@ class HighScoreManager(private val context: Context) {
 
     companion object {
         private const val KEY_PREFIX = "level_high_scores_"
-        private const val MAX_SCORES_PER_LEVEL = 10
+        private const val MAX_SCORES_PER_LEVEL = 6
     }
 
     /**
-     * Lưu kỷ lục cho level (lưu top 10 thời gian tốt nhất)
+     * Lưu kỷ lục cho level (lưu top 6 thời gian tốt nhất)
      */
     fun saveHighScore(levelId: Int, timeMillis: Long) {
         val key = getKeyForLevel(levelId)
@@ -30,7 +30,7 @@ class HighScoreManager(private val context: Context) {
         // Sắp xếp theo thời gian tăng dần (thời gian ngắn nhất lên đầu)
         currentScores.sort()
 
-        // Giữ chỉ top 10
+        // Giữ chỉ top 6
         val topScores = currentScores.take(MAX_SCORES_PER_LEVEL)
 
         // Lưu dưới dạng JSON array
@@ -41,7 +41,7 @@ class HighScoreManager(private val context: Context) {
     }
 
     /**
-     * Lấy danh sách top 10 kỷ lục cho level
+     * Lấy danh sách top 6 kỷ lục cho level
      */
     fun getHighScores(levelId: Int): List<Long> {
         val key = getKeyForLevel(levelId)
@@ -64,7 +64,7 @@ class HighScoreManager(private val context: Context) {
     }
 
     /**
-     * Kiểm tra xem thời gian có vào top 10 không
+     * Kiểm tra xem thời gian có vào top 6 không
      */
     fun isNewHighScore(levelId: Int, timeMillis: Long): Boolean {
         val currentScores = getHighScores(levelId)
@@ -72,7 +72,7 @@ class HighScoreManager(private val context: Context) {
         // Nếu chưa có kỷ lục nào
         if (currentScores.isEmpty()) return true
 
-        // Nếu chưa đủ 10 kỷ lục
+        // Nếu chưa đủ 6 kỷ lục
         if (currentScores.size < MAX_SCORES_PER_LEVEL) return true
 
         // Nếu thời gian mới tốt hơn kỷ lục kém nhất hiện tại

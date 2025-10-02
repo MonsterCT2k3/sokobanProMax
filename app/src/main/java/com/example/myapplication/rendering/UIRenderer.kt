@@ -34,7 +34,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         // Vẽ tiêu đề game với font lớn và màu trắng
         val titlePaint = Paint().apply {
             color = Color.WHITE
-            textSize = 55f  // Tăng từ ~60f (size mặc định) lên 80f
+            textSize = 44f  // Tăng từ ~60f (size mặc định) lên 80f
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -45,7 +45,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         // Vẽ shadow cho tiêu đề
         val shadowPaint = Paint().apply {
             color = Color.BLACK
-            textSize = 55f
+            textSize = 44f
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)

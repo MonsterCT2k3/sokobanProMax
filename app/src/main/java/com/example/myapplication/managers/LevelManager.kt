@@ -22,9 +22,9 @@ object LevelManager{
                 description = "Học cách chơi cơ bản và tránh quái",
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '@', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '@', 'S', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', 'B', '.', 'G', '.', '#'),
+                    charArrayOf('#', '.', 'B', '.', 'G', 'S', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#')
                 ),
@@ -44,9 +44,6 @@ object LevelManager{
                         initialDirection = Pair(1, 0),   // Đi xuống
                         speed = 1.0f
                     ),
-
-
-
                 )
             )
         )
@@ -60,11 +57,11 @@ object LevelManager{
                 description = "Thử thách đầu tiên với monster nảy tường",
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', 'S', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '@', '.', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '#', '.', '.', '#', '.', '#'),
                     charArrayOf('#', '.', '.', 'B', 'G', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', 'S', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#')
                 ),
                 monsters = listOf(
@@ -76,7 +73,7 @@ object LevelManager{
                         patrolPoints = listOf(Pair(0, 1)),  // Hướng ban đầu: đi sang phải
                         speed = 1.5f
                     ),
-                    // BOUNCE Monster khác - bắt đầu đi xuống  
+                    // BOUNCE Monster khác - bắt đầu đi xuống
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 1,
@@ -97,10 +94,10 @@ object LevelManager{
                 description = "Nhiều hộp hơn",
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', 'S', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '@', 'B', '.', 'B', '.', '#'),
                     charArrayOf('#', '.', 'G', '.', 'G', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', 'S', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#')
                 )
             )
@@ -116,15 +113,15 @@ object LevelManager{
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', 'B', '.', '.', 'G', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', 'B', '.', '.', 'G', '.', '.', 'S', '#'),
                     charArrayOf('#', '.', '.', '#', '.', '.', '#', '.', '.', '#'),
                     charArrayOf('#', '.', '#', '.', '#', '.', '.', 'B', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '@', '.', 'G', '.', 'B', '.', '.', '.', '#'),
+                    charArrayOf('#', '@', 'S', 'G', '.', 'B', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '.', '#'),
                     charArrayOf('#', '.', '.', 'B', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', 'S', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
                 )
             )
@@ -142,7 +139,7 @@ object LevelManager{
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#'),
                     charArrayOf('#', '.', '.', '#', '.', '.', '.', '#'),
                     charArrayOf('#', '.', 'B', '#', 'B', '.', '.', '#'),
-                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '@', '.', '.', 'S', '.', '.', '#'),
                     charArrayOf('#', 'G', '#', '.', '#', 'G', '.', '#'),
                     charArrayOf('#', '.', '.', 'B', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '#', '.', '.', 'G', '#'),
@@ -160,13 +157,13 @@ object LevelManager{
                 description = "Khám phá sức mạnh của BOUNCE monsters",
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', 'S', '#'),
                     charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '.', '#'),
                     charArrayOf('#', '@', '.', '.', '.', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '#', '.', '.', '#', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', 'B', '#'),
                     charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', 'G', '#'),
-                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', 'S', '.', '#', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
                 ),
                 monsters = listOf(
@@ -178,7 +175,7 @@ object LevelManager{
                         patrolPoints = emptyList(),  // Random hướng ban đầu
                         speed = 1.8f
                     ),
-                    // BOUNCE Monster đi chéo lên-phải  
+                    // BOUNCE Monster đi chéo lên-phải
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 7,
@@ -208,14 +205,14 @@ object LevelManager{
                 isUnlocked = true, // Mở khóa để test
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '.', 'S', '#'),
                     charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '#', '.', '.', '#'),
-                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '.', 'S', '.', '.', '#'),
                     charArrayOf('#', '.', '#', '.', 'B', '.', '#', '.', 'B', '.', '#', '.'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '#', '.', '#', '.', '.', '#', '.', '.', '#', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '.', 'B', '.', 'B', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '#', '.', '.', '.', '.', '.', '.', '#', '.', '#'),
+                    charArrayOf('#', '.', '#', 'S', '.', '.', '.', '.', '.', '#', '.', '#'),
                     charArrayOf('#', 'G', '.', 'G', '.', '.', '#', '.', 'G', '.', 'G', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#')

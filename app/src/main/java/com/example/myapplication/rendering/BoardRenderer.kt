@@ -44,7 +44,7 @@ class BoardRenderer(private val context: Context, private val gameRenderer: Game
      * 🗺️ Vẽ toàn bộ game board
      */
     fun drawGameBoard(canvas: Canvas, map: Array<CharArray>, playerRow: Int, playerCol: Int,
-                     playerDirection: PlayerDirection, monsters: List<Monster>) {
+                     playerDirection: PlayerDirection, monsters: List<Monster>, safeZonePositions: Set<Pair<Int, Int>>) {
         if (map.isEmpty() || map[0].isEmpty()) return
 
         val tileSize = min(screenWidth / map[0].size, screenHeight / map.size)
@@ -54,9 +54,8 @@ class BoardRenderer(private val context: Context, private val gameRenderer: Game
             cachedTileSize = tileSize
             cachedBitmaps = mapOf(
                 '#' to drawableToBitmap(gameRenderer.getWall(), tileSize),
-                'B' to drawableToBitmap(gameRenderer.getBox(), tileSize),
                 'G' to drawableToBitmap(gameRenderer.getGoal(), tileSize),
-                'S' to drawableToBitmap(gameRenderer.getGoal(), tileSize),  // Safe zone dùng goal drawable
+                'S' to drawableToBitmap(gameRenderer.getSafeZone(), tileSize),
                 '.' to drawableToBitmap(gameRenderer.getFloor(), tileSize)
             )
         }
@@ -69,7 +68,7 @@ class BoardRenderer(private val context: Context, private val gameRenderer: Game
         val offsetY = (screenHeight - boardHeight) / 2f
 
         // BƯỚC 1: Vẽ tất cả tiles trước (nền, tường, hộp, mục tiêu)
-        drawTiles(canvas, map, bitmaps, tileSize, offsetX, offsetY)
+        drawTiles(canvas, map, bitmaps, tileSize, offsetX, offsetY, safeZonePositions)
 
         // BƯỚC 2: Vẽ entities (player + monsters) theo thứ tự depth (Y-coordinate)
         drawEntitiesWithDepthSort(canvas, map, playerRow, playerCol, monsters, playerDirection, tileSize, offsetX, offsetY)
@@ -79,37 +78,36 @@ class BoardRenderer(private val context: Context, private val gameRenderer: Game
      * 🎨 Vẽ tất cả tiles trên map
      */
     private fun drawTiles(canvas: Canvas, map: Array<CharArray>, bitmaps: Map<Char, Bitmap>,
-                         tileSize: Int, offsetX: Float, offsetY: Float) {
+                         tileSize: Int, offsetX: Float, offsetY: Float, safeZonePositions: Set<Pair<Int, Int>>) {
         for (i in map.indices) {
             for (j in map[i].indices) {
                 val x = offsetX + j * tileSize.toFloat()
                 val y = offsetY + i * tileSize.toFloat()
 
-                // Vẽ bóng cho non-floor tiles
-                if (map[i][j] != '.') {
+                // Xác định nền cần vẽ (floor, wall, goal, safe zone)
+                val baseTile = when (map[i][j]) {
+                    'B' -> '.'  // Box hiển thị nền floor
+                    else -> map[i][j]  // Wall, goal, safe zone, floor giữ nguyên
+                }
+
+                // Vẽ bóng cho non-floor tiles (wall, goal, safe zone)
+                if (baseTile != '.' && baseTile != 'S') {
                     canvas.drawRect(x + 3, y + 3, x + tileSize + 3, y + tileSize + 3,
                                    gameRenderer.getShadowPaint())
                 }
 
-                // Vẽ tile (tường, hộp, mục tiêu, sàn)
-                val bitmap = bitmaps[map[i][j]] ?: bitmaps['.']!!
+                // Vẽ nền (wall, goal, safe zone, floor)
+                val bitmap = bitmaps[baseTile] ?: bitmaps['.']!!
                 canvas.drawBitmap(bitmap, x, y, gameRenderer.getTilePaint())
 
-                // 🆕 Overlay cho safe zone (ô 'S')
-                if (map[i][j] == 'S') {
-                    val safeZonePaint = Paint().apply {
-                        color = Color.argb(120, 0, 150, 255)  // Màu xanh dương trong suốt
-                        style = Paint.Style.FILL
-                    }
-                    canvas.drawRect(x, y, x + tileSize, y + tileSize, safeZonePaint)
+                // 🆕 Vẽ hộp nếu vị trí có hộp ('B')
+                if (map[i][j] == 'B') {
+                    val boxBitmap = drawableToBitmap(gameRenderer.getBox(), tileSize)
+                    canvas.drawBitmap(boxBitmap, x, y, gameRenderer.getTilePaint())
 
-                    // Vẽ viền xanh dương
-                    val borderPaint = Paint().apply {
-                        color = Color.rgb(0, 100, 200)
-                        style = Paint.Style.STROKE
-                        strokeWidth = 2f
-                    }
-                    canvas.drawRect(x, y, x + tileSize, y + tileSize, borderPaint)
+                    // Vẽ bóng cho hộp
+                    canvas.drawRect(x + 3, y + 3, x + tileSize + 3, y + tileSize + 3,
+                                   gameRenderer.getShadowPaint())
                 }
             }
         }
