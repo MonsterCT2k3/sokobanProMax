@@ -26,19 +26,19 @@ class BulletController(
         private set
 
     // ===== AMMO STATE =====
-    var normalAmmo = 5
-    var pierceAmmo = 5
-    var stunAmmo = 5
+    var normalAmmo = 3
+    var pierceAmmo = 3
+    var stunAmmo = 3
 
-    val maxAmmoPerType = 5
+    val maxAmmoPerType = 3
 
     /**
      * 🔄 Reset ammo về giá trị mặc định
      */
     fun resetAmmo() {
-        normalAmmo = 5
-        pierceAmmo = 5
-        stunAmmo = 5
+        normalAmmo = 3
+        pierceAmmo = 3
+        stunAmmo = 3
         currentBulletType = BulletType.NORMAL
         buildMode = false
     }
@@ -96,8 +96,8 @@ class BulletController(
 
         // 4️⃣ Tính target position dựa trên hướng player
         val targetX = when (playerDirection) {
-            PlayerDirection.LEFT -> playerScreenX - 2000f
-            PlayerDirection.RIGHT -> playerScreenX + 2000f
+            PlayerDirection.LEFT -> playerScreenX - 4000f
+            PlayerDirection.RIGHT -> playerScreenX + 4000f
             PlayerDirection.UP -> playerScreenX
             PlayerDirection.DOWN -> playerScreenX
         }
@@ -105,8 +105,8 @@ class BulletController(
         val targetY = when (playerDirection) {
             PlayerDirection.LEFT -> playerScreenY
             PlayerDirection.RIGHT -> playerScreenY
-            PlayerDirection.UP -> playerScreenY - 800f
-            PlayerDirection.DOWN -> playerScreenY + 800f
+            PlayerDirection.UP -> playerScreenY - 4000f
+            PlayerDirection.DOWN -> playerScreenY + 4000f
         }
 
         // 5️⃣ Bắn đạn theo hướng player

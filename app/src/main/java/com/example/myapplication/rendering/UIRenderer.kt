@@ -30,7 +30,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
     /**
      * 🎮 Vẽ UI chính của game (tiêu đề và hướng dẫn)
      */
-    fun drawGameUI(canvas: Canvas) {
+    fun drawGameUI(canvas: Canvas, currentLevelId: Int = 1) {
         // Vẽ tiêu đề game với font lớn và màu trắng
         val titlePaint = Paint().apply {
             color = Color.WHITE
@@ -55,6 +55,31 @@ class UIRenderer(private val resourceManager: ResourceManager) {
 
         canvas.drawText("Sokoban Game", screenWidth / 2f + 2f, 122f, shadowPaint)
         canvas.drawText("Sokoban Game", screenWidth / 2f, 120f, titlePaint)
+
+        // 🆕 Vẽ level display ngay dưới tiêu đề
+        val levelPaint = Paint().apply {
+            color = Color.YELLOW
+            textSize = 32f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+
+        val levelShadowPaint = Paint().apply {
+            color = Color.BLACK
+            textSize = 32f
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = 1f
+        }
+
+        val levelText = "LEVEL $currentLevelId"
+        canvas.drawText(levelText, screenWidth / 2f + 1f, 162f, levelShadowPaint)
+        canvas.drawText(levelText, screenWidth / 2f, 160f, levelPaint)
 
         // Vẽ hướng dẫn
         val instructionsPaint = Paint().apply {

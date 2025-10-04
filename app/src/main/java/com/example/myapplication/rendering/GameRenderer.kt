@@ -79,8 +79,8 @@ class GameRenderer(private val context: Context) {
     /**
      * 🎮 Vẽ UI chính của game
      */
-    fun drawGameUI(canvas: Canvas) {
-        uiRenderer.drawGameUI(canvas)
+    fun drawGameUI(canvas: Canvas, currentLevelId: Int = 1) {
+        uiRenderer.drawGameUI(canvas, currentLevelId)
     }
 
     /**
@@ -165,6 +165,10 @@ class GameRenderer(private val context: Context) {
 
     fun removeGoalReachedEffect(centerX: Float, centerY: Float) {
         effectRenderer.removeGoalReachedEffect(centerX, centerY)
+    }
+
+    fun clearGoalReachedEffects() {
+        effectRenderer.clearGoalReachedEffects()
     }
 
     fun drawGoalCounter(canvas: Canvas, currentCount: Int, totalCount: Int) {

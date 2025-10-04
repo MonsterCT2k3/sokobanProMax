@@ -23,11 +23,15 @@
 
         <Button
             android:id="@+id/btn_back"
-            style="@style/PixelButtonSecondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="← MENU"
-            android:layout_marginEnd="20dp" />
+            android:text="🏠 MENU"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/level_selection_button_back"
+            android:layout_marginEnd="20dp"
+            android:elevation="4dp" />
 
         <TextView
             android:id="@+id/title_text"

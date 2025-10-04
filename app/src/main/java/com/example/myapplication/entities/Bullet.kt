@@ -30,9 +30,9 @@ data class Bullet(
         return Pair(dx / distance, dy / distance)
     }
 
-    fun collidesWith(monsterX: Float, monsterY: Float, threshold: Float = 40f, monsterId: String): Boolean {
+    fun collidesWith(monsterX: Float, monsterY: Float, threshold: Float = 80f, monsterId: String): Boolean {
         val dx = currentX - monsterX
-        val dy = currentY - monsterY-77
+        val dy = currentY - monsterY-100f // Điều chỉnh trục Y để phù hợp với vị trí thực tế của monster
         val distance = kotlin.math.sqrt(dx * dx + dy * dy)
         // Trong Bullet.collidesWith
         println("🔍 Bullet at (${currentX.toInt()}, ${currentY.toInt()}) checking monster at (${monsterX.toInt()}, ${monsterY.toInt()}), distance: $distance")

@@ -53,19 +53,6 @@
             android:layout_marginBottom="20dp"
             android:fontFamily="monospace" />
 
-        <!-- History Button -->
-        <Button
-            android:id="@+id/btnHistory"
-            android:layout_width="280dp"
-            android:layout_height="70dp"
-            android:text="HISTORY"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/pixel_button_secondary_pressed"
-            android:layout_marginBottom="20dp"
-            android:fontFamily="monospace" />
-
         <!-- Record Button -->
         <Button
             android:id="@+id/btnRecord"

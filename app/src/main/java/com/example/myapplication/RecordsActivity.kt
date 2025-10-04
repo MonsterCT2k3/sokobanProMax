@@ -74,9 +74,9 @@ class RecordsActivity : AppCompatActivity() {
             levelSelectorLayout.visibility = View.VISIBLE
             tvSelectedLevel.visibility = View.VISIBLE
 
-            // Setup spinner với các level có kỷ lục
-            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, levelsWithScores)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            // Setup spinner với các level có kỷ lục (sử dụng custom layout)
+            val adapter = ArrayAdapter(this, R.layout.custom_spinner_item, levelsWithScores)
+            adapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item)
             spinnerLevels.adapter = adapter
 
             // Load kỷ lục cho level đầu tiên

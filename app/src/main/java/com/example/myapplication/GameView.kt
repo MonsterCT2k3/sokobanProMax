@@ -56,6 +56,9 @@ class GameView @JvmOverloads constructor(
     GameLogic.GameStateListener,        // Lắng nghe thay đổi trạng thái game
     InputHandler.PlayerMoveListener {   // Lắng nghe input từ user
 
+    // ===== VICTORY NAVIGATION CALLBACK =====
+    private var victoryNavigationCallback: (() -> Unit)? = null
+
     // ===== CORE COMPONENTS =====
     // Mỗi component có nhiệm vụ riêng biệt, tách biệt trách nhiệm
     private val gameLogic = GameLogic()                    // 🎯 Xử lý logic game
@@ -126,6 +129,8 @@ class GameView @JvmOverloads constructor(
         gameLogic.onGoalReachedEffect = { row, col ->
             val (centerX, centerY) = gameRenderer.calculateTileCenter(gameLogic.getMap(), row, col)
             gameRenderer.addGoalReachedEffect(centerX, centerY)
+            // 🔔 Phát âm thanh "ting" khi đẩy hộp vào đích
+            soundManager.playSound("ting")
         }
         gameLogic.onGoalLeftEffect = { row, col ->
             val (centerX, centerY) = gameRenderer.calculateTileCenter(gameLogic.getMap(), row, col)
@@ -145,6 +150,11 @@ class GameView @JvmOverloads constructor(
 
     // ===== PUBLIC API METHODS =====
     // Các method public để Activity/Fragment có thể điều khiển game
+
+    // 🆕 SETTER CHO VICTORY NAVIGATION CALLBACK
+    fun setVictoryNavigationCallback(callback: () -> Unit) {
+        victoryNavigationCallback = callback
+    }
 
     // 🆕 GETTER CHO CURRENT LEVEL ID
     fun getCurrentLevelId(): Int {
@@ -169,6 +179,9 @@ class GameView @JvmOverloads constructor(
 
         // 🆕 CLEAR PARTICLES khi load level mới
         particleSystem.clear()
+
+        // 🆕 CLEAR GOAL REACHED EFFECTS khi load level mới
+        gameRenderer.clearGoalReachedEffects()
 
         // 🆕 SPAWN AMMO PICKUPS (loại trừ vị trí player start)
         val playerStartPos = gameLogic.getCurrentLevel()?.getPlayerStartPosition()
@@ -483,7 +496,8 @@ class GameView @JvmOverloads constructor(
 
         // 3. 🖼️ Vẽ UI elements cuối cùng (trên cùng)
         //    Title, instructions, score, etc.
-        gameRenderer.drawGameUI(canvas)
+        val currentLevelId = gameLogic.getCurrentLevel()?.id ?: 1
+        gameRenderer.drawGameUI(canvas, currentLevelId)
 
         // 🆕 DRAW BULLET TYPE BUTTONS (ở phía dưới)
         gameRenderer.drawBulletTypeButtons(canvas, uiState.normalAmmo, uiState.pierceAmmo, uiState.stunAmmo,
@@ -582,6 +596,9 @@ class GameView @JvmOverloads constructor(
         soundManager.playSound("victory")
 
         post {
+            // 🔔 Thông báo cho activity rằng sắp chuyển sang VictoryActivity
+            victoryNavigationCallback?.invoke()
+
             // 🎉 MỞ MÀN VICTORY SCREEN với BXH
             val intent = Intent(context, VictoryActivity::class.java).apply {
                 putExtra("level_id", currentLevelId)

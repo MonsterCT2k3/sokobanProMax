@@ -65,6 +65,15 @@ class EffectRenderer(private val resourceManager: ResourceManager) {
     }
 
     /**
+     * 🧹 Xóa tất cả goal reached effects (khi reset level)
+     */
+    fun clearGoalReachedEffects() {
+        val count = goalReachedEffects.size
+        goalReachedEffects.clear()
+        println("🧹 Cleared all goal reached effects ($count effects)")
+    }
+
+    /**
      * 🎯 Vẽ hiệu ứng khi hộp đạt goal - Star Burst Effect
      */
     fun drawGoalReachedEffects(canvas: Canvas, currentTime: Long) {

@@ -16,6 +16,7 @@ class MenuActivity : AppCompatActivity() {
     private lateinit var soundManager: SoundManager
     private var isNavigatingToMusicSettings = false
     private var isNavigatingToGame = false
+    private var isNavigatingToRecords = false
     private var isFirstResume = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,13 +66,9 @@ class MenuActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Nút History - hiển thị lịch sử game
-        findViewById<Button>(R.id.btnHistory).setOnClickListener {
-            showToast("Lịch sử game sẽ được hiển thị ở đây!")
-        }
-
-        // Nút Record - hiển thị kỷ lục
+        // Nút Record - hiển thị kỷ lục, giữ nhạc phát tiếp
         findViewById<Button>(R.id.btnRecord).setOnClickListener {
+            isNavigatingToRecords = true
             val intent = Intent(this, RecordsActivity::class.java)
             startActivity(intent)
         }
@@ -103,6 +100,7 @@ class MenuActivity : AppCompatActivity() {
         // Reset flags
         isNavigatingToMusicSettings = false
         isNavigatingToGame = false
+        isNavigatingToRecords = false
 
         if (isFirstResume) {
             // Lần đầu vào app: load settings và phát nhạc
@@ -116,8 +114,8 @@ class MenuActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Chỉ tạm dừng nhạc khi không chuyển sang Music Settings hoặc Game
-        if (!isNavigatingToMusicSettings && !isNavigatingToGame) {
+        // Chỉ tạm dừng nhạc khi không chuyển sang Music Settings, Game, hoặc Records
+        if (!isNavigatingToMusicSettings && !isNavigatingToGame && !isNavigatingToRecords) {
             musicManager.pauseMusic()
         }
     }

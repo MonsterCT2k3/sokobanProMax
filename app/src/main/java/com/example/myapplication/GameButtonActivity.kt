@@ -7,9 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.managers.MusicManager
 
 class GameButtonActivity : AppCompatActivity() {
-    
+
     private lateinit var gameView: GameView
     private lateinit var musicManager: MusicManager
+    private var isNavigatingToVictory = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +32,11 @@ class GameButtonActivity : AppCompatActivity() {
         val levelId = intent.getIntExtra("LEVEL_ID", 1)
         gameView.loadLevel(levelId)
 
+        // Setup callback từ GameView để xử lý navigation
+        gameView.setVictoryNavigationCallback {
+            isNavigatingToVictory = true
+        }
+
         
         // Nút quay lại Level Selection
         findViewById<Button>(R.id.buttonBack).setOnClickListener {
@@ -49,6 +55,8 @@ class GameButtonActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Reset navigation flag
+        isNavigatingToVictory = false
         if (::gameView.isInitialized) {
             gameView.resumeGame()
         }
@@ -60,7 +68,10 @@ class GameButtonActivity : AppCompatActivity() {
         if (::gameView.isInitialized) {
             gameView.pauseGame()
         }
-        musicManager.pauseMusic()
+        // Chỉ tạm dừng nhạc khi không chuyển sang VictoryActivity
+        if (!isNavigatingToVictory) {
+            musicManager.pauseMusic()
+        }
     }
 
     override fun onDestroy() {

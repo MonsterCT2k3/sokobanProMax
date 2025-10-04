@@ -56,6 +56,7 @@ class SoundManager private constructor(private val context: Context) {
         soundIds["victory"] = soundPool?.load(context, R.raw.victory, 1) ?: 0  // 🆕 THÊM ÂM THANH CHIẾN THẮNG
         soundIds["game_over"] = soundPool?.load(context, R.raw.game_over, 1) ?: 0  // 🆕 THÊM ÂM THANH THUA
         soundIds["loose_health"] = soundPool?.load(context, R.raw.loose_health, 1) ?: 0  // 🆕 THÊM ÂM THANH MẤT MÁU
+        soundIds["ting"] = soundPool?.load(context, R.raw.ting, 1) ?: 0  // 🆕 THÊM ÂM THANH KHI ĐẨY HỘP VÀO ĐÍCH
 
         println("🎵 SoundManager loaded sounds: ${soundIds.keys}")
     }

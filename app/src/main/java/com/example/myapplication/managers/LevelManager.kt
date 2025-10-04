@@ -1,19 +1,31 @@
 package com.example.myapplication.managers
 
+import com.example.myapplication.entities.MonsterType
 import com.example.myapplication.models.Level
 import com.example.myapplication.models.Level.Difficulty.*
-import com.example.myapplication.entities.MonsterType
 import com.example.myapplication.models.MonsterData
 
-object LevelManager{
+/**
+ * LevelManager - Quản lý tất cả levels trong game
+ *
+ * Chức năng chính:
+ * - Khởi tạo và lưu trữ tất cả levels
+ * - Quản lý việc unlock levels
+ * - Cập nhật kỷ lục của từng level
+ * - Theo dõi tiến độ hoàn thành game
+ */
+object LevelManager {
     private val levels = mutableListOf<Level>()
 
     init {
         initializeLevels()
     }
 
-    private fun initializeLevels(){
-        // Level 1 - Tutorial với Monster
+    /**
+     * Khởi tạo tất cả levels của game
+     */
+    private fun initializeLevels() {
+        // ===== LEVEL 1: HƯỚNG DẪN =====
         levels.add(
             Level(
                 id = 1,
@@ -29,7 +41,6 @@ object LevelManager{
                     charArrayOf('#', '#', '#', '#', '#', '#', '#')
                 ),
                 monsters = listOf(
-                    // Đi sang phải
                     MonsterData(
                         type = MonsterType.STRAIGHT,
                         startRow = 1,
@@ -43,12 +54,12 @@ object LevelManager{
                         startColumn = 5,
                         initialDirection = Pair(1, 0),   // Đi xuống
                         speed = 1.0f
-                    ),
+                    )
                 )
             )
         )
 
-        // Level 2 - Easy với BOUNCE Monster
+        // ===== LEVEL 2: KHỞI ĐẦU VỚI BOUNCE =====
         levels.add(
             Level(
                 id = 2,
@@ -65,7 +76,6 @@ object LevelManager{
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#')
                 ),
                 monsters = listOf(
-                    // BOUNCE Monster - bắt đầu đi sang phải
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 1,
@@ -73,7 +83,6 @@ object LevelManager{
                         patrolPoints = listOf(Pair(0, 1)),  // Hướng ban đầu: đi sang phải
                         speed = 1.5f
                     ),
-                    // BOUNCE Monster khác - bắt đầu đi xuống
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 1,
@@ -85,7 +94,7 @@ object LevelManager{
             )
         )
 
-        // Level 3 - Medium
+        // ===== LEVEL 3: THỬ THÁCH =====
         levels.add(
             Level(
                 id = 3,
@@ -103,102 +112,56 @@ object LevelManager{
             )
         )
 
-        // Level 4 - Original từ game hiện tại
+        // ===== LEVEL 4: CỔ ĐIỂN =====
         levels.add(
             Level(
                 id = 4,
                 name = "Cổ điển",
                 difficulty = MEDIUM,
-                description = "Level từ phiên bản gốc",
+                description = "Level từ phiên bản gốc với monsters",
                 map = arrayOf(
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', 'B', '.', '.', 'G', '.', '.', 'S', '#'),
+                    charArrayOf('#', '.', 'B', '.', '.', 'G', '.', '.', '.', '#'),
                     charArrayOf('#', '.', '.', '#', '.', '.', '#', '.', '.', '#'),
                     charArrayOf('#', '.', '#', '.', '#', '.', '.', 'B', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '@', 'S', 'G', '.', 'B', '.', '.', '.', '#'),
+                    charArrayOf('#', '@', '.', 'G', '.', 'B', '.', 'G', '.', '#'),
                     charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '.', '#'),
+                    charArrayOf('#', '.', '#', '.', '.', '.', '#', 'G', '.', '#'),
                     charArrayOf('#', '.', '.', 'B', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', 'S', '#'),
-                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
-                )
-            )
-        )
-
-        // Level 5 - Hard
-        levels.add(
-            Level(
-                id = 5,
-                name = "Khó khăn",
-                difficulty = HARD,
-                description = "Dành cho người chơi giỏi",
-                isUnlocked = false, // Khóa ban đầu
-                map = arrayOf(
-                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '#', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', 'B', '#', 'B', '.', '.', '#'),
-                    charArrayOf('#', '@', '.', '.', 'S', '.', '.', '#'),
-                    charArrayOf('#', 'G', '#', '.', '#', 'G', '.', '#'),
-                    charArrayOf('#', '.', '.', 'B', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '#', '.', '.', 'G', '#'),
-                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#')
-                )
-            )
-        )
-
-        // Level 6 - BOUNCE Monster Playground 
-        levels.add(
-            Level(
-                id = 6,
-                name = "Thế giới Bounce",
-                difficulty = MEDIUM,
-                description = "Khám phá sức mạnh của BOUNCE monsters",
-                map = arrayOf(
-                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '.', '.', '#', '.', '.', '.', 'S', '#'),
-                    charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', '.', '#'),
-                    charArrayOf('#', '@', '.', '.', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '#', '.', '.', '#', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', 'B', '#'),
-                    charArrayOf('#', '.', '#', '.', '.', '.', '#', '.', 'G', '#'),
-                    charArrayOf('#', '.', 'S', '.', '#', '.', '.', '.', '.', '#'),
+                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '.', '.', '#'),
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
                 ),
                 monsters = listOf(
-                    // BOUNCE Monster với random direction
                     MonsterData(
-                        type = MonsterType.BOUNCE,
+                        type = MonsterType.PATROL,
                         startRow = 1,
                         startColumn = 1,
-                        patrolPoints = emptyList(),  // Random hướng ban đầu
-                        speed = 1.8f
+                        initialDirection = Pair(0, 1),  // Di chuyển sang phải
+                        speed = 1.5f
                     ),
-                    // BOUNCE Monster đi chéo lên-phải
                     MonsterData(
-                        type = MonsterType.BOUNCE,
-                        startRow = 7,
-                        startColumn = 1,
-                        patrolPoints = listOf(Pair(-1, 1)),  // Đi chéo lên-phải
-                        speed = 1.3f
-                    ),
-                    // BOUNCE Monster nhanh
-                    MonsterData(
-                        type = MonsterType.BOUNCE,
+                        type = MonsterType.PATROL,
                         startRow = 3,
                         startColumn = 8,
-                        patrolPoints = listOf(Pair(0, -1)),  // Đi sang trái
-                        speed = 2.2f
+                        initialDirection = Pair(1, 0),  // Di chuyển xuống
+                        speed = 1.8f
+                    ),
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 5,
+                        startColumn = 4,
+                        initialDirection = Pair(0, 1),  // Hướng ban đầu: sang phải
+                        speed = 2.0f
                     )
                 )
             )
         )
-        
-        // Level 7 - Hard Sokoban Challenge với PATROL và BOUNCE monsters
+        // ===== LEVEL 5: THÁCH THỨC TỐI THƯỢNG =====
         levels.add(
             Level(
-                id = 7,
+                id = 5,
                 name = "Thách thức tối thượng",
                 difficulty = HARD,
                 description = "Map khó với monster patrol và bounce",
@@ -218,7 +181,6 @@ object LevelManager{
                     charArrayOf('#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#')
                 ),
                 monsters = listOf(
-                    // PATROL Monster 1 - Di chuyển ngang phía trên
                     MonsterData(
                         type = MonsterType.PATROL,
                         startRow = 1,
@@ -226,7 +188,6 @@ object LevelManager{
                         initialDirection = Pair(0, 1),  // Di chuyển sang phải
                         speed = 2.2f
                     ),
-                    // PATROL Monster 2 - Di chuyển dọc bên phải
                     MonsterData(
                         type = MonsterType.PATROL,
                         startRow = 5,
@@ -234,7 +195,6 @@ object LevelManager{
                         initialDirection = Pair(1, 0),  // Di chuyển xuống
                         speed = 3.4f
                     ),
-                    // BOUNCE Monster 1 - Bắt đầu từ giữa trái
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 3,
@@ -242,7 +202,6 @@ object LevelManager{
                         initialDirection = Pair(0, 1),  // Hướng ban đầu: xuống
                         speed = 2.6f
                     ),
-                    // BOUNCE Monster 2 - Khu vực phía dưới
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 7,
@@ -250,13 +209,887 @@ object LevelManager{
                         initialDirection = Pair(-1, 0),  // Hướng ban đầu: lên
                         speed = 2.3f
                     ),
-
                     MonsterData(
                         type = MonsterType.BOUNCE,
                         startRow = 6,
                         startColumn = 8,
                         initialDirection = Pair(-1, 0),  // Hướng ban đầu: lên
                         speed = 4.0f
+                    )
+                )
+            )
+        )
+
+
+        // Level 6 - BOUNCE Monster Playground
+        levels.add(
+            Level(
+                id = 6,
+                name = "Hành lang tử thần",
+                difficulty = HARD,
+                description = "Map dọc với các hành lang hẹp, monster tuần tra và nảy bất ngờ tạo thử thách cao",
+                isUnlocked = true,
+                map = arrayOf(
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '@',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'S',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'S',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        'G',
+                        'G',
+                        'G',
+                        'G',
+                        'G',
+                        'G',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#'
+                    )
+                ),
+                monsters = listOf(
+                    // PATROL Monster 1 - Tuần tra ngang ở hành lang trên
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 1,
+                        startColumn = 1,
+                        initialDirection = Pair(0, 1),  // Sang phải
+                        speed = 2.5f
+                    ),
+                    // PATROL Monster 2 - Tuần tra dọc qua các lối giữa
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 4,
+                        startColumn = 13,
+                        initialDirection = Pair(1, 0),  // Xuống
+                        speed = 2.8f
+                    ),
+                    // PATROL Monster 3 - Tuần tra ngang ở khu vực dưới
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 17,
+                        startColumn = 1,
+                        initialDirection = Pair(0, 1),  // Sang phải
+                        speed = 3.0f
+                    ),
+                    // BOUNCE Monster 1 - Nảy ngẫu nhiên ở khu vực trên, gây bất ngờ
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 3,
+                        startColumn = 6,
+                        initialDirection = Pair(1, 0),  // Xuống
+                        speed = 2.6f
+                    ),
+                    // BOUNCE Monster 2 - Khu vực giữa, di chuyển linh hoạt
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 9,
+                        startColumn = 4,
+                        initialDirection = Pair(0, -1),  // Sang trái
+                        speed = 2.9f
+                    ),
+                    // BOUNCE Monster 3 - Khu vực dưới, chặn đường đẩy hộp
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 15,
+                        startColumn = 10,
+                        initialDirection = Pair(-1, 0),  // Lên
+                        speed = 2.7f
+                    )
+                )
+            )
+        )
+
+        // ===== LEVEL 7: MÊ CUNG QUÁI VẬT =====
+        levels.add(
+            Level(
+                id = 7,
+                name = "Mê cung quái vật",
+                difficulty = HARD,
+                description = "Map lớn với nhiều monster patrol và bounce gây khó khăn",
+                isUnlocked = true,
+                map = arrayOf(
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '@',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        'B',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        'S',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        'B',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'S',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        'S',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        'B',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#',
+                        '.',
+                        '.',
+                        '#',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        'B',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '.',
+                        '#',
+                        'G',
+                        '.',
+                        'G',
+                        '.',
+                        'G',
+                        '.',
+                        'G',
+                        '#',
+                        'G',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '.',
+                        '.',
+                        '.',
+                        'G',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '.',
+                        '#'
+                    ),
+                    charArrayOf(
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#',
+                        '#'
+                    )
+                ),
+                monsters = listOf(
+// PATROL Monster 1 - Di chuyển ngang ở khu vực trên
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 3,
+                        startColumn = 2,
+                        initialDirection = Pair(0, 1),  // Sang phải
+                        speed = 2.5f
+                    ),
+// PATROL Monster 2 - Di chuyển dọc ở giữa map
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 9,
+                        startColumn = 6,
+                        initialDirection = Pair(-1, 0),  // lên
+                        speed = 3.0f
+                    ),
+// PATROL Monster 3 - Di chuyển ngang ở khu vực dưới
+                    MonsterData(
+                        type = MonsterType.PATROL,
+                        startRow = 19,
+                        startColumn = 1,
+                        initialDirection = Pair(0, 1),  // Sang phải
+                        speed = 2.8f
+                    ),
+// BOUNCE Monster 1 - Khu vực trên, bắt đầu từ trái
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 3,
+                        startColumn = 1,
+                        initialDirection = Pair(0, 1),  // Sang phải
+                        speed = 2.7f
+                    ),
+// BOUNCE Monster 2 - Khu vực giữa, bắt đầu từ phải
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 11,
+                        startColumn = 13,
+                        initialDirection = Pair(0, -1),  // Sang trái
+                        speed = 3.2f
+                    ),
+// BOUNCE Monster 3 - Khu vực dưới, bắt đầu từ giữa
+                    MonsterData(
+                        type = MonsterType.BOUNCE,
+                        startRow = 17,
+                        startColumn = 6,
+                        initialDirection = Pair(1, 0),  // Xuống
+                        speed = 2.9f
                     )
                 )
             )
@@ -287,8 +1120,10 @@ object LevelManager{
             val currentBestMoves = level.bestMoves
             val currentBestTime = level.bestTime
 
-            val newBestMoves = if (currentBestMoves == null || moves < currentBestMoves) moves else currentBestMoves
-            val newBestTime = if (currentBestTime == null || time < currentBestTime) time else currentBestTime
+            val newBestMoves =
+                if (currentBestMoves == null || moves < currentBestMoves) moves else currentBestMoves
+            val newBestTime =
+                if (currentBestTime == null || time < currentBestTime) time else currentBestTime
 
             levels[index] = level.copy(bestMoves = newBestMoves, bestTime = newBestTime)
 
