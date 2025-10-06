@@ -26,18 +26,23 @@ class BulletController(
         private set
 
     // ===== AMMO STATE =====
-    var normalAmmo = 3
-    var pierceAmmo = 3
+    var normalAmmo = 0
+    var pierceAmmo = 0
     var stunAmmo = 3
 
     val maxAmmoPerType = 3
 
     /**
      * 🔄 Reset ammo về giá trị mặc định
+     *
+     * Mỗi level bắt đầu:
+     * - Đạn thường: 0
+     * - Đạn xuyên thấu: 0
+     * - Đạn choáng: 3
      */
     fun resetAmmo() {
-        normalAmmo = 3
-        pierceAmmo = 3
+        normalAmmo = 0
+        pierceAmmo = 0
         stunAmmo = 3
         currentBulletType = BulletType.NORMAL
         buildMode = false
