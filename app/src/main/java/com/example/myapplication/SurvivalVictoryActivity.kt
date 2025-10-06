@@ -38,18 +38,45 @@ class SurvivalVictoryActivity : AppCompatActivity() {
 
     private fun setupUI(session: com.example.myapplication.models.SurvivalSession?) {
         val tvTitle = findViewById<TextView>(R.id.tvSurvivalVictoryTitle)
+        val tvSubtitle = findViewById<TextView>(R.id.tvSurvivalVictorySubtitle)
         val tvTotalTime = findViewById<TextView>(R.id.tvSurvivalTotalTime)
         val tvCompletedLevels = findViewById<TextView>(R.id.tvSurvivalCompletedLevels)
+        val tvPerformance = findViewById<TextView>(R.id.tvSurvivalPerformance)
+        val btnPlayAgain = findViewById<Button>(R.id.btnSurvivalPlayAgain)
         val btnBackToMenu = findViewById<Button>(R.id.btnSurvivalVictoryBackToMenu)
 
         if (session != null) {
-            tvTitle.text = "🏆 SURVIVAL COMPLETE!"
-            tvTotalTime.text = "Total Time: ${formatTime(session.totalTimeMs)}"
-            tvCompletedLevels.text = "Completed Levels: ${session.completedLevels.joinToString(", ")}"
+            // Tính tổng thời gian thực tế (bao gồm cả thời gian level cuối)
+            val currentTime = System.currentTimeMillis()
+            val sessionDuration = currentTime - session.sessionStartTime
+            val totalPlayedTime = session.totalTimeMs + sessionDuration
+            
+            tvTitle.text = "🏆 SURVIVAL MASTER!"
+            tvSubtitle.text = "Congratulations! You conquered all levels!"
+            tvTotalTime.text = "⏱️ Total Time: ${formatTime(totalPlayedTime)}"
+            tvCompletedLevels.text = "🎯 Completed: ${session.completedLevels.joinToString(" → ")} (${session.totalLevels}/3)"
+            
+            // Đánh giá performance dựa trên thời gian
+            val performanceText = when {
+                totalPlayedTime < 300000 -> "⚡ LIGHTNING FAST! Amazing speed!"
+                totalPlayedTime < 600000 -> "🔥 EXCELLENT! Great performance!"
+                totalPlayedTime < 900000 -> "👍 GOOD JOB! Well done!"
+                else -> "🎉 COMPLETED! You did it!"
+            }
+            tvPerformance.text = performanceText
         } else {
             tvTitle.text = "🏆 VICTORY!"
-            tvTotalTime.text = "Session data not available"
+            tvSubtitle.text = "Session data not available"
+            tvTotalTime.text = ""
             tvCompletedLevels.text = ""
+            tvPerformance.text = ""
+        }
+
+        btnPlayAgain.setOnClickListener {
+            // Start new Survival session
+            val intent = Intent(this, SurvivalGameActivity::class.java)
+            startActivity(intent)
+            finish()
         }
 
         btnBackToMenu.setOnClickListener {

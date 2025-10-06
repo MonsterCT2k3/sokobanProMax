@@ -1,63 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/survival_animated_background"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="32dp"
-    android:background="@android:color/black">
+    android:padding="24dp">
 
-    <!-- Title -->
-    <TextView
-        android:id="@+id/tvSurvivalVictoryTitle"
-        android:layout_width="wrap_content"
+    <!-- Victory Crown Animation Area -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🏆 SURVIVAL COMPLETE!"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:fontFamily="monospace"
-        android:background="@drawable/game_mode_title_background"
-        android:padding="16dp"
-        android:layout_marginBottom="32dp" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/survival_victory_crown_bg"
+        android:padding="32dp"
+        android:layout_marginBottom="32dp"
+        android:elevation="12dp">
 
-    <!-- Total Time -->
-    <TextView
-        android:id="@+id/tvSurvivalTotalTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Total Time: 05:30"
-        android:textSize="20sp"
-        android:textColor="@android:color/white"
-        android:fontFamily="monospace"
-        android:background="@drawable/time_background"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp" />
+        <!-- Main Title -->
+        <TextView
+            android:id="@+id/tvSurvivalVictoryTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🏆 SURVIVAL MASTER!"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="16dp"
+            android:shadowColor="#000000"
+            android:shadowDx="3"
+            android:shadowDy="3"
+            android:shadowRadius="6" />
 
-    <!-- Completed Levels -->
-    <TextView
-        android:id="@+id/tvSurvivalCompletedLevels"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Completed Levels: 1, 3, 4"
-        android:textSize="18sp"
-        android:textColor="@android:color/white"
-        android:fontFamily="monospace"
-        android:background="@drawable/time_background"
-        android:padding="12dp"
-        android:layout_marginBottom="32dp" />
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/tvSurvivalVictorySubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Congratulations! You conquered all levels!"
+            android:textSize="18sp"
+            android:textColor="#FFF8DC"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:alpha="0.9" />
 
-    <!-- Back to Menu Button -->
-    <Button
-        android:id="@+id/btnSurvivalVictoryBackToMenu"
-        android:layout_width="wrap_content"
+    </LinearLayout>
+
+    <!-- Stats Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🏠 QUAY LẠI MENU"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:fontFamily="monospace"
-        android:background="@drawable/game_mode_back_button"
-        android:padding="16dp" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/survival_victory_stats_bg"
+        android:padding="28dp"
+        android:layout_marginBottom="24dp"
+        android:elevation="8dp">
+
+        <!-- Performance Rating -->
+        <TextView
+            android:id="@+id/tvSurvivalPerformance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡ LIGHTNING FAST! Amazing speed!"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#00FF7F"
+            android:fontFamily="monospace"
+            android:background="@drawable/survival_performance_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Total Time -->
+        <TextView
+            android:id="@+id/tvSurvivalTotalTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⏱️ Total Time: 05:30"
+            android:textSize="20sp"
+            android:textColor="#87CEEB"
+            android:fontFamily="monospace"
+            android:background="@drawable/survival_victory_time_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Completed Levels -->
+        <TextView
+            android:id="@+id/tvSurvivalCompletedLevels"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎯 Completed: 1 → 3 → 4 (3/3)"
+            android:textSize="18sp"
+            android:textColor="#FFD700"
+            android:fontFamily="monospace"
+            android:background="@drawable/survival_victory_levels_bg"
+            android:padding="14dp" />
+
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <!-- Play Again Button -->
+        <Button
+            android:id="@+id/btnSurvivalPlayAgain"
+            android:layout_width="300dp"
+            android:layout_height="65dp"
+            android:text="🔄 CHƠI LẠI SURVIVAL"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/survival_victory_play_again_btn"
+            android:layout_marginBottom="20dp"
+            android:elevation="8dp" />
+
+        <!-- Back to Menu Button -->
+        <Button
+            android:id="@+id/btnSurvivalVictoryBackToMenu"
+            android:layout_width="300dp"
+            android:layout_height="65dp"
+            android:text="🏠 QUAY LẠI MENU"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/survival_victory_menu_btn"
+            android:elevation="8dp" />
+
+    </LinearLayout>
 
 </LinearLayout>
+
+</ScrollView>
