@@ -103,6 +103,15 @@ class GameView @JvmOverloads constructor(
     private var lives = 3
     private val maxLives = 3
 
+    // Survival Mode callbacks
+    private var survivalOnLevelComplete: ((Long) -> Unit)? = null
+    private var survivalOnPlayerDeath: (() -> Unit)? = null
+    private var survivalGetTotalTime: (() -> Long)? = null  // 🆕 Callback để lấy tổng thời gian
+    private var isSurvivalMode = false
+
+    // 🆕 Prevent multiple death calls per collision (for Survival mode)
+    private var isPlayerDead = false
+
     init {
         initGame()
     }
@@ -219,6 +228,7 @@ class GameView @JvmOverloads constructor(
     fun startGame() {
         if (!isGameRunning) {
             isGameRunning = true
+            isPlayerDead = false  // Reset death flag when starting game
             animationStartTime = System.currentTimeMillis() // 🆕 Ghi lại thời điểm bắt đầu
             levelStartTime = System.currentTimeMillis()     // 🏆 Bắt đầu đếm thời gian level
             gameThread = GameThread()   // Tạo thread mới
@@ -281,6 +291,56 @@ class GameView @JvmOverloads constructor(
         }
     }
 
+    // ===== SURVIVAL MODE METHODS =====
+    
+    /**
+     * 🏃 Enable/Disable Survival Mode
+     */
+    fun setSurvivalMode(enabled: Boolean) {
+        isSurvivalMode = enabled
+        println("🏃 Survival mode: $enabled")
+    }
+
+    /**
+     * 🏃 Set callbacks for Survival Mode
+     */
+    fun setSurvivalCallbacks(
+        onLevelComplete: (Long) -> Unit,
+        onPlayerDeath: () -> Unit,
+        getTotalTime: () -> Long
+    ) {
+        survivalOnLevelComplete = onLevelComplete
+        survivalOnPlayerDeath = onPlayerDeath
+        survivalGetTotalTime = getTotalTime
+        println("🏃 Survival callbacks set")
+    }
+
+    /**
+     * 🏃 Reset current level (for Survival mode when player loses a life)
+     */
+    fun resetCurrentLevel() {
+        try {
+            val currentLevelId = getCurrentLevelId()
+            println("🏃 Survival: Starting reset of level $currentLevelId")
+
+            loadLevel(currentLevelId)
+            isPlayerDead = false  // Reset death flag
+            startGame()
+
+            println("🏃 Survival: Successfully reset level $currentLevelId")
+        } catch (e: Exception) {
+            println("🏃 Survival: ERROR in resetCurrentLevel: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * 🏃 Get bullet controller (for Survival mode ammo management)
+     */
+    fun getBulletController(): BulletController {
+        return bulletController
+    }
+
     /**
      * 🔄 Update game mỗi frame
      * 
@@ -319,7 +379,9 @@ class GameView @JvmOverloads constructor(
         monsterSystem.updateMonsters(deltaTime, playerX, playerY, gameLogic.getMap())
 
         //check collision between player and monsters
-        if(monsterSystem.checkPlayerCollision(playerX, playerY)){
+        if(monsterSystem.checkPlayerCollision(playerX, playerY) && !isPlayerDead){
+            isPlayerDead = true
+            println("💀 COLLISION DETECTED: Player died")
             onPlayerDied()
         }
 
@@ -347,11 +409,26 @@ class GameView @JvmOverloads constructor(
         println("🩸 Checking lives collection at (row=$playerX, col=$playerY)")
         val collectedLives = livesSystem.checkLivesCollection(playerX, playerY)
         if (collectedLives) {
-            if (lives < maxLives) {
-                lives++
-                println("❤️ Lives increased to $lives/$maxLives")
+            if (isSurvivalMode) {
+                // 🏃 SURVIVAL MODE: Cập nhật lives trong SurvivalManager
+                val session = survivalGetTotalTime?.let { 
+                    // Sử dụng callback để lấy session thông qua SurvivalManager
+                    com.example.myapplication.managers.SurvivalManager.getCurrentSession()
+                }
+                if (session != null && session.lives < maxLives) {
+                    session.lives++
+                    println("🏃 Survival Lives increased to ${session.lives}/$maxLives")
+                } else {
+                    println("🏃 Survival Lives already at max ($maxLives)")
+                }
             } else {
-                println("❤️ Lives already at max ($maxLives)")
+                // 🎯 CLASSIC MODE: Cập nhật lives trong GameView
+                if (lives < maxLives) {
+                    lives++
+                    println("❤️ Lives increased to $lives/$maxLives")
+                } else {
+                    println("❤️ Lives already at max ($maxLives)")
+                }
             }
             soundManager.playSound("victory")  // Hoặc sound khác cho lives pickup
         }
@@ -478,7 +555,20 @@ class GameView @JvmOverloads constructor(
         // 🆕 DRAW MAIN UI (lives + goal counter + timer)
         val currentGoalCount = gameLogic.getBoxesInGoal()
         val totalGoalCount = gameLogic.getGoalPositions().size
-        gameRenderer.drawMainUI(canvas, lives, maxLives, currentGoalCount, totalGoalCount, System.currentTimeMillis() - levelStartTime)
+        
+        // Tính thời gian và lives hiển thị dựa trên chế độ
+        val (displayTime, displayLives) = if (isSurvivalMode) {
+            // Survival Mode: Hiển thị tổng thời gian + lives từ SurvivalManager
+            val sessionTotalTime = survivalGetTotalTime?.invoke() ?: 0L
+            val currentLevelTime = System.currentTimeMillis() - levelStartTime
+            val survivalLives = com.example.myapplication.managers.SurvivalManager.getCurrentSession()?.lives ?: lives
+            Pair(sessionTotalTime + currentLevelTime, survivalLives)
+        } else {
+            // Classic Mode: Chỉ hiển thị thời gian level hiện tại + lives từ GameView
+            Pair(System.currentTimeMillis() - levelStartTime, lives)
+        }
+        
+        gameRenderer.drawMainUI(canvas, displayLives, maxLives, currentGoalCount, totalGoalCount, displayTime, isSurvivalMode)
 
         // 🎛️ Vẽ nút toggle phía trên map
         val uiState = uiManager.getUIState()
@@ -573,42 +663,50 @@ class GameView @JvmOverloads constructor(
     override fun onGameWon() {
         isGameRunning = false  // Dừng game loop
 
-        // 🏆 LƯU KỶ LỤC: Tính thời gian hoàn thành level và lưu kỷ lục
+        // 🏆 Tính thời gian hoàn thành level
         val levelEndTime = System.currentTimeMillis()
         val levelTime = levelEndTime - levelStartTime
         val currentLevelId = gameLogic.getCurrentLevel()?.id ?: 1
-        val isNewRecord = highScoreManager.isNewHighScore(currentLevelId, levelTime)
 
-        // Lưu kỷ lục nếu là thời gian tốt hơn
-        highScoreManager.saveHighScore(currentLevelId, levelTime)
+        if (isSurvivalMode) {
+            // 🏃 SURVIVAL MODE: Gọi callback thay vì hiển thị victory screen
+            println("🏃 Survival: Level $currentLevelId completed in ${levelTime}ms")
+            survivalOnLevelComplete?.invoke(levelTime)
+        } else {
+            // 🎯 CLASSIC MODE: Logic cũ - lưu kỷ lục và mở victory screen
+            val isNewRecord = highScoreManager.isNewHighScore(currentLevelId, levelTime)
 
-        // 🆕 LƯU PROGRESS: Cập nhật level đã hoàn thành
-        val sharedPreferences = context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
-        val lastCompletedLevel = sharedPreferences.getInt("last_completed_level", 0)
+            // Lưu kỷ lục nếu là thời gian tốt hơn
+            highScoreManager.saveHighScore(currentLevelId, levelTime)
 
-        // Chỉ cập nhật nếu level hiện tại cao hơn level đã hoàn thành trước đó
-        if (currentLevelId > lastCompletedLevel) {
-            sharedPreferences.edit().putInt("last_completed_level", currentLevelId).apply()
-            Log.d("GameView", "Progress updated: completed level $currentLevelId")
-        }
+            // 🆕 LƯU PROGRESS: Cập nhật level đã hoàn thành
+            val sharedPreferences = context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
+            val lastCompletedLevel = sharedPreferences.getInt("last_completed_level", 0)
 
-        // 🆕 PHÁT ÂM THANH CHIẾN THẮNG
-        soundManager.playSound("victory")
-
-        post {
-            // 🔔 Thông báo cho activity rằng sắp chuyển sang VictoryActivity
-            victoryNavigationCallback?.invoke()
-
-            // 🎉 MỞ MÀN VICTORY SCREEN với BXH
-            val intent = Intent(context, VictoryActivity::class.java).apply {
-                putExtra("level_id", currentLevelId)
-                putExtra("your_time", levelTime)
-                putExtra("is_new_record", isNewRecord)
+            // Chỉ cập nhật nếu level hiện tại cao hơn level đã hoàn thành trước đó
+            if (currentLevelId > lastCompletedLevel) {
+                sharedPreferences.edit().putInt("last_completed_level", currentLevelId).apply()
+                Log.d("GameView", "Progress updated: completed level $currentLevelId")
             }
-            context.startActivity(intent)
 
-            // Kết thúc activity hiện tại
-            (context as? android.app.Activity)?.finish()
+            // 🆕 PHÁT ÂM THANH CHIẾN THẮNG
+            soundManager.playSound("victory")
+
+            post {
+                // 🔔 Thông báo cho activity rằng sắp chuyển sang VictoryActivity
+                victoryNavigationCallback?.invoke()
+
+                // 🎉 MỞ MÀN VICTORY SCREEN với BXH
+                val intent = Intent(context, VictoryActivity::class.java).apply {
+                    putExtra("level_id", currentLevelId)
+                    putExtra("your_time", levelTime)
+                    putExtra("is_new_record", isNewRecord)
+                }
+                context.startActivity(intent)
+
+                // Kết thúc activity hiện tại
+                (context as? android.app.Activity)?.finish()
+            }
         }
     }
 
@@ -624,38 +722,66 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun onPlayerDied() {
-        lives--  // Giảm 1 mạng
-
-        if (lives <= 0) {
-            // HẾT MẠNG - GAME OVER
-            isGameRunning = false
-            soundManager.playSound("game_over")
-            post {
-                dialogManager.showLoseDialog(gameLogic, { levelId ->
-                    loadLevel(levelId)
-                    startGame()
-                })
-            }
+        if (isSurvivalMode) {
+            // 🏃 SURVIVAL MODE: Gọi callback để SurvivalManager xử lý
+            println("💀 Survival: Player died")
+            
+            // Phát âm thanh mất mạng (SurvivalManager sẽ quyết định game over hay không)
+            soundManager.playSound("loose_health")
+            
+            // Reset monsters, bullets, particles ngay lập tức để tránh spam death
+            resetGameElementsAfterDeath()
+            
+            // Gọi callback để SurvivalManager xử lý lives
+            survivalOnPlayerDeath?.invoke()
         } else {
-            // VẪN CÒN MẠNG - CHỈ TRỪ MẠNG, TIẾP TỤC CHƠI TỪ VỊ TRÍ HIỆN TẠI
-            soundManager.playSound("loose_health")  // Hoặc sound khác cho mất mạng
-            println("💔 Lost a life! Lives remaining: $lives/$maxLives")
+            // 🎯 CLASSIC MODE: Logic cũ với lives system riêng
+            lives--  // Giảm 1 mạng
 
-            // Reset monsters về vị trí ban đầu (để tránh bị spawn trap)
-            monsterSystem.clearMonsters()
-            val level = gameLogic.getCurrentLevel()
-            level?.monsters?.forEachIndexed { index, monsterData ->
-                val monsterId = "monster_${level.id}_${index}"
-                val monster = monsterSystem.createMonsterFromData(monsterData, monsterId)
-                monsterSystem.addMonster(monster)
+            if (lives <= 0) {
+                // HẾT MẠNG - GAME OVER
+                isGameRunning = false
+                soundManager.playSound("game_over")
+                post {
+                    dialogManager.showLoseDialog(gameLogic, { levelId ->
+                        loadLevel(levelId)
+                        startGame()
+                    })
+                }
+            } else {
+                // VẪN CÒN MẠNG - CHỈ TRỪ MẠNG, TIẾP TỤC CHƠI
+                soundManager.playSound("loose_health")
+                println("💔 Lost a life! Lives remaining: $lives/$maxLives")
+
+                // Reset game elements và death flag
+                resetGameElementsAfterDeath()
+                
+                // Thông báo game state changed để redraw
+                gameStateChanged = true
             }
-
-            // Reset bullets và particles
-            bulletSystem.clearBullets()
-            particleSystem.clear()
-
-            // Thông báo game state changed để redraw
-            gameStateChanged = true
         }
+    }
+
+    /**
+     * 🔄 Reset game elements sau khi player chết (dùng chung cho cả 2 mode)
+     */
+    private fun resetGameElementsAfterDeath() {
+        // Reset monsters về vị trí ban đầu (để tránh bị spawn trap)
+        monsterSystem.clearMonsters()
+        val level = gameLogic.getCurrentLevel()
+        level?.monsters?.forEachIndexed { index, monsterData ->
+            val monsterId = "monster_${level.id}_${index}"
+            val monster = monsterSystem.createMonsterFromData(monsterData, monsterId)
+            monsterSystem.addMonster(monster)
+        }
+
+        // Reset bullets và particles
+        bulletSystem.clearBullets()
+        particleSystem.clear()
+
+        // Reset death flag để có thể chết lần nữa
+        isPlayerDead = false
+        
+        println("🔄 Game elements reset after death")
     }
 }

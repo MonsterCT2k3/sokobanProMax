@@ -44,11 +44,11 @@ class GameModeSelectionActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 🏃 Nút Chế độ sinh tử - tạm thời hiển thị thông báo
+        // 🏃 Nút Chế độ sinh tử - chuyển đến SurvivalGameActivity
         findViewById<Button>(R.id.btnSurvivalMode).setOnClickListener {
             isNavigatingToSurvival = true
-            showToast("🏗️ Chế độ Sinh Tử đang được phát triển!")
-            // TODO: Implement Survival Mode later
+            val intent = Intent(this, SurvivalGameActivity::class.java)
+            startActivity(intent)
         }
 
         // 🏠 Nút Quay lại - về menu chính

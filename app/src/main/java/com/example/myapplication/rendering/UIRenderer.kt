@@ -328,20 +328,34 @@ class UIRenderer(private val resourceManager: ResourceManager) {
     /**
      * ❤️ Vẽ UI chính với lives, goal counter và timer - căn giữa cả ba
      */
-    fun drawMainUI(canvas: Canvas, lives: Int, maxLives: Int, currentGoalCount: Int, totalGoalCount: Int, elapsedTime: Long) {
-        // Tính toán vị trí để căn giữa cả ba elements
-        val elementWidth = 150f  // Width của lives và goal UI
-        val timerWidth = 120f    // Width của timer UI
-        val gap = 15f           // Khoảng cách giữa các elements
+    fun drawMainUI(canvas: Canvas, lives: Int, maxLives: Int, currentGoalCount: Int, totalGoalCount: Int, elapsedTime: Long, isSurvivalMode: Boolean) {
+        if (isSurvivalMode) {
+            // 🏃 SURVIVAL MODE: Lives + Goal Counter + Total Time
+            val elementWidth = 150f
+            val gap = 15f
+            val totalWidth = elementWidth + gap + elementWidth + gap + elementWidth
+            val startX = screenWidth / 2f - totalWidth / 2f
 
-        // Tổng width của cả ba elements và gaps
-        val totalWidth = elementWidth + gap + elementWidth + gap + timerWidth
-        val startX = screenWidth / 2f - totalWidth / 2f  // Căn giữa toàn bộ nhóm
+            // Survival Lives UI ở bên trái (với style riêng)
+            drawSurvivalLivesUI(canvas, lives, maxLives, startX)
+            
+            // Goal counter ở giữa
+            drawGoalCounter(canvas, currentGoalCount, totalGoalCount, startX + elementWidth + gap)
+            
+            // Total time ở bên phải (thời gian tổng cộng từ khi bắt đầu Survival)
+            drawSurvivalTimerUI(canvas, elapsedTime, startX + elementWidth + gap + elementWidth + gap)
+        } else {
+            // 🎯 CLASSIC MODE: Lives + Goal + Level Time
+            val elementWidth = 150f
+            val timerWidth = 120f
+            val gap = 15f
+            val totalWidth = elementWidth + gap + elementWidth + gap + timerWidth
+            val startX = screenWidth / 2f - totalWidth / 2f
 
-        // Vẽ từng element với vị trí tính toán
-        drawLivesUI(canvas, lives, maxLives, startX)
-        drawGoalCounter(canvas, currentGoalCount, totalGoalCount, startX + elementWidth + gap)
-        drawTimerUI(canvas, elapsedTime, startX + elementWidth + gap + elementWidth + gap)
+            drawLivesUI(canvas, lives, maxLives, startX)
+            drawGoalCounter(canvas, currentGoalCount, totalGoalCount, startX + elementWidth + gap)
+            drawTimerUI(canvas, elapsedTime, startX + elementWidth + gap + elementWidth + gap)
+        }
     }
 
     /**
@@ -571,5 +585,178 @@ class UIRenderer(private val resourceManager: ResourceManager) {
             iconBottom.toInt()
         )
         resourceManager.timeIcon.draw(canvas)
+    }
+
+    /**
+     * 🏃 Vẽ timer cho Survival Mode (hiển thị tổng thời gian từ khi bắt đầu session)
+     */
+    private fun drawSurvivalTimerUI(canvas: Canvas, totalElapsedTime: Long, startX: Float) {
+        val timerWidth = 150f
+        val timerHeight = 100f
+
+        val timerRect = RectF(
+            startX,
+            200f,
+            startX + timerWidth,
+            250f + timerHeight
+        )
+
+        // Vẽ nền với gradient màu cam (khác với Classic Mode)
+        val bgPaint = Paint().apply {
+            color = Color.parseColor("#CC8B4513")  // Semi-transparent brown/orange
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRoundRect(timerRect, 15f, 15f, bgPaint)
+
+        // Vẽ border màu cam
+        val borderPaint = Paint().apply {
+            color = Color.parseColor("#FFA500")  // Orange border
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+            isAntiAlias = true
+        }
+        canvas.drawRoundRect(timerRect, 15f, 15f, borderPaint)
+
+        // Format thời gian tổng (MM:SS)
+        val totalSeconds = totalElapsedTime / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        val timeText = String.format("%02d:%02d", minutes, seconds)
+
+        // Vẽ text "TOTAL" ở dòng trên
+        val labelPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 24f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText(
+            "TOTAL",
+            timerRect.centerX(),
+            timerRect.top + 35f,
+            labelPaint
+        )
+
+        // Vẽ thời gian ở dòng dưới
+        val timePaint = Paint().apply {
+            color = Color.parseColor("#FFA500")  // Orange color
+            textSize = 32f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText(
+            timeText,
+            timerRect.centerX(),
+            timerRect.bottom - 25f,
+            timePaint
+        )
+
+        // Vẽ icon clock màu cam
+        val iconSize = 20f
+        val iconLeft = timerRect.centerX() - iconSize / 2
+        val iconTop = timerRect.top + 45f
+        
+        val iconPaint = Paint().apply {
+            color = Color.parseColor("#FFA500")
+            textSize = iconSize
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText(
+            "⏱️",
+            timerRect.centerX(),
+            iconTop + iconSize,
+            iconPaint
+        )
+    }
+
+    /**
+     * 🏃 Vẽ Lives UI cho Survival Mode (với style riêng màu cam/đỏ)
+     */
+    private fun drawSurvivalLivesUI(canvas: Canvas, lives: Int, maxLives: Int, startX: Float) {
+        val uiWidth = 150f
+        val uiHeight = 100f
+        val uiRect = RectF(
+            startX,
+            200f,
+            startX + uiWidth,
+            250f + uiHeight
+        )
+
+        // Vẽ nền với gradient màu đỏ/cam (khác với Classic Mode)
+        val bgPaint = Paint().apply {
+            color = Color.parseColor("#CC8B0000")  // Semi-transparent dark red
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, bgPaint)
+
+        // Vẽ border màu đỏ
+        val borderPaint = Paint().apply {
+            color = Color.parseColor("#FF4444")  // Red border
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+            isAntiAlias = true
+        }
+        canvas.drawRoundRect(uiRect, 15f, 15f, borderPaint)
+
+        // Vẽ text "LIVES" ở dòng trên
+        val labelPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 24f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText(
+            "LIVES",
+            uiRect.centerX(),
+            uiRect.top + 35f,
+            labelPaint
+        )
+
+        // Vẽ số mạng ở dòng dưới với màu đỏ/cam
+        val livesText = "$lives/$maxLives"
+        val livesPaint = Paint().apply {
+            color = Color.parseColor("#FF6666")  // Light red color
+            textSize = 32f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText(
+            livesText,
+            uiRect.centerX(),
+            uiRect.bottom - 25f,
+            livesPaint
+        )
+
+        // Vẽ hearts icons theo số mạng còn lại
+        val heartSize = 20f
+        val heartsStartX = uiRect.centerX() - (maxLives * heartSize) / 2f + heartSize / 2f
+        val heartY = uiRect.top + 55f
+
+        for (i in 0 until maxLives) {
+            val heartX = heartsStartX + i * (heartSize + 5f)
+            val heartPaint = Paint().apply {
+                textSize = heartSize
+                textAlign = Paint.Align.CENTER
+                isAntiAlias = true
+                color = if (i < lives) {
+                    Color.parseColor("#FF4444")  // Red heart for active lives
+                } else {
+                    Color.parseColor("#666666")  // Gray heart for lost lives
+                }
+            }
+            canvas.drawText(
+                "❤️",
+                heartX,
+                heartY + heartSize,
+                heartPaint
+            )
+        }
     }
 }

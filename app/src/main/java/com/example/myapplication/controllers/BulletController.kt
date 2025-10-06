@@ -46,6 +46,7 @@ class BulletController(
         stunAmmo = 3
         currentBulletType = BulletType.NORMAL
         buildMode = false
+        onAmmoChanged?.invoke(normalAmmo, pierceAmmo, stunAmmo)
     }
 
     /**
@@ -69,6 +70,7 @@ class BulletController(
                 }
             }
         }
+        onAmmoChanged?.invoke(normalAmmo, pierceAmmo, stunAmmo)
     }
 
     /**
@@ -123,6 +125,9 @@ class BulletController(
             BulletType.PIERCE -> pierceAmmo--
             BulletType.STUN -> stunAmmo--
         }
+
+        // Notify ammo change for Survival Mode
+        onAmmoChanged?.invoke(normalAmmo, pierceAmmo, stunAmmo)
 
         println("🔫 Fired ${currentBulletType} bullet in direction: $playerDirection")
 
@@ -204,4 +209,7 @@ class BulletController(
             BulletType.STUN -> stunAmmo > 0
         }
     }
+
+    // 🏃 Callback for Survival Mode to track ammo changes
+    var onAmmoChanged: ((Int, Int, Int) -> Unit)? = null
 }

@@ -111,8 +111,8 @@ class GameRenderer(private val context: Context) {
     /**
      * ❤️ Vẽ lives UI
      */
-    fun drawMainUI(canvas: Canvas, lives: Int, maxLives: Int, currentGoalCount: Int, totalGoalCount: Int, elapsedTime: Long) {
-        uiRenderer.drawMainUI(canvas, lives, maxLives, currentGoalCount, totalGoalCount, elapsedTime)
+    fun drawMainUI(canvas: Canvas, lives: Int, maxLives: Int, currentGoalCount: Int, totalGoalCount: Int, elapsedTime: Long, isSurvivalMode: Boolean) {
+        uiRenderer.drawMainUI(canvas, lives, maxLives, currentGoalCount, totalGoalCount, elapsedTime, isSurvivalMode)
     }
 
     /**
