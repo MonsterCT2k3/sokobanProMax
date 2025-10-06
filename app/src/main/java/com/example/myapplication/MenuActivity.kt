@@ -59,10 +59,10 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
-        // Nút Play - chuyển đến màn hình game, giữ nhạc phát tiếp
+        // Nút Play - chuyển đến màn hình chọn chế độ chơi, giữ nhạc phát tiếp
         findViewById<Button>(R.id.btnPlay).setOnClickListener {
             isNavigatingToGame = true
-            val intent = Intent(this, LevelSelectionActivity::class.java)
+            val intent = Intent(this, GameModeSelectionActivity::class.java)
             startActivity(intent)
         }
 

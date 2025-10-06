@@ -30,6 +30,11 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
+        <!-- Game Mode Selection Activity -->
+        <activity
+            android:name=".GameModeSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <!-- Keep existing activities -->
         <activity
