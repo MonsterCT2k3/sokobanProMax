@@ -11,7 +11,7 @@ package com.example.myapplication.models
  */
 data class SurvivalSession(
     val sessionId: String,
-    val levels: List<Int> = listOf(1, 3, 4),  // Fixed levels for Survival mode
+    var levels: List<Int> = listOf(1, 3, 4),  // Fixed levels for Survival mode
     var currentLevelIndex: Int = 0,
     var lives: Int = 3,
     var totalTimeMs: Long = 0L,
@@ -23,6 +23,16 @@ data class SurvivalSession(
     var isFailed: Boolean = false,
     val completedLevels: MutableList<Int> = mutableListOf()
 ) {
+
+    init{
+        levels = randomizeLevels()
+    }
+    private fun randomizeLevels(): List<Int> {
+        //random 3 level from 1 to 7
+        return (1..7).shuffled().take(3).sorted()
+    }
+
+
     /**
      * Get current level ID
      */

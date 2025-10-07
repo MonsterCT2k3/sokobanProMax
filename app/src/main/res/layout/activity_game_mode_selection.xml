@@ -62,7 +62,7 @@
             android:id="@+id/btnSurvivalMode"
             android:layout_width="320dp"
             android:layout_height="80dp"
-            android:text="🏃 CHẾ ĐỘ SINH TỬ\n(Survival Mode)"
+            android:text="🏃 CHẾ ĐỘ SINH TỒN\n(Survival Mode)"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"

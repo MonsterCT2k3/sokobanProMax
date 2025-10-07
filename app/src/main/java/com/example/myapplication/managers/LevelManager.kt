@@ -389,27 +389,6 @@ object LevelManager {
                 )
             )
         )
-
-        levels.add(
-            Level(
-                id = 8,
-                name = "Intricate Maze",
-                difficulty = MEDIUM,
-                description = "An 8x8 maze with multiple goals and obstacles",
-                isUnlocked = true,
-                map = arrayOf(
-                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#'),
-                    charArrayOf('#', '.', '@', 'G', '.', '.', 'G', '#'),
-                    charArrayOf('#', '.', 'B', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '@', '#', '#', 'B', 'B', '#'),
-                    charArrayOf('#', '.', '.', '.', 'B', 'G', 'G', '#'),
-                    charArrayOf('#', '.', '@', '@', '.', '.', '.', '#'),
-                    charArrayOf('#', '.', '.', '.', '.', '.', '.', '#'),
-                    charArrayOf('#', '#', '#', '#', '#', '#', '#', '#')
-                ),
-                monsters = listOf()
-            )
-        )
     }
 
     // Public methods
