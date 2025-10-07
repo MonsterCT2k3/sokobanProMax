@@ -93,14 +93,14 @@ class VictoryAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // Top 3 elements
-        val top3Background: android.widget.LinearLayout = view.findViewById(R.id.top3Background)
+        val top3Background: LinearLayout = view.findViewById(R.id.top3Background)
         val tvRank: TextView = view.findViewById(R.id.tvRank)
         val tvTime: TextView = view.findViewById(R.id.tvTime)
         val tvFormattedTime: TextView = view.findViewById(R.id.tvFormattedTime)
         val tvIsYourTime: TextView = view.findViewById(R.id.tvIsYourTime)
 
         // Regular elements
-        val regularBackground: android.widget.LinearLayout = view.findViewById(R.id.regularBackground)
+        val regularBackground: LinearLayout = view.findViewById(R.id.regularBackground)
         val tvRankRegular: TextView = view.findViewById(R.id.tvRankRegular)
         val tvTimeRegular: TextView = view.findViewById(R.id.tvTimeRegular)
         val tvFormattedTimeRegular: TextView = view.findViewById(R.id.tvFormattedTimeRegular)
@@ -120,8 +120,8 @@ class VictoryAdapter(
 
         // Show appropriate background
         if (isTop3) {
-            holder.top3Background.visibility = android.view.View.VISIBLE
-            holder.regularBackground.visibility = android.view.View.GONE
+            holder.top3Background.visibility = View.VISIBLE
+            holder.regularBackground.visibility = View.GONE
 
             holder.tvRank.text = "#$rank"
             holder.tvTime.text = "${timeMillis}ms"
@@ -130,13 +130,13 @@ class VictoryAdapter(
             // Check if this is the player's time
             if (timeMillis == yourTime) {
                 holder.tvIsYourTime.text = "← BẠN!"
-                holder.tvIsYourTime.visibility = android.view.View.VISIBLE
+                holder.tvIsYourTime.visibility = View.VISIBLE
             } else {
-                holder.tvIsYourTime.visibility = android.view.View.GONE
+                holder.tvIsYourTime.visibility = View.GONE
             }
         } else {
-            holder.top3Background.visibility = android.view.View.GONE
-            holder.regularBackground.visibility = android.view.View.VISIBLE
+            holder.top3Background.visibility = View.GONE
+            holder.regularBackground.visibility = View.VISIBLE
 
             holder.tvRankRegular.text = "#$rank"
             holder.tvTimeRegular.text = "${timeMillis}ms"
@@ -145,9 +145,9 @@ class VictoryAdapter(
             // Check if this is the player's time
             if (timeMillis == yourTime) {
                 holder.tvIsYourTimeRegular.text = "← BẠN!"
-                holder.tvIsYourTimeRegular.visibility = android.view.View.VISIBLE
+                holder.tvIsYourTimeRegular.visibility = View.VISIBLE
             } else {
-                holder.tvIsYourTimeRegular.visibility = android.view.View.GONE
+                holder.tvIsYourTimeRegular.visibility = View.GONE
             }
         }
     }

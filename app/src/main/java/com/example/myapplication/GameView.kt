@@ -24,6 +24,9 @@ import com.example.myapplication.entities.AmmoPickup
 import com.example.myapplication.entities.AmmoType
 import com.example.myapplication.entities.BulletType
 import com.example.myapplication.entities.LivesPickup
+import com.example.myapplication.entities.Monster
+import com.example.myapplication.entities.MonsterAIState
+import com.example.myapplication.entities.MonsterType
 import com.example.myapplication.managers.DialogManager
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
@@ -457,7 +460,7 @@ class GameView @JvmOverloads constructor(
         // ===== CHECK BULLET COLLISIONS =====
         // Kiểm tra bullets có chạm monsters không
         val monsterIds = monsterSystem.getActiveMonsters().map { it.id }
-        val monsterPositions = monsterSystem.getActiveMonsters().map { monster: com.example.myapplication.entities.Monster ->
+        val monsterPositions = monsterSystem.getActiveMonsters().map { monster: Monster ->
             // Convert grid coordinates to screen coordinates
             val screenX = offsetX + monster.currentY * tileSize  // currentY là column
             val screenY = offsetY + monster.currentX * tileSize  // currentX là row
@@ -844,34 +847,34 @@ class GameView @JvmOverloads constructor(
         monsterSystem.clearMonsters()
         for ((x, y, type) in monsterData) {
             val monsterType = when (type) {
-                "PATROL" -> com.example.myapplication.entities.MonsterType.PATROL
-                "BOUNCE" -> com.example.myapplication.entities.MonsterType.BOUNCE
-                else -> com.example.myapplication.entities.MonsterType.PATROL
+                "PATROL" -> MonsterType.PATROL
+                "BOUNCE" -> MonsterType.BOUNCE
+                else -> MonsterType.PATROL
             }
             val monsterId = "custom_monster_${x}_${y}"
 
             // Create monster with appropriate AI state
             val aiState = when (monsterType) {
-                com.example.myapplication.entities.MonsterType.PATROL -> {
-                    com.example.myapplication.entities.MonsterAIState.PatrolState(
+                MonsterType.PATROL -> {
+                    MonsterAIState.PatrolState(
                         startPosition = Pair(x, y),
                         currentDirection = Pair(0, 1) // Default to moving down
                     )
                 }
-                com.example.myapplication.entities.MonsterType.BOUNCE -> {
-                    com.example.myapplication.entities.MonsterAIState.BounceState(
+                MonsterType.BOUNCE -> {
+                    MonsterAIState.BounceState(
                         currentDirection = Pair(0, 1) // Default to moving down
                     )
                 }
                 else -> {
-                    com.example.myapplication.entities.MonsterAIState.PatrolState(
+                    MonsterAIState.PatrolState(
                         startPosition = Pair(x, y),
                         currentDirection = Pair(0, 1)
                     )
                 }
             }
 
-            val monster = com.example.myapplication.entities.Monster(
+            val monster = Monster(
                 id = monsterId,
                 type = monsterType,
                 currentX = x.toFloat(),
@@ -893,34 +896,34 @@ class GameView @JvmOverloads constructor(
             for (x in tempMap[y].indices) {
                 when (tempMap[y][x]) {
                     'N' -> {
-                        val ammo = com.example.myapplication.entities.AmmoPickup(
+                        val ammo = AmmoPickup(
                             id = "custom_ammo_N_${x}_${y}",
                             gridX = x,
                             gridY = y,
-                            ammoType = com.example.myapplication.entities.AmmoType.NORMAL
+                            ammoType = AmmoType.NORMAL
                         )
                         ammoSystem.addAmmoPickup(ammo)
                     }
                     'P' -> {
-                        val ammo = com.example.myapplication.entities.AmmoPickup(
+                        val ammo = AmmoPickup(
                             id = "custom_ammo_P_${x}_${y}",
                             gridX = x,
                             gridY = y,
-                            ammoType = com.example.myapplication.entities.AmmoType.PIERCE
+                            ammoType =AmmoType.PIERCE
                         )
                         ammoSystem.addAmmoPickup(ammo)
                     }
                     'S' -> {
-                        val ammo = com.example.myapplication.entities.AmmoPickup(
+                        val ammo = AmmoPickup(
                             id = "custom_ammo_S_${x}_${y}",
                             gridX = x,
                             gridY = y,
-                            ammoType = com.example.myapplication.entities.AmmoType.STUN
+                            ammoType = AmmoType.STUN
                         )
                         ammoSystem.addAmmoPickup(ammo)
                     }
                     'L' -> {
-                        val lives = com.example.myapplication.entities.LivesPickup(
+                        val lives = LivesPickup(
                             id = "custom_lives_${x}_${y}",
                             gridX = x,
                             gridY = y
@@ -967,34 +970,34 @@ class GameView @JvmOverloads constructor(
             println("🔄 Custom level: Respawning ${customLevelMonsterData!!.size} monsters")
             for ((x, y, type) in customLevelMonsterData!!) {
                 val monsterType = when (type) {
-                    "PATROL" -> com.example.myapplication.entities.MonsterType.PATROL
-                    "BOUNCE" -> com.example.myapplication.entities.MonsterType.BOUNCE
-                    else -> com.example.myapplication.entities.MonsterType.PATROL
+                    "PATROL" -> MonsterType.PATROL
+                    "BOUNCE" -> MonsterType.BOUNCE
+                    else -> MonsterType.PATROL
                 }
                 val monsterId = "custom_monster_${x}_${y}"
 
                 // Create monster with appropriate AI state
                 val aiState = when (monsterType) {
-                    com.example.myapplication.entities.MonsterType.PATROL -> {
-                        com.example.myapplication.entities.MonsterAIState.PatrolState(
+                    MonsterType.PATROL -> {
+                        MonsterAIState.PatrolState(
                             startPosition = Pair(x, y),
                             currentDirection = Pair(0, 1)
                         )
                     }
-                    com.example.myapplication.entities.MonsterType.BOUNCE -> {
-                        com.example.myapplication.entities.MonsterAIState.BounceState(
+                    MonsterType.BOUNCE -> {
+                        MonsterAIState.BounceState(
                             currentDirection = Pair(0, 1)
                         )
                     }
                     else -> {
-                        com.example.myapplication.entities.MonsterAIState.PatrolState(
+                        MonsterAIState.PatrolState(
                             startPosition = Pair(x, y),
                             currentDirection = Pair(0, 1)
                         )
                     }
                 }
 
-                val monster = com.example.myapplication.entities.Monster(
+                val monster = Monster(
                     id = monsterId,
                     type = monsterType,
                     currentX = x.toFloat(),
