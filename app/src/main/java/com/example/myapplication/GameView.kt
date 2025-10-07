@@ -68,6 +68,13 @@ class GameView @JvmOverloads constructor(
     private val highScoreManager = HighScoreManager(context)
     private var levelStartTime = 0L
     private var currentLevelBestTime: Long? = null
+
+    // 🐛 FIX: Store custom level data for respawn after death and game over screen
+    private var customLevelMapString: String? = null
+    private var customLevelWidth: Int = 15
+    private var customLevelHeight: Int = 15
+    private var customLevelBoxCount: Int = 3
+    private var customLevelMonsterData: List<Triple<Int, Int, String>>? = null
     private val backgroundManager = BackgroundManager(context) // 🎨 Quản lý background
     private val inputHandler = InputHandler()              // 👆 Xử lý touch input
     private val monsterSystem = MonsterSystem()            // 👾 Xử lý logic monster
@@ -170,7 +177,15 @@ class GameView @JvmOverloads constructor(
         return gameLogic.getCurrentLevel()?.id ?: 1
     }
 
+    fun getCurrentElapsedTime(): Long {
+        return gameLogic.getLevelElapsedTime()
+    }
+
     fun loadLevel(levelId: Int) {
+        // 🐛 FIX: Clear custom level data khi load regular level
+        customLevelMapString = null
+        customLevelMonsterData = null
+
         gameLogic.loadLevel(levelId)
         // 🏆 Load kỷ lục cho level hiện tại
         currentLevelBestTime = highScoreManager.getBestHighScore(levelId)
@@ -672,6 +687,29 @@ class GameView @JvmOverloads constructor(
             // 🏃 SURVIVAL MODE: Gọi callback thay vì hiển thị victory screen
             println("🏃 Survival: Level $currentLevelId completed in ${levelTime}ms")
             survivalOnLevelComplete?.invoke(levelTime)
+        } else if (customLevelMonsterData != null) {
+            // 🎨 CUSTOM LEVEL: Mở CustomVictoryActivity
+            println("🎨 Custom level completed in ${levelTime}ms")
+
+            // 🆕 PHÁT ÂM THANH CHIẾN THẮNG
+            soundManager.playSound("victory")
+
+            post {
+                // 🔔 Thông báo cho activity rằng sắp chuyển sang CustomVictoryActivity
+                victoryNavigationCallback?.invoke()
+
+                // 🎉 MỞ MÀN CUSTOM VICTORY SCREEN
+                val intent = Intent(context, com.example.myapplication.CustomVictoryActivity::class.java).apply {
+                    putExtra("completion_time", levelTime)
+                    putExtra("map_size", "${customLevelWidth}x${customLevelHeight}")
+                    putExtra("box_count", customLevelBoxCount)
+                    putExtra("monster_count", customLevelMonsterData?.size ?: 0)
+                }
+                context.startActivity(intent)
+
+                // Kết thúc activity hiện tại
+                (context as? android.app.Activity)?.finish()
+            }
         } else {
             // 🎯 CLASSIC MODE: Logic cũ - lưu kỷ lục và mở victory screen
             val isNewRecord = highScoreManager.isNewHighScore(currentLevelId, levelTime)
@@ -742,11 +780,32 @@ class GameView @JvmOverloads constructor(
                 // HẾT MẠNG - GAME OVER
                 isGameRunning = false
                 soundManager.playSound("game_over")
-                post {
-                    dialogManager.showLoseDialog(gameLogic, { levelId ->
-                        loadLevel(levelId)
-                        startGame()
-                    })
+
+                // 🐛 FIX: Check if custom level and handle differently
+                if (customLevelMonsterData != null) {
+                    // CUSTOM LEVEL: Navigate to custom game over screen
+                    post {
+                        val intent = Intent(context, com.example.myapplication.CustomGameOverActivity::class.java)
+                        intent.putExtra("map_size", "${customLevelWidth}x${customLevelHeight}")
+                        intent.putExtra("box_count", customLevelBoxCount)
+                        intent.putExtra("monster_count", customLevelMonsterData?.size ?: 0)
+                        intent.putExtra("failure_reason", "No lives remaining")
+                        // Pass custom level data for "try again"
+                        intent.putExtra("customLevelMap", customLevelMapString)
+                        intent.putExtra("customLevelWidth", customLevelWidth)
+                        intent.putExtra("customLevelHeight", customLevelHeight)
+                        intent.putExtra("customBoxCount", customLevelBoxCount)
+                        intent.putExtra("customMonsterData", ArrayList(customLevelMonsterData?.toMutableList() ?: mutableListOf()))
+                        context.startActivity(intent)
+                    }
+                } else {
+                    // REGULAR LEVEL: Show lose dialog
+                    post {
+                        dialogManager.showLoseDialog(gameLogic, { levelId ->
+                            loadLevel(levelId)
+                            startGame()
+                        })
+                    }
                 }
             } else {
                 // VẪN CÒN MẠNG - CHỈ TRỪ MẠNG, TIẾP TỤC CHƠI
@@ -763,16 +822,198 @@ class GameView @JvmOverloads constructor(
     }
 
     /**
+     * 🎨 Load custom level từ Customize mode
+     */
+    fun loadCustomLevelData(mapString: String, width: Int, height: Int, boxCount: Int, monsterData: List<Triple<Int, Int, String>>) {
+        println("🎨 Loading custom level data: ${width}x${height}, $boxCount boxes, ${monsterData.size} monsters")
+
+        // 🐛 FIX: Store all custom level data for respawn after death and game over screen
+        customLevelMapString = mapString
+        customLevelWidth = width
+        customLevelHeight = height
+        customLevelBoxCount = boxCount
+        customLevelMonsterData = monsterData.toList()
+
+        // Load level từ custom data
+        gameLogic.loadCustomLevelData(mapString, width, height, boxCount)
+
+        // Load kỷ lục (custom level không có kỷ lục)
+        currentLevelBestTime = null
+
+        // Load monsters từ custom data
+        monsterSystem.clearMonsters()
+        for ((x, y, type) in monsterData) {
+            val monsterType = when (type) {
+                "PATROL" -> com.example.myapplication.entities.MonsterType.PATROL
+                "BOUNCE" -> com.example.myapplication.entities.MonsterType.BOUNCE
+                else -> com.example.myapplication.entities.MonsterType.PATROL
+            }
+            val monsterId = "custom_monster_${x}_${y}"
+
+            // Create monster with appropriate AI state
+            val aiState = when (monsterType) {
+                com.example.myapplication.entities.MonsterType.PATROL -> {
+                    com.example.myapplication.entities.MonsterAIState.PatrolState(
+                        startPosition = Pair(x, y),
+                        currentDirection = Pair(0, 1) // Default to moving down
+                    )
+                }
+                com.example.myapplication.entities.MonsterType.BOUNCE -> {
+                    com.example.myapplication.entities.MonsterAIState.BounceState(
+                        currentDirection = Pair(0, 1) // Default to moving down
+                    )
+                }
+                else -> {
+                    com.example.myapplication.entities.MonsterAIState.PatrolState(
+                        startPosition = Pair(x, y),
+                        currentDirection = Pair(0, 1)
+                    )
+                }
+            }
+
+            val monster = com.example.myapplication.entities.Monster(
+                id = monsterId,
+                type = monsterType,
+                currentX = x.toFloat(),
+                currentY = y.toFloat(),
+                targetX = x,
+                targetY = y,
+                aiState = aiState
+            )
+
+            monsterSystem.addMonster(monster)
+        }
+
+        // Spawn pickups từ map data (custom levels có pickups embedded)
+        ammoSystem.clearAmmoPickups()
+        livesSystem.clearLivesPickups()
+
+        val tempMap = gameLogic.getMap()
+        for (y in tempMap.indices) {
+            for (x in tempMap[y].indices) {
+                when (tempMap[y][x]) {
+                    'N' -> {
+                        val ammo = com.example.myapplication.entities.AmmoPickup(
+                            id = "custom_ammo_N_${x}_${y}",
+                            gridX = x,
+                            gridY = y,
+                            ammoType = com.example.myapplication.entities.AmmoType.NORMAL
+                        )
+                        ammoSystem.addAmmoPickup(ammo)
+                    }
+                    'P' -> {
+                        val ammo = com.example.myapplication.entities.AmmoPickup(
+                            id = "custom_ammo_P_${x}_${y}",
+                            gridX = x,
+                            gridY = y,
+                            ammoType = com.example.myapplication.entities.AmmoType.PIERCE
+                        )
+                        ammoSystem.addAmmoPickup(ammo)
+                    }
+                    'S' -> {
+                        val ammo = com.example.myapplication.entities.AmmoPickup(
+                            id = "custom_ammo_S_${x}_${y}",
+                            gridX = x,
+                            gridY = y,
+                            ammoType = com.example.myapplication.entities.AmmoType.STUN
+                        )
+                        ammoSystem.addAmmoPickup(ammo)
+                    }
+                    'L' -> {
+                        val lives = com.example.myapplication.entities.LivesPickup(
+                            id = "custom_lives_${x}_${y}",
+                            gridX = x,
+                            gridY = y
+                        )
+                        livesSystem.addLivesPickup(lives)
+                    }
+                }
+            }
+        }
+
+        // Reset timers và start game
+        animationTime = 0f
+        animationStartTime = System.currentTimeMillis()
+        lastUpdateTime = System.currentTimeMillis()
+
+        // Reset game state
+        gameStateChanged = true
+
+        // Reset bullet controller cho custom level
+        bulletController.resetAmmo()
+
+        // Clear effects
+        gameRenderer.clearGoalReachedEffects()
+        particleSystem.clear()
+
+        // Reset lives cho Classic mode
+        if (!isSurvivalMode) {
+            lives = 3
+        }
+
+        println("🎨 Custom level loaded successfully")
+    }
+
+    /**
      * 🔄 Reset game elements sau khi player chết (dùng chung cho cả 2 mode)
      */
     private fun resetGameElementsAfterDeath() {
         // Reset monsters về vị trí ban đầu (để tránh bị spawn trap)
         monsterSystem.clearMonsters()
-        val level = gameLogic.getCurrentLevel()
-        level?.monsters?.forEachIndexed { index, monsterData ->
-            val monsterId = "monster_${level.id}_${index}"
-            val monster = monsterSystem.createMonsterFromData(monsterData, monsterId)
-            monsterSystem.addMonster(monster)
+
+        // 🐛 FIX: Handle custom levels vs regular levels differently
+        if (customLevelMonsterData != null) {
+            // CUSTOM LEVEL: Respawn từ stored monster data
+            println("🔄 Custom level: Respawning ${customLevelMonsterData!!.size} monsters")
+            for ((x, y, type) in customLevelMonsterData!!) {
+                val monsterType = when (type) {
+                    "PATROL" -> com.example.myapplication.entities.MonsterType.PATROL
+                    "BOUNCE" -> com.example.myapplication.entities.MonsterType.BOUNCE
+                    else -> com.example.myapplication.entities.MonsterType.PATROL
+                }
+                val monsterId = "custom_monster_${x}_${y}"
+
+                // Create monster with appropriate AI state
+                val aiState = when (monsterType) {
+                    com.example.myapplication.entities.MonsterType.PATROL -> {
+                        com.example.myapplication.entities.MonsterAIState.PatrolState(
+                            startPosition = Pair(x, y),
+                            currentDirection = Pair(0, 1)
+                        )
+                    }
+                    com.example.myapplication.entities.MonsterType.BOUNCE -> {
+                        com.example.myapplication.entities.MonsterAIState.BounceState(
+                            currentDirection = Pair(0, 1)
+                        )
+                    }
+                    else -> {
+                        com.example.myapplication.entities.MonsterAIState.PatrolState(
+                            startPosition = Pair(x, y),
+                            currentDirection = Pair(0, 1)
+                        )
+                    }
+                }
+
+                val monster = com.example.myapplication.entities.Monster(
+                    id = monsterId,
+                    type = monsterType,
+                    currentX = x.toFloat(),
+                    currentY = y.toFloat(),
+                    targetX = x,
+                    targetY = y,
+                    aiState = aiState
+                )
+
+                monsterSystem.addMonster(monster)
+            }
+        } else {
+            // REGULAR LEVEL: Respawn từ level data
+            val level = gameLogic.getCurrentLevel()
+            level?.monsters?.forEachIndexed { index, monsterData ->
+                val monsterId = "monster_${level.id}_${index}"
+                val monster = monsterSystem.createMonsterFromData(monsterData, monsterId)
+                monsterSystem.addMonster(monster)
+            }
         }
 
         // Reset bullets và particles
@@ -781,7 +1022,7 @@ class GameView @JvmOverloads constructor(
 
         // Reset death flag để có thể chết lần nữa
         isPlayerDead = false
-        
+
         println("🔄 Game elements reset after death")
     }
 }

@@ -36,6 +36,24 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
+        <!-- Customize Activity -->
+        <activity
+            android:name=".CustomizeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <!-- Custom Victory Activity -->
+        <activity
+            android:name=".CustomVictoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <!-- Custom Game Over Activity -->
+        <activity
+            android:name=".CustomGameOverActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
         <!-- Keep existing activities -->
         <activity
             android:name=".MainActivity"

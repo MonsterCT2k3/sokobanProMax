@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.managers.MusicManager
 import com.example.myapplication.managers.SurvivalManager
+import com.example.myapplication.rendering.BackgroundManager
 
 /**
  * 🏃 SurvivalGameActivity - Activity chính cho Survival Mode
@@ -54,8 +55,11 @@ class SurvivalGameActivity : AppCompatActivity() {
         // Enable Survival mode
         gameView.setSurvivalMode(true)
         
-        // Set background (use default background)
-        // gameView.setBackgroundImage(R.drawable.game_background_1)
+        // Set background riêng cho chế độ sinh tử
+        gameView.setBackgroundImage(
+            R.drawable.bg2, // Background đặc biệt cho survival mode
+            BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL
+        )
         
         println("🏃 SurvivalGameActivity: GameView setup completed")
     }

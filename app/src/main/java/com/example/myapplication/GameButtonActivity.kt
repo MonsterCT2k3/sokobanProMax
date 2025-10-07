@@ -1,16 +1,26 @@
 package com.example.myapplication
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.managers.MusicManager
+import com.example.myapplication.rendering.BackgroundManager
 
 class GameButtonActivity : AppCompatActivity() {
 
     private lateinit var gameView: GameView
     private lateinit var musicManager: MusicManager
     private var isNavigatingToVictory = false
+
+    // Store custom level data for reset functionality
+    private var customLevelMap: String? = null
+    private var customWidth: Int = 15
+    private var customHeight: Int = 15
+    private var customBoxCount: Int = 3
+    private var customMonsterData: ArrayList<Triple<Int, Int, String>>? = null
+    private var isCustomLevel: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,19 +32,60 @@ class GameButtonActivity : AppCompatActivity() {
         // Lấy tham chiếu đến GameView
         gameView = findViewById(R.id.gameView)
 
-        // Set background image
-        gameView.setBackgroundImage(
-            R.drawable.bg2, // Thử với ảnh forest
-            com.example.myapplication.rendering.BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL
-        )
-
         // Lấy level ID từ intent và load level
         val levelId = intent.getIntExtra("LEVEL_ID", 1)
-        gameView.loadLevel(levelId)
+
+        // Check if this is a custom level
+        customLevelMap = intent.getStringExtra("customLevelMap")
+        customWidth = intent.getIntExtra("customLevelWidth", 15)
+        customHeight = intent.getIntExtra("customLevelHeight", 15)
+        customBoxCount = intent.getIntExtra("customBoxCount", 3)
+        customMonsterData = intent.getSerializableExtra("customMonsterData") as? ArrayList<Triple<Int, Int, String>>
+
+        // Set background dựa trên chế độ chơi
+        if (customLevelMap != null) {
+            // Custom level: sử dụng bg6
+            gameView.setBackgroundImage(
+                R.drawable.bg2, // Background đặc biệt cho custom mode
+                BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL
+            )
+            // Load custom level
+            isCustomLevel = true
+            gameView.loadCustomLevelData(customLevelMap!!, customWidth, customHeight, customBoxCount, customMonsterData ?: emptyList())
+        } else {
+            // Classic level: sử dụng bg2
+            gameView.setBackgroundImage(
+                R.drawable.bg2, // Background thông thường
+                BackgroundManager.BackgroundScrollType.PARALLAX_HORIZONTAL
+            )
+            // Load regular level
+            isCustomLevel = false
+            gameView.loadLevel(levelId)
+        }
 
         // Setup callback từ GameView để xử lý navigation
         gameView.setVictoryNavigationCallback {
             isNavigatingToVictory = true
+
+            // Handle victory navigation based on level type
+            if (isCustomLevel) {
+                // Custom level victory
+                val intent = Intent(this, CustomVictoryActivity::class.java)
+                intent.putExtra("map_size", "${customWidth}x${customHeight}")
+                intent.putExtra("box_count", customBoxCount)
+                intent.putExtra("monster_count", customMonsterData?.size ?: 0)
+                intent.putExtra("completion_time", gameView.getCurrentElapsedTime())
+                // Pass custom level data for "play again"
+                intent.putExtra("customLevelMap", customLevelMap)
+                intent.putExtra("customLevelWidth", customWidth)
+                intent.putExtra("customLevelHeight", customHeight)
+                intent.putExtra("customMonsterData", customMonsterData)
+                startActivity(intent)
+                finish()
+            } else {
+                // Regular level victory - let GameView handle it
+                // (GameView will start VictoryActivity)
+            }
         }
 
         
@@ -45,9 +96,14 @@ class GameButtonActivity : AppCompatActivity() {
         
         // Nút Reset level
         findViewById<Button>(R.id.buttonReset).setOnClickListener {
-            // 🆕 Lấy level hiện tại từ game thay vì từ intent
-            val currentLevelId = gameView.getCurrentLevelId()
-            gameView.loadLevel(currentLevelId) // Reset level hiện tại về trạng thái ban đầu
+            if (isCustomLevel && customLevelMap != null) {
+                // Reset custom level: reload with stored data
+                gameView.loadCustomLevelData(customLevelMap!!, customWidth, customHeight, customBoxCount, customMonsterData ?: emptyList())
+            } else {
+                // Reset regular level
+                val currentLevelId = gameView.getCurrentLevelId()
+                gameView.loadLevel(currentLevelId)
+            }
         }
     }
 

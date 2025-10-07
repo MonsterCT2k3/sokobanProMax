@@ -8,6 +8,14 @@ class AmmoSystem {
     private val ammoPickups = mutableListOf<AmmoPickup>()
     private var nextAmmoId = 0
 
+    fun clearAmmoPickups() {
+        ammoPickups.clear()
+    }
+
+    fun addAmmoPickup(ammoPickup: AmmoPickup) {
+        ammoPickups.add(ammoPickup)
+    }
+
     // Tạo ammo pickup ngẫu nhiên trên map
     fun spawnRandomAmmo(map: Array<CharArray>, count: Int = 3, excludePositions: List<Pair<Int, Int>> = emptyList()) {
         ammoPickups.clear()

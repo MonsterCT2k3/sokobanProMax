@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/custom_game_over_background"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <!-- Game Over Skull Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/custom_game_over_skull_bg"
+        android:padding="32dp"
+        android:layout_marginBottom="32dp"
+        android:elevation="12dp">
+
+        <TextView
+            android:id="@+id/tvCustomGameOverTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💀 CUSTOM LEVEL FAILED"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#FF4444"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="16dp"
+            android:shadowColor="#000000"
+            android:shadowDx="3"
+            android:shadowDy="3"
+            android:shadowRadius="6" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your custom level proved challenging!"
+            android:textSize="16sp"
+            android:textColor="#FFA07A"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:alpha="0.9" />
+
+    </LinearLayout>
+
+    <!-- Level Info Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/custom_game_over_info_bg"
+        android:padding="24dp"
+        android:layout_marginBottom="16dp"
+        android:elevation="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎯 LEVEL DETAILS"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FF6B6B"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvCustomLevelInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Map Size: 15x15\nBoxes: 3\nMonsters: 2"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvCustomFailureReason"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="❌ Player died\n\nDon't give up! Try again or modify your level."
+            android:textSize="16sp"
+            android:textColor="#FFA07A"
+            android:fontFamily="monospace"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <!-- Try Again Button -->
+        <Button
+            android:id="@+id/btnCustomTryAgain"
+            android:layout_width="300dp"
+            android:layout_height="65dp"
+            android:text="🔄 THỬ LẠI"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/custom_game_over_try_again_btn"
+            android:layout_marginBottom="16dp"
+            android:elevation="8dp" />
+
+        <!-- Modify Level Button -->
+        <Button
+            android:id="@+id/btnCustomModifyLevel"
+            android:layout_width="300dp"
+            android:layout_height="65dp"
+            android:text="⚙️ CHỈNH SỬA LEVEL"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/custom_game_over_modify_btn"
+            android:layout_marginBottom="16dp"
+            android:elevation="8dp" />
+
+        <!-- Back to Menu Button -->
+        <Button
+            android:id="@+id/btnCustomGameOverBackToMenu"
+            android:layout_width="300dp"
+            android:layout_height="65dp"
+            android:text="🏠 QUAY LẠI MENU"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/custom_game_over_menu_btn"
+            android:elevation="8dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
+</ScrollView>

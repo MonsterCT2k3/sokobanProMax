@@ -7,6 +7,14 @@ class LivesSystem {
     private val livesPickups = mutableListOf<LivesPickup>()
     private var nextLivesId = 0
 
+    fun clearLivesPickups() {
+        livesPickups.clear()
+    }
+
+    fun addLivesPickup(livesPickup: LivesPickup) {
+        livesPickups.add(livesPickup)
+    }
+
     fun spawnRandomLives(map: Array<CharArray>, count: Int = 1, excludePositions: List<Pair<Int, Int>> = emptyList()) {
         livesPickups.clear()
         val validPositions = mutableListOf<Pair<Int, Int>>()

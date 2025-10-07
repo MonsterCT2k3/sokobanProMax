@@ -21,6 +21,7 @@ class GameModeSelectionActivity : AppCompatActivity() {
     private lateinit var musicManager: MusicManager
     private var isNavigatingToClassic = false
     private var isNavigatingToSurvival = false
+    private var isNavigatingToCustomize = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +42,13 @@ class GameModeSelectionActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnClassicMode).setOnClickListener {
             isNavigatingToClassic = true
             val intent = Intent(this, LevelSelectionActivity::class.java)
+            startActivity(intent)
+        }
+
+        // 🎨 Nút Tùy chỉnh - chuyển đến CustomizeActivity
+        findViewById<Button>(R.id.btnCustomizeMode).setOnClickListener {
+            isNavigatingToCustomize = true
+            val intent = Intent(this, CustomizeActivity::class.java)
             startActivity(intent)
         }
 
@@ -81,6 +89,7 @@ class GameModeSelectionActivity : AppCompatActivity() {
         // Reset flags
         isNavigatingToClassic = false
         isNavigatingToSurvival = false
+        isNavigatingToCustomize = false
 
         // Tiếp tục phát nhạc menu (nếu không bị tạm dừng)
         musicManager.resumeMusic()
@@ -88,8 +97,8 @@ class GameModeSelectionActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Tạm dừng nhạc khi navigate đến classic mode hoặc survival mode
-        if (!isNavigatingToClassic && !isNavigatingToSurvival) {
+        // Tạm dừng nhạc khi navigate đến bất kỳ mode nào
+        if (!isNavigatingToClassic && !isNavigatingToSurvival && !isNavigatingToCustomize) {
             musicManager.pauseMusic()
         }
     }

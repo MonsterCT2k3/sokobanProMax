@@ -52,7 +52,22 @@
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:background="@drawable/game_mode_classic_button"
-            android:layout_marginBottom="30dp"
+            android:layout_marginBottom="20dp"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:lineSpacingExtra="8dp" />
+
+        <!-- Customize Mode Button -->
+        <Button
+            android:id="@+id/btnCustomizeMode"
+            android:layout_width="320dp"
+            android:layout_height="80dp"
+            android:text="🎨 TÙY CHỈNH\n(Customize Mode)"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/game_mode_customize_button"
+            android:layout_marginBottom="20dp"
             android:fontFamily="monospace"
             android:gravity="center"
             android:lineSpacingExtra="8dp" />

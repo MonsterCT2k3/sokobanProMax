@@ -109,7 +109,71 @@ class GameLogic {
             gameStateListener?.onGameStateChanged()
         }
     }
-    
+
+    /**
+     * 🎨 Load custom level từ Customize mode
+     */
+    fun loadCustomLevelData(mapString: String, width: Int, height: Int, expectedBoxCount: Int) {
+        println("🎨 GameLogic: Loading custom level data: ${width}x${height}, $expectedBoxCount boxes")
+
+        // Parse map từ string - split by newlines and convert to char arrays
+        val mapLines = mapString.split("\n")
+        map = Array(height) { row ->
+            if (row < mapLines.size) {
+                val line = mapLines[row]
+                CharArray(width) { col ->
+                    if (col < line.length) line[col] else ' '
+                }
+            } else {
+                CharArray(width) { ' ' }
+            }
+        }
+
+        // Tìm vị trí player
+        var playerPos: Pair<Int, Int>? = null
+        for (i in map.indices) {
+            for (j in map[i].indices) {
+                if (map[i][j] == '@') {
+                    playerPos = Pair(i, j)
+                    break
+                }
+            }
+            if (playerPos != null) break
+        }
+
+        if (playerPos != null) {
+            playerX = playerPos.first
+            playerY = playerPos.second
+        } else {
+            // Fallback nếu không tìm thấy player
+            playerX = 1
+            playerY = 1
+        }
+
+        // Parse goal positions từ map
+        goalPositions.clear()
+        safeZonePositions.clear()
+        for (i in map.indices) {
+            for (j in map[i].indices) {
+                when (map[i][j]) {
+                    '.', 'G' -> goalPositions.add(Pair(i, j))
+                    'S' -> safeZonePositions.add(Pair(i, j))
+                }
+            }
+        }
+
+        // Reset game state
+        isGameWon = false
+        boxesInGoal = 0
+        levelStartTime = 0L
+        levelElapsedTime = 0L
+
+        // Thông báo game state changed
+        gameStateListener?.onGameStateChanged()
+
+        println("🎨 GameLogic: Custom level loaded successfully")
+    }
+
     // Player movement
     fun movePlayer(dx: Int, dy: Int): Boolean {
         playerDirection = PlayerDirection.fromMovement(dx, dy)

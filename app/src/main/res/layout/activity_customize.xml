@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/customize_background"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <!-- Title -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/customize_title_bg"
+        android:padding="32dp"
+        android:layout_marginBottom="32dp"
+        android:elevation="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎨 CUSTOMIZE MODE"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="16dp"
+            android:shadowColor="#000000"
+            android:shadowDx="3"
+            android:shadowDy="3"
+            android:shadowRadius="6" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create your own level!\n\n✨ Includes random ammo &amp; life pickups!"
+            android:textSize="16sp"
+            android:textColor="#FFF8DC"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:alpha="0.9" />
+
+    </LinearLayout>
+
+    <!-- Settings Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/customize_settings_bg"
+        android:padding="28dp"
+        android:layout_marginBottom="24dp"
+        android:elevation="8dp">
+
+        <!-- Map Size Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗺️ MAP SIZE"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Map Width -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/customize_setting_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvMapWidth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Map Width: 15"
+                android:textSize="16sp"
+                android:textColor="#87CEEB"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp" />
+
+            <SeekBar
+                android:id="@+id/sbMapWidth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="15"
+                android:progress="5"
+                android:thumb="@drawable/customize_thumb"
+                android:progressBackgroundTint="#666666"
+                android:progressTint="#87CEEB" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10 - 25 tiles"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Map Height -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/customize_setting_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/tvMapHeight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Map Height: 15"
+                android:textSize="16sp"
+                android:textColor="#87CEEB"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp" />
+
+            <SeekBar
+                android:id="@+id/sbMapHeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="15"
+                android:progress="5"
+                android:thumb="@drawable/customize_thumb"
+                android:progressBackgroundTint="#666666"
+                android:progressTint="#87CEEB" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10 - 25 tiles"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Game Elements Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎯 GAME ELEMENTS"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#FFD700"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Box Count -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/customize_setting_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvBoxCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Box Count: 3"
+                android:textSize="16sp"
+                android:textColor="#FFA500"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp" />
+
+            <SeekBar
+                android:id="@+id/sbBoxCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="7"
+                android:progress="2"
+                android:thumb="@drawable/customize_thumb"
+                android:progressBackgroundTint="#666666"
+                android:progressTint="#FFA500" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 - 8 boxes"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Monster Count -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/customize_setting_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvMonsterCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Monster Count: 2"
+                android:textSize="16sp"
+                android:textColor="#FF4444"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp" />
+
+            <SeekBar
+                android:id="@+id/sbMonsterCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="5"
+                android:progress="2"
+                android:thumb="@drawable/customize_thumb"
+                android:progressBackgroundTint="#666666"
+                android:progressTint="#FF4444" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 - 5 monsters"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <!-- Generate Level Button -->
+        <Button
+            android:id="@+id/btnGenerateLevel"
+            android:layout_width="320dp"
+            android:layout_height="75dp"
+            android:text="🎲 GENERATE LEVEL"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/customize_generate_btn"
+            android:layout_marginBottom="20dp"
+            android:elevation="10dp" />
+
+        <!-- Back to Menu Button -->
+        <Button
+            android:id="@+id/btnBackToMenu"
+            android:layout_width="320dp"
+            android:layout_height="75dp"
+            android:text="🏠 BACK TO MENU"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="monospace"
+            android:background="@drawable/customize_menu_btn"
+            android:elevation="10dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
+</ScrollView>
