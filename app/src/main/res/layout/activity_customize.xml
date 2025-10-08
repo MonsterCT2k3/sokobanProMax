@@ -231,7 +231,46 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0 - 5 monsters"
+                android:text="0 - 8 monsters"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Safe Zone Count -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/customize_setting_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvSafeZoneCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Safe Zone Count: 1"
+                android:textSize="16sp"
+                android:textColor="#32CD32"
+                android:fontFamily="monospace"
+                android:layout_marginBottom="8dp" />
+
+            <SeekBar
+                android:id="@+id/sbSafeZoneCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="3"
+                android:progress="1"
+                android:thumb="@drawable/customize_thumb"
+                android:progressBackgroundTint="#666666"
+                android:progressTint="#32CD32" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 - 3 safe zones"
                 android:textSize="12sp"
                 android:textColor="#AAAAAA"
                 android:fontFamily="monospace" />

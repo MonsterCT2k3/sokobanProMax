@@ -28,6 +28,7 @@ import com.example.myapplication.entities.Monster
 import com.example.myapplication.entities.MonsterAIState
 import com.example.myapplication.entities.MonsterType
 import com.example.myapplication.managers.DialogManager
+import com.example.myapplication.managers.SurvivalManager
 import com.example.myapplication.rendering.BackgroundManager
 import com.example.myapplication.rendering.GameRenderer
 import com.example.myapplication.systems.AmmoSystem
@@ -431,7 +432,7 @@ class GameView @JvmOverloads constructor(
                 // 🏃 SURVIVAL MODE: Cập nhật lives trong SurvivalManager
                 val session = survivalGetTotalTime?.let { 
                     // Sử dụng callback để lấy session thông qua SurvivalManager
-                    com.example.myapplication.managers.SurvivalManager.getCurrentSession()
+                    SurvivalManager.getCurrentSession()
                 }
                 if (session != null && session.lives < maxLives) {
                     session.lives++
@@ -579,7 +580,7 @@ class GameView @JvmOverloads constructor(
             // Survival Mode: Hiển thị tổng thời gian + lives từ SurvivalManager
             val sessionTotalTime = survivalGetTotalTime?.invoke() ?: 0L
             val currentLevelTime = System.currentTimeMillis() - levelStartTime
-            val survivalLives = com.example.myapplication.managers.SurvivalManager.getCurrentSession()?.lives ?: lives
+            val survivalLives = SurvivalManager.getCurrentSession()?.lives ?: lives
             Pair(sessionTotalTime + currentLevelTime, survivalLives)
         } else {
             // Classic Mode: Chỉ hiển thị thời gian level hiện tại + lives từ GameView
@@ -702,7 +703,7 @@ class GameView @JvmOverloads constructor(
                 victoryNavigationCallback?.invoke()
 
                 // 🎉 MỞ MÀN CUSTOM VICTORY SCREEN
-                val intent = Intent(context, com.example.myapplication.CustomVictoryActivity::class.java).apply {
+                val intent = Intent(context, CustomVictoryActivity::class.java).apply {
                     putExtra("completion_time", levelTime)
                     putExtra("map_size", "${customLevelWidth}x${customLevelHeight}")
                     putExtra("box_count", customLevelBoxCount)
@@ -828,7 +829,13 @@ class GameView @JvmOverloads constructor(
      * 🎨 Load custom level từ Customize mode
      */
     fun loadCustomLevelData(mapString: String, width: Int, height: Int, boxCount: Int, monsterData: List<Triple<Int, Int, String>>) {
-        println("🎨 Loading custom level data: ${width}x${height}, $boxCount boxes, ${monsterData.size} monsters")
+        println("🎨 ========== GameView.loadCustomLevelData ==========")
+        println("   Size: ${width}x${height}")
+        println("   Boxes: $boxCount")
+        println("   Monster data received: ${monsterData.size} monsters")
+        monsterData.forEachIndexed { index, (x, y, type) ->
+            println("      ${index + 1}. Position: ($x, $y), Type: $type")
+        }
 
         // 🐛 FIX: Store all custom level data for respawn after death and game over screen
         customLevelMapString = mapString
@@ -836,6 +843,9 @@ class GameView @JvmOverloads constructor(
         customLevelHeight = height
         customLevelBoxCount = boxCount
         customLevelMonsterData = monsterData.toList()
+        
+        val storedMonsters = customLevelMonsterData
+        println("   ✅ Stored customLevelMonsterData: ${storedMonsters?.size ?: 0} monsters")
 
         // Load level từ custom data
         gameLogic.loadCustomLevelData(mapString, width, height, boxCount)
@@ -845,6 +855,7 @@ class GameView @JvmOverloads constructor(
 
         // Load monsters từ custom data
         monsterSystem.clearMonsters()
+        println("   🐺 Creating ${monsterData.size} monsters...")
         for ((x, y, type) in monsterData) {
             val monsterType = when (type) {
                 "PATROL" -> MonsterType.PATROL
@@ -885,7 +896,11 @@ class GameView @JvmOverloads constructor(
             )
 
             monsterSystem.addMonster(monster)
+            println("      ✅ Added monster: $monsterId at ($x, $y) - $monsterType")
         }
+        
+        println("   🎯 Total monsters in MonsterSystem: ${monsterSystem.getActiveMonsters().size}")
+        println("======================================================")
 
         // Spawn pickups từ map data (custom levels có pickups embedded)
         ammoSystem.clearAmmoPickups()
@@ -913,9 +928,9 @@ class GameView @JvmOverloads constructor(
                         )
                         ammoSystem.addAmmoPickup(ammo)
                     }
-                    'S' -> {
+                    'T' -> {  // Đổi từ 'S' thành 'T' cho stun ammo
                         val ammo = AmmoPickup(
-                            id = "custom_ammo_S_${x}_${y}",
+                            id = "custom_ammo_T_${x}_${y}",
                             gridX = x,
                             gridY = y,
                             ammoType = AmmoType.STUN

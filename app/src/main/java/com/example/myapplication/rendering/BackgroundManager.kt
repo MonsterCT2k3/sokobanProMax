@@ -17,7 +17,7 @@ class BackgroundManager(private val context: Context) {
     private var scaledBackgroundBitmap: Bitmap? = null
     private var backgroundScrollX = 0f
     private var backgroundScrollY = 0f
-    private var backgroundSpeed = 0.5f
+    private var backgroundSpeed = 0.8f
     private var backgroundType = BackgroundScrollType.PARALLAX_HORIZONTAL
     
     // Screen dimensions - sẽ được set từ GameView

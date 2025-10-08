@@ -42,6 +42,15 @@ class GameButtonActivity : AppCompatActivity() {
         customBoxCount = intent.getIntExtra("customBoxCount", 3)
         customMonsterData = intent.getSerializableExtra("customMonsterData") as? ArrayList<Triple<Int, Int, String>>
 
+        println("🎮 GameButtonActivity received custom level data:")
+        println("   Map: ${if (customLevelMap != null) "YES (${customLevelMap!!.length} chars)" else "NO"}")
+        println("   Size: ${customWidth}x${customHeight}")
+        println("   Boxes: $customBoxCount")
+        println("   Monster data: ${customMonsterData?.size ?: 0} monsters")
+        customMonsterData?.forEachIndexed { index, (x, y, type) ->
+            println("      ${index + 1}. ($x, $y) - $type")
+        }
+
         // Set background dựa trên chế độ chơi
         if (customLevelMap != null) {
             // Custom level: sử dụng bg6
@@ -51,7 +60,11 @@ class GameButtonActivity : AppCompatActivity() {
             )
             // Load custom level
             isCustomLevel = true
-            gameView.loadCustomLevelData(customLevelMap!!, customWidth, customHeight, customBoxCount, customMonsterData ?: emptyList())
+            
+            val monsterList = customMonsterData ?: emptyList()
+            println("🎮 Passing ${monsterList.size} monsters to GameView.loadCustomLevelData")
+            
+            gameView.loadCustomLevelData(customLevelMap!!, customWidth, customHeight, customBoxCount, monsterList)
         } else {
             // Classic level: sử dụng bg2
             gameView.setBackgroundImage(

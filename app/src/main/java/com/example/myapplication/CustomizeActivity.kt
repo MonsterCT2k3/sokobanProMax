@@ -17,6 +17,7 @@ import kotlin.random.Random
  * - Kích thước bản đồ (width x height)
  * - Số lượng hộp cần đẩy
  * - Số lượng quái vật
+ * - Số lượng ô safe zone
  * - Tạo level ngẫu nhiên từ các tham số này
  */
 class CustomizeActivity : AppCompatActivity() {
@@ -28,11 +29,13 @@ class CustomizeActivity : AppCompatActivity() {
     private lateinit var sbMapHeight: SeekBar
     private lateinit var sbBoxCount: SeekBar
     private lateinit var sbMonsterCount: SeekBar
+    private lateinit var sbSafeZoneCount: SeekBar
 
     private lateinit var tvMapWidth: TextView
     private lateinit var tvMapHeight: TextView
     private lateinit var tvBoxCount: TextView
     private lateinit var tvMonsterCount: TextView
+    private lateinit var tvSafeZoneCount: TextView
 
     private lateinit var btnGenerateLevel: Button
     private lateinit var btnBackToMenu: Button
@@ -42,6 +45,7 @@ class CustomizeActivity : AppCompatActivity() {
     private var mapHeight = 15
     private var boxCount = 3
     private var monsterCount = 2
+    private var safeZoneCount = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,12 +64,14 @@ class CustomizeActivity : AppCompatActivity() {
         sbMapHeight = findViewById(R.id.sbMapHeight)
         sbBoxCount = findViewById(R.id.sbBoxCount)
         sbMonsterCount = findViewById(R.id.sbMonsterCount)
+        sbSafeZoneCount = findViewById(R.id.sbSafeZoneCount)
 
         // TextViews
         tvMapWidth = findViewById(R.id.tvMapWidth)
         tvMapHeight = findViewById(R.id.tvMapHeight)
         tvBoxCount = findViewById(R.id.tvBoxCount)
         tvMonsterCount = findViewById(R.id.tvMonsterCount)
+        tvSafeZoneCount = findViewById(R.id.tvSafeZoneCount)
 
         // Buttons
         btnGenerateLevel = findViewById(R.id.btnGenerateLevel)
@@ -112,8 +118,8 @@ class CustomizeActivity : AppCompatActivity() {
         })
         tvBoxCount.text = "Box Count: $boxCount"
 
-        // Monster Count: 0-5
-        sbMonsterCount.max = 5 // 0-5 range
+        // Monster Count: 0-8
+        sbMonsterCount.max = 8 // 0-8 range
         sbMonsterCount.progress = monsterCount
         sbMonsterCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -124,6 +130,19 @@ class CustomizeActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
         tvMonsterCount.text = "Monster Count: $monsterCount"
+
+        // Safe Zone Count: 0-3
+        sbSafeZoneCount.max = 3 // 0-3 range
+        sbSafeZoneCount.progress = safeZoneCount
+        sbSafeZoneCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                safeZoneCount = progress
+                tvSafeZoneCount.text = "Safe Zone Count: $safeZoneCount"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        tvSafeZoneCount.text = "Safe Zone Count: $safeZoneCount"
     }
 
     private fun setupButtons() {
@@ -149,8 +168,8 @@ class CustomizeActivity : AppCompatActivity() {
             return false
         }
 
-        // Kiểm tra có đủ không gian cho monster
-        val totalElements = boxCount + monsterCount + 3 // boxes + monsters + player + safe zone
+        // Kiểm tra có đủ không gian cho monster và safe zones
+        val totalElements = boxCount + monsterCount + safeZoneCount + 1 // boxes + monsters + safe zones + player
         val availableSpace = (mapWidth * mapHeight) * 0.6 // 60% diện tích khả dụng
         if (totalElements > availableSpace) {
             Toast.makeText(this, "Too many elements for this map size!", Toast.LENGTH_LONG).show()
@@ -164,6 +183,16 @@ class CustomizeActivity : AppCompatActivity() {
         try {
             // Tạo level ngẫu nhiên từ settings
             val (mapString, monsterData) = generateRandomLevel()
+
+            println("🚀 ========== STARTING GAME WITH CUSTOM LEVEL ==========")
+            println("📦 Map size: ${mapWidth}x${mapHeight}")
+            println("📦 Box count: $boxCount")
+            println("🐺 Monster data size: ${monsterData.size}")
+            println("🐺 Monster details:")
+            monsterData.forEachIndexed { index, (x, y, type) ->
+                println("   ${index + 1}. Position: ($x, $y), Type: $type")
+            }
+            println("=======================================================")
 
             // Chuyển đến GameButtonActivity với level tùy chỉnh
             val intent = Intent(this, GameButtonActivity::class.java)
@@ -184,6 +213,11 @@ class CustomizeActivity : AppCompatActivity() {
     private fun generateRandomLevel(): Pair<String, List<Triple<Int, Int, String>>> {
         val map = Array(mapHeight) { CharArray(mapWidth) }
 
+        println("🎮 ========== BẮT ĐẦU TẠO MAP ==========")
+        println("📐 Kích thước MAP: width=$mapWidth, height=$mapHeight")
+        println("📐 Array size: map[0..${mapHeight-1}][0..${mapWidth-1}]")
+        println("📦 Boxes: $boxCount, 🐺 Monsters: $monsterCount, 🛡️ Safe zones: $safeZoneCount")
+
         // Khởi tạo map với tường bao quanh
         for (y in 0 until mapHeight) {
             for (x in 0 until mapWidth) {
@@ -191,168 +225,254 @@ class CustomizeActivity : AppCompatActivity() {
             }
         }
 
-        // Danh sách vị trí trống ban đầu
-        val emptyPositions = mutableListOf<Pair<Int, Int>>()
-        for (y in 1 until mapHeight - 1) {
-            for (x in 1 until mapWidth - 1) {
-                if (map[y][x] == ' ') {
-                    emptyPositions.add(Pair(x, y))
+        // Helper function để lấy tất cả vị trí trống thực sự trên map
+        fun getEmptyPositions(): List<Pair<Int, Int>> {
+            val positions = mutableListOf<Pair<Int, Int>>()
+            for (y in 1 until mapHeight - 1) {
+                for (x in 1 until mapWidth - 1) {
+                    if (map[y][x] == ' ') {
+                        positions.add(Pair(x, y))
+                    }
                 }
             }
+            return positions
         }
 
-        // Đảm bảo có đủ không gian cho gameplay
-        val requiredSpace = boxCount + monsterCount + 8  // boxes + monsters + goals + safe zone + pickups
-        if (emptyPositions.size < requiredSpace) {
-            throw Exception("Not enough space for all elements. Need at least $requiredSpace empty cells, but only ${emptyPositions.size} available")
-        }
-
-        println("🎯 Available positions: ${emptyPositions.size}, required: $requiredSpace")
-
-        // 1. ĐẶT PLAYER TRƯỚC TIÊN
-        val playerPos = emptyPositions.random()
-        map[playerPos.second][playerPos.first] = '@'
-        emptyPositions.remove(playerPos)
-
-        // Track vị trí đã chiếm
-        val occupiedPositions = mutableSetOf<Pair<Int, Int>>()
-        occupiedPositions.add(playerPos)
-
-        // 2. ĐẶT MONSTERS
-        val monsterData = mutableListOf<Triple<Int, Int, String>>()
-        for (i in 0 until monsterCount) {
-            val monsterPos = emptyPositions.random()
-            occupiedPositions.add(monsterPos)
-            emptyPositions.remove(monsterPos)
-
-            // Chọn loại monster ngẫu nhiên
-            val monsterType = when (Random.nextInt(3)) {
-                0 -> "PATROL"
-                1 -> "BOUNCE"
-                else -> "PATROL"
+        // Helper function để đặt một phần tử lên map
+        fun placeElement(char: Char, name: String): Pair<Int, Int>? {
+            val emptyPos = getEmptyPositions()
+            if (emptyPos.isEmpty()) {
+                println("⚠️ Không còn vị trí trống cho $name")
+                return null
             }
-
-            monsterData.add(Triple(monsterPos.first, monsterPos.second, monsterType))
+            val pos = emptyPos.random()
+            map[pos.second][pos.first] = char
+            println("✅ Đặt $name tại (${pos.first}, ${pos.second})")
+            return pos
         }
 
-        // 3. TẠO GẠCH RẢI RÁC (walls) - tránh vị trí đã chiếm
-        val wallCount = Random.nextInt(mapWidth * mapHeight / 25, mapWidth * mapHeight / 10) // 4% - 10% diện tích
+        // 1. ĐẶT PLAYER
+        println("\n👤 BƯỚC 1: Đặt player...")
+        val playerPos = placeElement('@', "player") ?: throw Exception("Cannot place player")
 
-        // Tạo các cụm tường lớn để tạo "phòng" và "hành lang"
-        val clusterCount = Random.nextInt(2, 6)
+        // 2. TẠO WALLS
+        println("\n🧱 BƯỚC 2: Tạo walls...")
+        val targetWallCount = Random.nextInt(mapWidth * mapHeight / 25, mapWidth * mapHeight / 10)
+        var actualWallCount = 0
+
+        // Tạo wall clusters
+        val clusterCount = Random.nextInt(2, 5)
         for (cluster in 0 until clusterCount) {
-            val clusterX = Random.nextInt(3, mapWidth - 6)
-            val clusterY = Random.nextInt(3, mapHeight - 6)
-            val clusterSize = Random.nextInt(2, 5)
+            val centerX = Random.nextInt(3, mapWidth - 3)
+            val centerY = Random.nextInt(3, mapHeight - 3)
+            val size = Random.nextInt(2, 4)
 
-            // Tạo cụm tường hình vuông hoặc chữ L
-            for (dy in 0 until clusterSize) {
-                for (dx in 0 until clusterSize) {
-                    val x = clusterX + dx
-                    val y = clusterY + dy
-                    val pos = Pair(x, y)
-                    if (x >= 2 && x < mapWidth - 2 && y >= 2 && y < mapHeight - 2 &&
-                        map[y][x] == ' ' && pos !in occupiedPositions) {
-                        // Tạo hình dạng ngẫu nhiên (không phải tất cả ô trong cụm)
-                        if (Random.nextFloat() < 0.5f) { // 50% chance tạo tường
+            for (dy in -size..size) {
+                for (dx in -size..size) {
+                    val x = centerX + dx
+                    val y = centerY + dy
+                    if (x >= 2 && x < mapWidth - 2 && y >= 2 && y < mapHeight - 2) {
+                        if (map[y][x] == ' ' && Random.nextFloat() < 0.4f) {
                             map[y][x] = '#'
+                            actualWallCount++
                         }
                     }
                 }
             }
         }
 
-        // Thêm tường đơn lẻ để lấp đầy khoảng trống
-        for (i in 0 until wallCount) {
-            val x = Random.nextInt(2, mapWidth - 2)
-            val y = Random.nextInt(2, mapHeight - 2)
-            val pos = Pair(x, y)
-            if (map[y][x] == ' ' && pos !in occupiedPositions) {
-                map[y][x] = '#'
-            }
+        // Thêm single walls
+        while (actualWallCount < targetWallCount) {
+            val emptyPos = getEmptyPositions()
+            if (emptyPos.isEmpty()) break
+            
+            val pos = emptyPos.random()
+            map[pos.second][pos.first] = '#'
+            actualWallCount++
         }
+        
+        println("✅ Đã tạo $actualWallCount walls")
 
-        // Cập nhật emptyPositions sau khi tạo tường
-        emptyPositions.clear()
-        for (y in 1 until mapHeight - 1) {
-            for (x in 1 until mapWidth - 1) {
-                val pos = Pair(x, y)
-                if (map[y][x] == ' ' && pos !in occupiedPositions) {
-                    emptyPositions.add(pos)
-                }
-            }
-        }
-
-        // 4. ĐẶT BOXES - KHÔNG ĐƯỢC SÁT GẠCH VÀ TƯỜNG
+        // 3. ĐẶT BOXES - tránh sát tường
+        println("\n📦 BƯỚC 3: Đặt $boxCount boxes...")
+        var boxesPlaced = 0
+        
         for (i in 0 until boxCount) {
-            // Tìm vị trí không cạnh tường hoặc gạch
-            var validBoxPos: Pair<Int, Int>? = null
-            val maxAttempts = 50 // Tránh loop vô hạn
+            val emptyPos = getEmptyPositions()
+            if (emptyPos.isEmpty()) {
+                println("⚠️ Không đủ chỗ cho box ${i + 1}/${boxCount}")
+                break
+            }
 
-            for (attempt in 0 until maxAttempts) {
-                if (emptyPositions.isEmpty()) break
-
-                val testPos = emptyPositions.random()
-                if (!isNearWall(testPos, map, mapWidth, mapHeight)) {
-                    validBoxPos = testPos
+            // Ưu tiên vị trí không sát tường
+            var bestPos: Pair<Int, Int>? = null
+            for (pos in emptyPos.shuffled()) {
+                if (!isNearWall(pos, map, mapWidth, mapHeight)) {
+                    bestPos = pos
                     break
                 }
             }
-
-            // Nếu không tìm được vị trí hợp lý, dùng vị trí bất kỳ còn trống
-            if (validBoxPos == null && emptyPositions.isNotEmpty()) {
-                validBoxPos = emptyPositions.random()
-            }
-
-            if (validBoxPos != null) {
-                map[validBoxPos.second][validBoxPos.first] = 'B'  // Sokoban standard: 'B' for box
-                occupiedPositions.add(validBoxPos)
-                emptyPositions.remove(validBoxPos)
-            }
+            
+            // Nếu không tìm được, dùng vị trí bất kỳ
+            val finalPos = bestPos ?: emptyPos.random()
+            map[finalPos.second][finalPos.first] = 'B'
+            boxesPlaced++
         }
+        println("✅ Đã đặt $boxesPlaced/$boxCount boxes")
 
-
-        // Đặt safe zone
-        if (emptyPositions.isNotEmpty()) {
-            val safeZonePos = emptyPositions.random()
-            map[safeZonePos.second][safeZonePos.first] = 'S'
-            emptyPositions.remove(safeZonePos)
-        }
-
-        // Đặt ammo pickups (2-4 viên tùy map size)
-        val ammoPickupCount = Random.nextInt(2, minOf(5, emptyPositions.size / 2 + 1))
-        for (i in 0 until ammoPickupCount) {
-            if (emptyPositions.isNotEmpty()) {
-                val ammoPos = emptyPositions.random()
-                // Chọn loại ammo ngẫu nhiên: N (normal), P (pierce), S (stun)
-                val ammoType = when (Random.nextInt(3)) {
-                    0 -> 'N'
-                    1 -> 'P'
-                    else -> 'S'
-                }
-                map[ammoPos.second][ammoPos.first] = ammoType
-                emptyPositions.remove(ammoPos)
-            }
-        }
-
-        // Đặt lives pickups (1-2 viên)
-        val livesPickupCount = Random.nextInt(1, minOf(3, emptyPositions.size + 1))
-        for (i in 0 until livesPickupCount) {
-            if (emptyPositions.isNotEmpty()) {
-                val livesPos = emptyPositions.random()
-                map[livesPos.second][livesPos.first] = 'L'
-                emptyPositions.remove(livesPos)
-            }
-        }
-
-        // 5. TẠO GOALS Ở CUỐI CÙNG - số lượng bằng số boxes
+        // 4. ĐẶT GOALS - bằng số boxes
+        println("\n🎯 BƯỚC 4: Đặt $boxCount goals...")
+        var goalsPlaced = 0
+        
         for (i in 0 until boxCount) {
-            if (emptyPositions.isNotEmpty()) {
-                val goalPos = emptyPositions.random()
-                map[goalPos.second][goalPos.first] = 'G'  // Sokoban standard: 'G' for goal
-                emptyPositions.remove(goalPos)
+            val pos = placeElement('G', "goal #${i + 1}")
+            if (pos != null) goalsPlaced++
+        }
+        println("✅ Đã đặt $goalsPlaced/$boxCount goals")
+
+        // 5. ĐẶT SAFE ZONES
+        println("\n🛡️ BƯỚC 5: Đặt $safeZoneCount safe zones...")
+        var safeZonesPlaced = 0
+        
+        for (i in 0 until safeZoneCount) {
+            val pos = placeElement('S', "safe zone #${i + 1}")
+            if (pos != null) safeZonesPlaced++
+        }
+        println("✅ Đã đặt $safeZonesPlaced/$safeZoneCount safe zones")
+
+        // 6. ĐẶT MONSTERS - DÙNG LOGIC GIỐNG BOXES ĐỂ ĐẢM BẢO ĐỦ SỐ LƯỢNG
+        println("\n🐺 BƯỚC 6: Đặt $monsterCount monsters (phân tán đều)...")
+        val monsterData = mutableListOf<Triple<Int, Int, String>>()
+        val monsterPositions = mutableListOf<Pair<Int, Int>>()
+        
+        for (i in 0 until monsterCount) {
+            val emptyPos = getEmptyPositions()
+            if (emptyPos.isEmpty()) {
+                println("⚠️ Không đủ chỗ cho monster ${i + 1}/${monsterCount}")
+                break
+            }
+
+            // Tìm vị trí phân tán đều - xa player và xa monsters khác
+            var bestPos = emptyPos.random()
+            var maxMinDist = 0
+            
+            // Duyệt qua một số vị trí ngẫu nhiên để tìm vị trí tốt nhất
+            val samplesToCheck = minOf(emptyPos.size, 50) // Chỉ check tối đa 50 vị trí để tối ưu
+            for (sample in emptyPos.shuffled().take(samplesToCheck)) {
+                val distToPlayer = Math.abs(sample.first - playerPos.first) + Math.abs(sample.second - playerPos.second)
+                
+                var minDistToMonsters = 999
+                for (monsterPos in monsterPositions) {
+                    val dist = Math.abs(sample.first - monsterPos.first) + Math.abs(sample.second - monsterPos.second)
+                    if (dist < minDistToMonsters) {
+                        minDistToMonsters = dist
+                    }
+                }
+                
+                // Kết hợp khoảng cách: 40% player, 60% monsters khác (ưu tiên phân tán)
+                val combinedDist = (distToPlayer * 0.4 + minDistToMonsters * 0.6).toInt()
+                
+                if (combinedDist > maxMinDist) {
+                    maxMinDist = combinedDist
+                    bestPos = sample
+                }
+            }
+
+            val monsterType = if (Random.nextBoolean()) "PATROL" else "BOUNCE"
+            
+            // QUAN TRỌNG: 
+            // bestPos = Pair(x=col, y=row) từ getEmptyPositions
+            // Nhưng GameView (khi for ((x, y, type))) expect x=row, y=col (theo cách GameLogic parse)
+            // VÌ KHÔNG SỬA GameLogic (ảnh hưởng chế độ khác), phải ĐỔI ở đây
+            val monsterX = bestPos.first  // col từ bestPos
+            val monsterY = bestPos.second // row từ bestPos
+            
+            // VALIDATE: Đảm bảo monster trong biên map
+            if (monsterX >= mapWidth || monsterY >= mapHeight || monsterX < 0 || monsterY < 0) {
+                println("   ⚠️ MONSTER ${i + 1} NGOÀI BIÊN! col=$monsterX (max=${mapWidth-1}), row=$monsterY (max=${mapHeight-1}) - BỎ QUA!")
+                continue
+            }
+            
+            // CHỈ thêm vào monsterPositions SAU KHI validate thành công
+            monsterPositions.add(bestPos)
+            
+            // ĐỔI THỨ TỰ: Lưu (row, col) thay vì (col, row) để khớp với GameView
+            monsterData.add(Triple(monsterY, monsterX, monsterType))  // (row, col, type)
+            
+            val nearestDist = if (monsterPositions.size > 1) {
+                monsterPositions.dropLast(1).minOf { 
+                    Math.abs(bestPos.first - it.first) + Math.abs(bestPos.second - it.second) 
+                }
+            } else 0
+            
+            println("   🐺 Monster ${monsterData.size}: col=$monsterX, row=$monsterY (max: col<$mapWidth, row<$mapHeight) → Triple($monsterY, $monsterX, $monsterType) [ĐỔI row,col] - nearest: ${if (nearestDist > 0) "${nearestDist} tiles" else "first"}")
+        }
+        println("✅ Đã đặt ${monsterData.size}/$monsterCount monsters")
+
+        // 7. ĐẶT AMMO PICKUPS
+        println("\n💣 BƯỚC 7: Đặt ammo pickups...")
+        val ammoCount = Random.nextInt(2, 5)
+        var ammoPlaced = 0
+        
+        for (i in 0 until ammoCount) {
+            val emptyPos = getEmptyPositions()
+            if (emptyPos.isEmpty()) break
+            
+            val pos = emptyPos.random()
+            val ammoType = when (Random.nextInt(3)) {
+                0 -> 'N'  // Normal
+                1 -> 'P'  // Pierce
+                else -> 'T'  // sTun (đổi từ S để tránh trùng Safe zone)
+            }
+            map[pos.second][pos.first] = ammoType
+            ammoPlaced++
+        }
+        println("✅ Đã đặt $ammoPlaced ammo pickups")
+
+        // 8. ĐẶT LIVES PICKUPS
+        println("\n❤️ BƯỚC 8: Đặt lives pickups...")
+        val livesCount = Random.nextInt(1, 3)
+        var livesPlaced = 0
+        
+        for (i in 0 until livesCount) {
+            val pos = placeElement('L', "lives #${i + 1}")
+            if (pos != null) livesPlaced++
+        }
+        println("✅ Đã đặt $livesPlaced lives pickups")
+
+        // 9. DEBUG - ĐẾM FINAL STATS
+        println("\n📊 ========== FINAL MAP STATS ==========")
+        var actualPlayer = 0
+        var actualWalls = 0
+        var actualBoxes = 0
+        var actualGoals = 0
+        var actualSafeZones = 0
+        var actualEmpty = 0
+        var actualPickups = 0
+
+        for (y in 0 until mapHeight) {
+            for (x in 0 until mapWidth) {
+                when (map[y][x]) {
+                    '@' -> actualPlayer++
+                    '#' -> actualWalls++
+                    'B' -> actualBoxes++
+                    'G' -> actualGoals++
+                    'S' -> actualSafeZones++
+                    ' ' -> actualEmpty++
+                    'N', 'P', 'T', 'L' -> actualPickups++
+                }
             }
         }
+
+        println("👤 Player: $actualPlayer")
+        println("🐺 Monsters: ${monsterData.size} (expected: $monsterCount)")
+        println("🧱 Walls: $actualWalls")
+        println("📦 Boxes: $actualBoxes (expected: $boxCount)")
+        println("🎯 Goals: $actualGoals (expected: $boxCount)")
+        println("🛡️ Safe Zones: $actualSafeZones (expected: $safeZoneCount)")
+        println("💣 Pickups: $actualPickups")
+        println("⬜ Empty: $actualEmpty")
+        println("========================================")
 
         // Chuyển map thành string
         val mapString = map.joinToString("\n") { it.joinToString("") }
@@ -417,6 +537,7 @@ class CustomizeActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        super.onBackPressed()
         val intent = Intent(this, GameModeSelectionActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         startActivity(intent)
