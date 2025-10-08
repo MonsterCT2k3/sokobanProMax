@@ -34,7 +34,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         // Vẽ tiêu đề game với font lớn và màu trắng
         val titlePaint = Paint().apply {
             color = Color.WHITE
-            textSize = 44f  // Tăng từ ~60f (size mặc định) lên 80f
+            textSize = 42f  // Tăng từ ~60f (size mặc định) lên 80f
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -45,7 +45,7 @@ class UIRenderer(private val resourceManager: ResourceManager) {
         // Vẽ shadow cho tiêu đề
         val shadowPaint = Paint().apply {
             color = Color.BLACK
-            textSize = 44f
+            textSize = 42f
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -53,8 +53,8 @@ class UIRenderer(private val resourceManager: ResourceManager) {
             strokeWidth = 1f
         }
 
-        canvas.drawText("Sokoban Game", screenWidth / 2f + 2f, 122f, shadowPaint)
-        canvas.drawText("Sokoban Game", screenWidth / 2f, 120f, titlePaint)
+        canvas.drawText("Solve The Maze", screenWidth / 2f + 2f, 122f, shadowPaint)
+        canvas.drawText("Solve The Maze", screenWidth / 2f, 120f, titlePaint)
 
         // 🆕 Vẽ level display ngay dưới tiêu đề
         val levelPaint = Paint().apply {
